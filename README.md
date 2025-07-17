@@ -93,7 +93,7 @@ yaml
 
 ## 🧾 데이터베이스 ERD
 
-- [ERD 확인하기](https://www.erdcloud.com/d/2LFetYzYWhFgmbFbd)
+- [ERD 확인하기](https://www.erdcloud.com/d/2LFetYzYWhFgmbFbd](https://www.erdcloud.com/d/Hyv5npmaceLrCr4kH))
 - [DB 테이블 명세서](https://docs.google.com/spreadsheets/d/1Hq5XLG8044kCkO1DYgRZBnSOsUc9_5bjqr21Cf_5ny4)
 
 ---
