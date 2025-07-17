@@ -98,7 +98,7 @@ finzie-backend/
 
 ## 🚀 배포 및 실행
 
-```bash
+```
 # 로컬 빌드
 ./gradlew build
 
@@ -106,12 +106,10 @@ finzie-backend/
 java -jar build/libs/finzie-backend.jar
 
 # 도커 실행
-docker-compose up --build
+docker-compose up --buil
+```
 ⚙️ CI/CD 자동화
-yaml
-복사
-편집
-# .github/workflows/deploy.yml 예시
+```
 name: Deploy to EC2
 on:
   push:
@@ -134,13 +132,8 @@ jobs:
           REMOTE_HOST: ${{ secrets.EC2_HOST }}
           REMOTE_USER: ec2-user
           TARGET: /home/ec2-user/finzie
-👥 팀 역할 (예시)
-이름	역할
-김OO	인증 및 유저 관리 API
-박OO	모의투자 매매 로직 + 시세 연동
-이OO	챗봇 GPT 프롬프트 설계 및 피드백
-정OO	투자 성향 테스트 및 콘텐츠 큐레이션
-홍OO	랭킹 시스템 및 분석 API 개발
+```
+
 
 📎 참고 링크
 📈 한국투자증권 Open API
