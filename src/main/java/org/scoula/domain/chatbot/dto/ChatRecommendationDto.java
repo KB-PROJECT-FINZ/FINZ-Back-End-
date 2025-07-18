@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 @ApiModel(discriminator = "종목 추천 결과 dto")
 public class ChatRecommendationDto {
-    private Long id;
-    private Long userId;
+    private Integer id;
+    private Integer userId;
     private String ticker;
     private String recommendType; // "PROFILE" or "KEYWORD"
     private String reason;

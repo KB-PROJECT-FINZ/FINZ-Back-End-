@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Builder
 @ApiModel("쳇봇 에러 저장 dto")
 public class ChatErrorDto {
-    private Long id;
-    private Long userId;
+    private Integer id;
+    private Integer userId;
     private String errorMessage;
     private String errorType;     // GPT / DB / API 등
     private LocalDateTime createdAt;

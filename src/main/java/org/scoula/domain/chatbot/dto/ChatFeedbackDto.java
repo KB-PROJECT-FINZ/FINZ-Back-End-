@@ -15,9 +15,9 @@ import java.time.LocalDateTime;
 @Builder
 @ApiModel(discriminator = "사용자 종목추천 피드백 저장 dto")
 public class ChatFeedbackDto {
-    private Long id;
-    private Long userId;
-    private Long recommendationId;
+    private Integer id;
+    private Integer userId;
+    private Integer recommendationId;
     private String feedbackType;  // "INTERESTED", "NOT_INTERESTED"
     private LocalDateTime createdAt;
 }
