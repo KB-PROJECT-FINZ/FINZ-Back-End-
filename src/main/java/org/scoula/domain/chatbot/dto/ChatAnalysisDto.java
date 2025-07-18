@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @ApiModel(discriminator = "종목 분석 정보 저장 dto")
 public class ChatAnalysisDto {
-    private Long id;
+    private Integer id;
     private String ticker;
     private String name;
     private String region;
