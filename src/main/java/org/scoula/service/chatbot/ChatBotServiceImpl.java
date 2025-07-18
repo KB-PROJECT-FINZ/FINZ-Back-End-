@@ -20,6 +20,26 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ChatBotServiceImpl implements ChatBotService {
 
+    // 기능별 메서드 정의해야함 .
+    //    private ChatResponseDto handleProfileRecommendation(ChatRequestDto request) throws Exception {
+    //    String prompt = promptBuilder.buildForProfile(String.valueOf(request.getUserId()));
+    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_PROFILE", request);
+    //    }
+    //
+    //    private ChatResponseDto handleKeywordRecommendation(ChatRequestDto request) throws Exception {
+    //    String prompt = promptBuilder.buildForKeyword(request.getMessage());
+    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_KEYWORD", request);
+    //    }
+    //
+    //    private ChatResponseDto handleStockAnalysis(ChatRequestDto request) throws Exception {
+    //    String prompt = promptBuilder.buildForAnalysis(request.getMessage());
+    //    return callOpenAiAndBuildResponse(prompt, "ANALYZE_STOCK", request);
+    //    }
+    //
+    //    private ChatResponseDto handleGeneralChat(ChatRequestDto request) throws Exception {
+    //    return callOpenAiAndBuildResponse(request.getMessage(), "GENERAL", request);
+    //    }
+
     @Value("${openai.api.key}")
     private String openaiApiKey;
 
@@ -34,41 +54,47 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
         try {
-            // ChatRequestDto에서 필요한 파라미터 추출
+            // ====================== 1. 입력 데이터 추출 ======================
             String userMessage = request.getMessage();
             String intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
+            // ========================2. 전처리======================
             // TODO: 민감 정보 마스킹 로직
             // TODO: 세션 조회 또는 생성 로직 (sessionId가 없으면 새로 생성)
+
+            // ====================== 3. 의도 분류 ======================
             // TODO: intentType이 없는 경우 → intent 분류 시도
             // if (intentType == null) {
-            //     intentType = classifyIntent(userMessage); // 분류 함수 추후 구현
-            // }
+                // TODO: GPT를 활용한 의도 분류 시도 or 하드코딩 분류
+            //    intentType = classifyIntent(userMessage);
+            //}
 
             // 분류함수 하드코딩 -> 나중에 GPT로 바꿔야함
-//            private String classifyIntent(String message) {
-//                if (message.contains("추천")) return "RECOMMEND_PROFILE";
-//                else if (message.contains("분석")) return "ANALYZE_STOCK";
-//                else return null; // 분류 실패
-//            }
-
+//                  private String classifyIntent(String message) {
+//                        if (message.contains("추천")) return "RECOMMEND_PROFILE";
+//                        else if (message.contains("분석")) return "ANALYZE_STOCK";
+//                        else return null; // 분류 실패
+//                  }
 
 
             // TODO: intent 분류 실패 시 fallback 처리 및 chat_errors 저장
-//            if (intentType == null) {
-//                return handleError(
-//                        new IllegalArgumentException("의도 분류 실패: fallback 응답 처리"),
-//                        userId,
-//                        "UNKNOWN_INTENT"
-//                );
-//            }
 
+            //    if (intentType == null) {
+            //            return handleError(
+            //                    new IllegalArgumentException("의도 분류 실패: fallback 응답 처리"),
+            //                    userId,
+            //                    "UNKNOWN_INTENT"
+            //            );
+            //        }
 
+            // ====================== 4. 사용자 메시지 저장 ======================
             // TODO: chat_messages 테이블에 사용자 메시지 저장
             // saveChatMessage(userId, sessionId, "user", userMessage, intentType);
 
+
+            // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
             Map<String, Object> message = new HashMap<>();
             message.put("role", "user");
@@ -87,20 +113,23 @@ public class ChatBotServiceImpl implements ChatBotService {
             RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
-            // 응답 성공 여부 체크
+            // ====================== 6. 응답 성공 여부 확인 ======================
             if (!response.getStatusCode().is2xxSuccessful()) {
                 return handleError(new RuntimeException("OpenAI 응답 실패 - 상태코드: " + response.getStatusCodeValue()), userId, intentType);
             }
 
-            // 응답 파싱
+            // ====================== 7. 응답 파싱 ======================
             JsonNode root = objectMapper.readTree(response.getBody());
             String content = root.path("choices").get(0).path("message").path("content").asText();
 
+            // ====================== 8. GPT 응답 저장 ======================
             // TODO: chat_messages 테이블에 GPT 응답 저장
             // saveChatMessage(userId, sessionId, "assistant", content, intentType);
 
             // TODO: 세션에 마지막 intent 저장 + 세션 종료 조건 검사 및 update
 
+
+            // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
                     .content(content.trim())
                     .intentType(intentType)
@@ -111,7 +140,7 @@ public class ChatBotServiceImpl implements ChatBotService {
         }
     }
 
-    // 에러 핸들링 분리 함수
+    // ====================== 예외 처리 함수 ======================
     private ChatResponseDto handleError(Exception e, Integer userId, String intentType) {
         log.error("OpenAI 호출 중 예외 발생", e);
 
