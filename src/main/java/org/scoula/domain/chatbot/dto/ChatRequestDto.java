@@ -9,5 +9,9 @@ import lombok.*;
 @Builder
 @ApiModel(description ="GPT 요청 DTO")
 public class ChatRequestDto {
-    private String message;
+    private Long userId;  // 사용자 고유 ID
+    private Long sessionId;   // 대화 세션 ID
+    private String message; // 사용자가 보낸 메시지
+    private String intentType;  // 의도 타입: RECOMMEND_PROFILE, STOCK_ANALYZE 등
+
 }
