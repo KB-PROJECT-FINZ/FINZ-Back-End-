@@ -1,5 +1,6 @@
 package org.scoula.mapper.chatbot;
 
+import org.apache.ibatis.annotations.Param;
 import org.mapstruct.Mapper;
 import org.scoula.domain.chatbot.dto.ChatMessageDto;
 import org.scoula.domain.chatbot.dto.ChatSessionDto;
@@ -21,7 +22,8 @@ public interface ChatBotMapper {
     void insertChatSession(ChatSessionDto session);
     void updateChatSessionIntent(ChatSessionDto session);
     IntentType getLastIntentBySessionId(Integer sessionId);
-    void endChatSession(Integer sessionId);
+
+    void endChatSession(@Param("sessionId") Integer sessionId);
 
 
 }

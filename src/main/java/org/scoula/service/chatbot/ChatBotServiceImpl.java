@@ -67,12 +67,48 @@ public class ChatBotServiceImpl implements ChatBotService {
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
+
+
+            if (intentType == null) {
+                String prompt = buildIntentClassificationPrompt(userMessage);
+
+                // GPT 호출
+                Map<String, Object> msg = new HashMap<>();
+                msg.put("role", "user");
+                msg.put("content", prompt);
+
+                Map<String, Object> requestBody = new HashMap<>();
+                requestBody.put("model", model);
+                requestBody.put("messages", List.of(msg));
+                requestBody.put("temperature", 0);
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                headers.setBearerAuth(openaiApiKey);
+
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+                RestTemplate restTemplate = new RestTemplate();
+                ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
+
+                JsonNode json = objectMapper.readTree(gptResponse.getBody());
+                String intentText = json.path("choices").get(0).path("message").path("content").asText().trim();
+
+                try {
+                    intentType = IntentType.valueOf(intentText); // enum 파싱
+                } catch (IllegalArgumentException ex) {
+                    intentType = IntentType.UNKNOWN; // 실패 fallback
+                }
+
+                request.setIntentType(intentType);
+            }
+
             // ========================2. 전처리======================
             // TODO: 민감 정보 마스킹 로직
 
             // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
             if (sessionId == null) {
                 // 세션이 없으면 새로 생성
+                log.info("세션 생성... sessionId = {}", sessionId);
                 ChatSessionDto newSession = ChatSessionDto.builder()
                         .userId(userId)
                         .lastIntent(intentType)
@@ -81,11 +117,13 @@ public class ChatBotServiceImpl implements ChatBotService {
                 sessionId = newSession.getId();
             } else {
                 // 기존 세션의 마지막 intent 가져옴
+                log.info("기존 세션의 마지막 intent 가져옴... sessionId = {}", sessionId);
                 IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
 
                 if (!intentType.equals(lastIntent)) {
                     // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
-                    chatBotMapper.endChatSession(sessionId); // ended_at 업데이트용 쿼리 필요
+                    log.info("세션 종료 시도: {}", sessionId);
+                    chatBotMapper.endChatSession(sessionId);
 
                     ChatSessionDto newSession = ChatSessionDto.builder()
                             .userId(userId)
@@ -94,6 +132,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     chatBotMapper.insertChatSession(newSession);
                     sessionId = newSession.getId();
                 } else {
+                    log.info("lastIntent만 갱신... sessionId = {}", sessionId);
                     // intent 같음 → lastIntent만 갱신
                     chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
                             .id(sessionId)
@@ -171,6 +210,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     .content(content.trim())
                     .intentType(intentType)
                     .messageId(gptMessage.getId())
+                    .sessionId(sessionId)
                     .build();
 
         } catch (Exception e) {
@@ -204,5 +244,41 @@ public class ChatBotServiceImpl implements ChatBotService {
         chatBotMapper.insertChatMessage(message); // insert 시 keyProperty="id"로 id 채워짐
         return message; // ID 포함된 message 반환
     }
+
+    // 의도 분류 프롬프트
+    private String buildIntentClassificationPrompt(String userMessage) {
+        return """
+    You are an intent classifier for a financial chatbot.
+
+    Classify the user's message into one of the following intent types **based on the meaning**:
+
+    - MESSAGE: General conversation or small talk.
+    - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
+    - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
+    - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
+    - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
+    - SESSION_END: Wants to end the conversation.
+    - ERROR: Clear error or invalid message.
+    - UNKNOWN: Cannot determine intent.
+
+    Just return the intent type only, no explanation.
+
+    Example 1:
+    User: "AI 관련된 주식 추천해줘"
+    Answer: RECOMMEND_KEYWORD
+
+    Example 2:
+    User: "삼성전자 분석해줘"
+    Answer: STOCK_ANALYZE
+    
+    Example 3:
+    User: "가치주 추천"
+    Answer: RECOMMEND_KEYWORD
+
+    User: %s
+    """.formatted(userMessage);
+    }
+
+
 
 }
