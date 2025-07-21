@@ -2,6 +2,7 @@ package org.scoula.api.mocktrading;
 
 import okhttp3.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.scoula.util.mocktrading.ConfigManager;
 
 import java.io.IOException;
 import java.sql.*;
@@ -17,8 +18,8 @@ public class TokenManager {
     private static final String DB_PASSWORD = "mockpassword";
 
     // 한국투자증권 모의투자 API 정보
-    private static final String APP_KEY = "PSH0easBeXEsg1O8xDFID806ogGp5m9OnDE4";
-    private static final String APP_SECRET = "qebHXATUH/Y8lxudeqIguM2F3F8TP0zedOogN9bYnTdhjdKGnEj2tfY1imFgWQw3dle/oB3m6Mde6x+LTrC2RSQtYOXdD6kiByz4hWZmZFhCDOuU4LEuA0dYNaCG3pSfUT0q/+9d3KHVobbj9wNylWv4QLGT6CTc04aU3UPootqzYzeIh+M=";
+    private static final String APP_KEY = ConfigManager.get("app.key");
+    private static final String APP_SECRET = ConfigManager.get("app.secret");
     private static final String TOKEN_URL = "https://openapivts.koreainvestment.com:29443/oauth2/tokenP";
     private static final String APPROVAL_KEY_URL = "https://openapivts.koreainvestment.com:29443/oauth2/Approval";
 

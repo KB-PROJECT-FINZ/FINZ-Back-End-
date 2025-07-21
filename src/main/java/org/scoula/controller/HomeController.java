@@ -13,4 +13,10 @@ public class HomeController {
         log.info("====================> HomeController /");
         return "index";         // View의 이름
     }
+    
+    @GetMapping("/api-docs")
+    public String apiDocs() {
+        log.info("====================> Redirecting to Swagger UI");
+        return "redirect:/swagger-ui.html";
+    }
 }

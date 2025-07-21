@@ -9,10 +9,12 @@ import java.io.IOException;
 public class BalanceApi {
     private static final String APP_SECRET = ConfigManager.get("app.secret");
     private static final String APP_KEY = ConfigManager.get("app.key");
-    private static final String BASE_URL = "https://openapivts.koreainvestment.com:29443";
+//    private static final String BASE_URL = "https://openapivts.koreainvestment.com:29443";
+    private static final String BASE_URL = "https://openapi.koreainvestment.com:9443";
 
     // 예시 계좌번호
-    private static final String CANO = "50143644";       // 앞 8자리
+//    private static final String CANO = "72453762";       // 앞 8자리
+    private static final String CANO = ConfigManager.get("app.cano");       // 앞 8자리
     private static final String ACNT_PRDT_CD = "01";     // 뒤 2자리
 
     public static void inquireBalance() throws IOException {
@@ -40,7 +42,8 @@ public class BalanceApi {
                 .addHeader("appkey", APP_KEY)
                 .addHeader("appsecret", APP_SECRET)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("tr_id", "VTTC8434R")  // 모의투자 잔고조회용 TR
+//                .addHeader("tr_id", "VTTC8434R")  // 모의투자 잔고조회용 TR
+                .addHeader("tr_id", "TTTC8434R")  // 실전투자 잔고조회용 TR
                 .build();
 
         OkHttpClient client = new OkHttpClient();
