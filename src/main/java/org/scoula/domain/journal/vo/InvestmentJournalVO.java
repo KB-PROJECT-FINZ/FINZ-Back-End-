@@ -12,7 +12,9 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class InvestmentJournalVO {
+
     private Integer id;
     private Date journalDate;
     private String emotion;

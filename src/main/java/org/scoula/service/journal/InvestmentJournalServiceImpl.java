@@ -3,7 +3,6 @@ package org.scoula.service.journal;
 import org.scoula.domain.journal.dto.InvestmentJournalDto;
 import org.scoula.domain.journal.vo.InvestmentJournalVO;
 import org.scoula.mapper.InvestmentJournalMapper;
-import org.scoula.service.journal.InvestmentJournalService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
