@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.scoula.domain.chatbot.enums.IntentType;
 
 import java.time.LocalDateTime;
 
@@ -20,6 +21,6 @@ public class ChatMessageDto {
     private Integer sessionId; // 세션 ID
     private String role;  // "user" / "assistant"
     private String content;  // 메세지 내용
-    private String intentType;  // optional
+    private IntentType intentType;  // optional
     private LocalDateTime createdAt;  //생성 일시
 }
