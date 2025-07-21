@@ -7,6 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.chatbot.dto.ChatMessageDto;
 import org.scoula.domain.chatbot.dto.ChatRequestDto;
 import org.scoula.domain.chatbot.dto.ChatResponseDto;
+import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -61,7 +62,7 @@ public class ChatBotServiceImpl implements ChatBotService {
         try {
             // ====================== 1. 입력 데이터 추출 ======================
             String userMessage = request.getMessage();
-            String intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
+            IntentType intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
@@ -146,7 +147,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     }
 
     // ====================== 예외 처리 함수 ======================
-    private ChatResponseDto handleError(Exception e, Integer userId, String intentType) {
+    private ChatResponseDto handleError(Exception e, Integer userId, IntentType intentType) {
         log.error("OpenAI 호출 중 예외 발생", e);
 
         // TODO: chat_errors 테이블 저장
@@ -154,12 +155,12 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         return ChatResponseDto.builder()
                 .content("⚠ 서버 오류가 발생했습니다. 다시 시도해주세요.")
-                .intentType("ERROR")
+                .intentType(IntentType.ERROR)
                 .build();
     }
     
     // 메세지 저장 함수
-    private void saveChatMessage(Integer userId, Integer sessionId, String role, String content, String intentType) {
+    private void saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
         chatBotMapper.insertChatMessage(ChatMessageDto.builder()
                 .userId(userId)
                 .sessionId(sessionId)
