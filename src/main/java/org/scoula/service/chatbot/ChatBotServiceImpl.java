@@ -7,6 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.chatbot.dto.ChatMessageDto;
 import org.scoula.domain.chatbot.dto.ChatRequestDto;
 import org.scoula.domain.chatbot.dto.ChatResponseDto;
+import org.scoula.domain.chatbot.dto.ChatSessionDto;
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,8 +69,38 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ========================2. 전처리======================
             // TODO: 민감 정보 마스킹 로직
-            // TODO: 세션 조회 또는 생성 로직 (sessionId가 없으면 새로 생성)
 
+            // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
+            if (sessionId == null) {
+                // 세션이 없으면 새로 생성
+                ChatSessionDto newSession = ChatSessionDto.builder()
+                        .userId(userId)
+                        .lastIntent(intentType)
+                        .build();
+                chatBotMapper.insertChatSession(newSession);
+                sessionId = newSession.getId();
+            } else {
+                // 기존 세션의 마지막 intent 가져옴
+                IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
+
+                if (!intentType.equals(lastIntent)) {
+                    // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
+                    chatBotMapper.endChatSession(sessionId); // ended_at 업데이트용 쿼리 필요
+
+                    ChatSessionDto newSession = ChatSessionDto.builder()
+                            .userId(userId)
+                            .lastIntent(intentType)
+                            .build();
+                    chatBotMapper.insertChatSession(newSession);
+                    sessionId = newSession.getId();
+                } else {
+                    // intent 같음 → lastIntent만 갱신
+                    chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
+                            .id(sessionId)
+                            .lastIntent(intentType)
+                            .build());
+                }
+            }
             // ====================== 3. 의도 분류 ======================
             // TODO: intentType이 없는 경우 → intent 분류 시도  //null
             // if (intentType == null) {
@@ -129,7 +160,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 8. GPT 응답 저장 ======================
             // TODO: chat_messages 테이블에 GPT 응답 저장
-            saveChatMessage(userId, sessionId, "assistant", content, intentType);
+            ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
 
 
             // TODO: 세션에 마지막 intent 저장 + 세션 종료 조건 검사 및 update
@@ -139,6 +170,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             return ChatResponseDto.builder()
                     .content(content.trim())
                     .intentType(intentType)
+                    .messageId(gptMessage.getId())
                     .build();
 
         } catch (Exception e) {
@@ -158,15 +190,19 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .intentType(IntentType.ERROR)
                 .build();
     }
-    
+
     // 메세지 저장 함수
-    private void saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
-        chatBotMapper.insertChatMessage(ChatMessageDto.builder()
+    private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
+        ChatMessageDto message = ChatMessageDto.builder()
                 .userId(userId)
                 .sessionId(sessionId)
                 .role(role)
                 .content(content)
                 .intentType(intentType)
-                .build());
+                .build();
+
+        chatBotMapper.insertChatMessage(message); // insert 시 keyProperty="id"로 id 채워짐
+        return message; // ID 포함된 message 반환
     }
+
 }

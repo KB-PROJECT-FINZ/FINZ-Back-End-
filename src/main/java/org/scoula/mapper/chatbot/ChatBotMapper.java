@@ -2,6 +2,8 @@ package org.scoula.mapper.chatbot;
 
 import org.mapstruct.Mapper;
 import org.scoula.domain.chatbot.dto.ChatMessageDto;
+import org.scoula.domain.chatbot.dto.ChatSessionDto;
+import org.scoula.domain.chatbot.enums.IntentType;
 
 import java.util.List;
 
@@ -14,5 +16,12 @@ public interface ChatBotMapper {
 
     // get
     ChatMessageDto getMessageById(Integer id);
+
+    // -------- 세션 관련 Mapper ---------
+    void insertChatSession(ChatSessionDto session);
+    void updateChatSessionIntent(ChatSessionDto session);
+    IntentType getLastIntentBySessionId(Integer sessionId);
+    void endChatSession(Integer sessionId);
+
 
 }
