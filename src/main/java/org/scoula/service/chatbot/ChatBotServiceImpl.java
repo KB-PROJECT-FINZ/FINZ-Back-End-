@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.scoula.domain.chatbot.dto.ChatMessageDto;
 import org.scoula.domain.chatbot.dto.ChatRequestDto;
 import org.scoula.domain.chatbot.dto.ChatResponseDto;
+import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -49,7 +51,9 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     @Value("${openai.model}")
     private String model;
-
+    
+    // 쳇봇 mapper 주입
+    private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -92,8 +96,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 4. 사용자 메시지 저장 ======================
             // TODO: chat_messages 테이블에 사용자 메시지 저장
-            // saveChatMessage(userId, sessionId, "user", userMessage, intentType);
-
+            saveChatMessage(userId, sessionId, "user", userMessage, intentType);
 
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
@@ -125,7 +128,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 8. GPT 응답 저장 ======================
             // TODO: chat_messages 테이블에 GPT 응답 저장
-            // saveChatMessage(userId, sessionId, "assistant", content, intentType);
+            saveChatMessage(userId, sessionId, "assistant", content, intentType);
+
 
             // TODO: 세션에 마지막 intent 저장 + 세션 종료 조건 검사 및 update
 
@@ -152,5 +156,16 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .content("⚠ 서버 오류가 발생했습니다. 다시 시도해주세요.")
                 .intentType("ERROR")
                 .build();
+    }
+    
+    // 메세지 저장 함수
+    private void saveChatMessage(Integer userId, Integer sessionId, String role, String content, String intentType) {
+        chatBotMapper.insertChatMessage(ChatMessageDto.builder()
+                .userId(userId)
+                .sessionId(sessionId)
+                .role(role)
+                .content(content)
+                .intentType(intentType)
+                .build());
     }
 }
