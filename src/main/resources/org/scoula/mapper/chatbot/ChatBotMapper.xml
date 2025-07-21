@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+    <mapper namespace="org.scoula.mapper.chatbot.ChatBotMapper">
+
+
+    <insert id="insertChatMessage"
+            parameterType="org.scoula.domain.chatbot.dto.ChatMessageDto"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO chat_messages (user_id, session_id, role, content, intent_type)
+        VALUES (#{userId}, #{sessionId}, #{role}, #{content}, #{intentType})
+    </insert>
+
+        <select id="getMessagesBySessionId" parameterType="int" resultType="org.scoula.domain.chatbot.dto.ChatMessageDto">
+            SELECT * FROM chat_messages
+            WHERE session_id = #{sessionId}
+            ORDER BY created_at ASC
+        </select>
+
+        <select id="getMessageById" parameterType="int" resultType="org.scoula.domain.chatbot.dto.ChatMessageDto">
+            SELECT * FROM chat_messages
+            WHERE id = #{id}
+        </select>
+    </mapper>

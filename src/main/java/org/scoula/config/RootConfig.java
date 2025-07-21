@@ -17,7 +17,7 @@ import javax.sql.DataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
-//@MapperScan(basePackages = {})
+@MapperScan(basePackages = "org.scoula.mapper.chatbot")
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;

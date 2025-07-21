@@ -40,6 +40,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     //    return callOpenAiAndBuildResponse(request.getMessage(), "GENERAL", request);
     //    }
 
+
     @Value("${openai.api.key}")
     private String openaiApiKey;
 
@@ -65,7 +66,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // TODO: 세션 조회 또는 생성 로직 (sessionId가 없으면 새로 생성)
 
             // ====================== 3. 의도 분류 ======================
-            // TODO: intentType이 없는 경우 → intent 분류 시도
+            // TODO: intentType이 없는 경우 → intent 분류 시도  //null
             // if (intentType == null) {
                 // TODO: GPT를 활용한 의도 분류 시도 or 하드코딩 분류
             //    intentType = classifyIntent(userMessage);
