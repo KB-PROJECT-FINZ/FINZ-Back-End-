@@ -20,7 +20,7 @@
     </select>
 
     <!--콘텐츠 상세 조회-->
-    <select id="getContentById" parameterType="int" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+    <select id="getContentById" parameterType="int" resultType="org.scoula.domain.learning.dto.LearningContentDTO">
         SELECT * FROM learning_contents WHERE content_id = #{id}
     </select>
 

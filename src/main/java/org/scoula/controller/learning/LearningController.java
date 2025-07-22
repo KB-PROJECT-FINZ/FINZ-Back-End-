@@ -3,7 +3,6 @@ package org.scoula.controller.learning;
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
-import org.scoula.domain.learning.dto.LearningQuizSubmitDTO;
 import org.scoula.service.learning.LearningService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
