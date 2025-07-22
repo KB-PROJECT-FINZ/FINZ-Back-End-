@@ -102,6 +102,18 @@ public class ChatBotServiceImpl implements ChatBotService {
                 }
             }
             // ====================== 3. 의도 분류 ======================
+            if (userMessage == null || userMessage.isBlank()) {
+                String systemMessage = getSystemMessageForIntent(intentType);
+                if (systemMessage != null) {
+                    ChatMessageDto botMessage = saveChatMessage(userId, sessionId, "assistant", systemMessage, intentType);
+
+                    return ChatResponseDto.builder()
+                            .content(systemMessage)
+                            .intentType(intentType)
+                            .messageId(botMessage.getId())
+                            .build();
+                }
+            }
             // TODO: intentType이 없는 경우 → intent 분류 시도  //null
             // if (intentType == null) {
                 // TODO: GPT를 활용한 의도 분류 시도 or 하드코딩 분류
@@ -204,5 +216,13 @@ public class ChatBotServiceImpl implements ChatBotService {
         chatBotMapper.insertChatMessage(message); // insert 시 keyProperty="id"로 id 채워짐
         return message; // ID 포함된 message 반환
     }
-
+    private String getSystemMessageForIntent(IntentType intentType) {
+        return switch (intentType) {
+            case RECOMMEND_PROFILE -> "🎯 투자 성향 기반 추천을 시작할게요! 먼저 당신의 투자 성향을 간단히 소개해줘.";
+            case RECOMMEND_KEYWORD -> "🔍 관심 있는 산업이나 키워드를 입력해주세요. 예: AI, 전기차";
+            case STOCK_ANALYZE -> "📊 분석하고 싶은 종목명을 입력해주세요. 예: 삼성전자";
+            case PORTFOLIO_ANALYZE -> "💼 포트폴리오를 분석하려면 종목 리스트나 수익률을 알려줘.";
+            default -> null;
+        };
+    }
 }
