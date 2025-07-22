@@ -20,8 +20,8 @@ public class TokenManager {
     // 한국투자증권 모의투자 API 정보
     private static final String APP_KEY = ConfigManager.get("app.key");
     private static final String APP_SECRET = ConfigManager.get("app.secret");
-    private static final String TOKEN_URL = "https://openapivts.koreainvestment.com:29443/oauth2/tokenP";
-    private static final String APPROVAL_KEY_URL = "https://openapivts.koreainvestment.com:29443/oauth2/Approval";
+    private static final String TOKEN_URL = "https://openapi.koreainvestment.com:9443/oauth2/tokenP";
+    private static final String APPROVAL_KEY_URL = "https://openapi.koreainvestment.com:9443/oauth2/Approval";
 
     // ✅ 토큰 정보 클래스
     public static class TokenInfo {

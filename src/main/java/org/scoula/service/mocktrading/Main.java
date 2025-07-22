@@ -2,6 +2,7 @@ package org.scoula.service.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.scoula.api.mocktrading.BalanceApi;
+import org.scoula.api.mocktrading.MinuteChartApi;
 import org.scoula.api.mocktrading.PriceApi;
 import org.scoula.api.mocktrading.TokenManager;
 import org.scoula.api.mocktrading.TokenManager.TokenInfo;
@@ -16,9 +17,7 @@ public class Main {
 
             // 종목코드 기반 현재가 조회
 //            JsonNode output = PriceApi.getPriceData("005930").path("output");
-//
-//            String currentPrice = output.path("stck_prpr").asText();
-//            System.out.println("현재가: " + currentPrice);
+//            System.out.println(output);
             
             // 잔고 조회
             BalanceApi.inquireBalance();

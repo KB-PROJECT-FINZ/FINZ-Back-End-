@@ -13,7 +13,6 @@ public class BalanceApi {
     private static final String BASE_URL = "https://openapi.koreainvestment.com:9443";
 
     // 예시 계좌번호
-//    private static final String CANO = "72453762";       // 앞 8자리
     private static final String CANO = ConfigManager.get("app.cano");       // 앞 8자리
     private static final String ACNT_PRDT_CD = "01";     // 뒤 2자리
 
