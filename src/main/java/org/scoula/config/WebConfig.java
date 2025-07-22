@@ -1,11 +1,11 @@
 package org.scoula.config;
 
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-import javax.servlet.Filter;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletRegistration;
+import javax.servlet.*;
 
 public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
 

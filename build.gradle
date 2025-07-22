@@ -105,6 +105,10 @@ dependencies {
     implementation 'javax.websocket:javax.websocket-api:1.1'
     implementation 'org.glassfish.tyrus.bundles:tyrus-standalone-client:1.17'
     implementation 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation 'org.apache.tomcat:tomcat-websocket:9.0.75' // 톰캣 내부 WebSocket 지원
+
+    // jakarta
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
 
 
 

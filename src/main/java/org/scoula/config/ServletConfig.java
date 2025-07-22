@@ -2,11 +2,19 @@ package org.scoula.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
+import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.config.annotation.*;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
+import javax.websocket.server.ServerContainer;
 
 @EnableWebMvc
 @ComponentScan(basePackages = {"org.scoula"})        // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
@@ -53,4 +61,33 @@ public class ServletConfig implements WebMvcConfigurer {
         StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
         return resolver;
     }
+
+//    @Override
+//    public void onStartup(ServletContext servletContext) throws ServletException {
+//        // 기존 설정
+//        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
+//        context.register(RootConfig.class);
+//        servletContext.addListener(new ContextLoaderListener(context));
+//
+//        ServletRegistration.Dynamic dispatcher = servletContext.addServlet("dispatcher",
+//                new DispatcherServlet(context));
+//        dispatcher.setLoadOnStartup(1);
+//        dispatcher.addMapping("/");
+//
+//        // ✅ WebSocket 엔드포인트 수동 등록
+//        try {
+//            ServerContainer serverContainer =
+//                    (ServerContainer) servletContext.getAttribute("javax.websocket.server.ServerContainer");
+//
+//            if (serverContainer != null) {
+//                serverContainer.addEndpoint(Class.forName("org.scoula.controller.mocktrading.StockRelaySocket"));
+//                System.out.println("✅ WebSocket 엔드포인트 등록 완료 (/ws/stock)");
+//            } else {
+//                System.err.println("❌ WebSocket ServerContainer가 null입니다.");
+//            }
+//        } catch (Exception e) {
+//            System.err.println("❌ WebSocket 등록 중 예외 발생: " + e.getMessage());
+//        }
+//    }
+
 }

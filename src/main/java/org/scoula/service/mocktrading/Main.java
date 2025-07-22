@@ -1,10 +1,7 @@
 package org.scoula.service.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.scoula.api.mocktrading.BalanceApi;
-import org.scoula.api.mocktrading.MinuteChartApi;
-import org.scoula.api.mocktrading.PriceApi;
-import org.scoula.api.mocktrading.TokenManager;
+import org.scoula.api.mocktrading.*;
 import org.scoula.api.mocktrading.TokenManager.TokenInfo;
 
 public class Main {
@@ -20,10 +17,13 @@ public class Main {
 //            System.out.println(output);
             
             // 잔고 조회
-            BalanceApi.inquireBalance();
+//            BalanceApi.inquireBalance();
 
             // 분봉 조회
 //            MinuteChartApi.getAndAggregateChart("005930", 5);  // 삼성전자 5분봉
+
+            RealtimeExecutionClient.startWebSocket();
+
 
         } catch (Exception e) {
             System.err.println("❌ 오류 발생: " + e.getMessage());
