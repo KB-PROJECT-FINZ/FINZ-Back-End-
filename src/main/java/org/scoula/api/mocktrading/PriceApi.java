@@ -14,7 +14,7 @@ public class PriceApi {
 
     private static final String APP_KEY = ConfigManager.get("app.key");
     private static final String APP_SECRET = ConfigManager.get("app.secret");
-    private static final String TR_ID = "FHKST01010100"; // 모의투자 현재가 TR
+    private static final String TR_ID = "FHKST01010100"; // 실전투자 현재가 TR
 
     /**
      * 전체 응답 JsonNode 반환

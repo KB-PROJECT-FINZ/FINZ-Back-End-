@@ -1,6 +1,8 @@
 package org.scoula.controller.mocktrading;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.scoula.domain.mocktrading.RealtimeBidsAndAsksDto;
 import org.scoula.domain.mocktrading.RealtimeStockDto;
 
 import javax.websocket.*;
@@ -34,15 +36,43 @@ public class StockRelaySocket {
         System.out.println("📩 클라이언트 메시지 수신: " + msg);
     }
 
+    // 호가 데이터 브로드캐스트 메서드 추가
+    public static void broadcastBidsAndAsks(RealtimeBidsAndAsksDto dto) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode response = mapper.createObjectNode();
+            response.put("type", "bidsAndAsks");  // 데이터 타입 구분
+            response.set("data", mapper.valueToTree(dto));
+
+            String jsonMessage = mapper.writeValueAsString(response);
+
+            for (Session session : sessions) {
+                if (session.isOpen()) {
+                    session.getBasicRemote().sendText(jsonMessage);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("❌ 호가 브로드캐스트 오류: " + e.getMessage());
+        }
+    }
+
+    // 기존 체결 데이터도 타입 구분 추가
     public static void broadcast(RealtimeStockDto dto) {
         try {
-            String json = mapper.writeValueAsString(dto);
-            System.out.println("📤 브로드캐스트 JSON: " + json); // ← 추가
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode response = mapper.createObjectNode();
+            response.put("type", "execution");  // 데이터 타입 구분
+            response.set("data", mapper.valueToTree(dto));
+
+            String jsonMessage = mapper.writeValueAsString(response);
+
             for (Session session : sessions) {
-                session.getBasicRemote().sendText(json);
+                if (session.isOpen()) {
+                    session.getBasicRemote().sendText(jsonMessage);
+                }
             }
-        } catch (IOException e) {
-            System.err.println("📤 WebSocket 브로드캐스트 오류: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("❌ 체결 브로드캐스트 오류: " + e.getMessage());
         }
     }
 }
