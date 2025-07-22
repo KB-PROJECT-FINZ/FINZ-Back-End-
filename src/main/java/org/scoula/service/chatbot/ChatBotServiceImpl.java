@@ -66,6 +66,8 @@ public class ChatBotServiceImpl implements ChatBotService {
             IntentType intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
+            log.info("📥 요청 받음: userId={}, sessionId={}, intent={}, message={}",
+                    request.getUserId(), request.getSessionId(), request.getIntentType(), request.getMessage());
 
             // ========================2. 전처리======================
             // TODO: 민감 정보 마스킹 로직
@@ -159,13 +161,18 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
             RestTemplate restTemplate = new RestTemplate();
+
+
+            log.info("🔗 OpenAI 요청 body: {}", objectMapper.writeValueAsString(body));
+
             ResponseEntity<String> response = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
             // ====================== 6. 응답 성공 여부 확인 ======================
             if (!response.getStatusCode().is2xxSuccessful()) {
                 return handleError(new RuntimeException("OpenAI 응답 실패 - 상태코드: " + response.getStatusCodeValue()), userId, intentType);
             }
-
+            log.info("✅ OpenAI 응답 코드: {}", response.getStatusCodeValue());
+            log.info("🧠 OpenAI 응답 내용: {}", response.getBody());
             // ====================== 7. 응답 파싱 ======================
             JsonNode root = objectMapper.readTree(response.getBody());
             String content = root.path("choices").get(0).path("message").path("content").asText();
