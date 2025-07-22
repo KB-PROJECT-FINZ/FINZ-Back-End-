@@ -1,23 +1,27 @@
-<mapper namespace="com.finz.mapper.AuthMapper">
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-    <insert id="insertUser" parameterType="User">
+<mapper namespace="org.scoula.mapper.AuthMapper">
+
+    <insert id="insertUser" parameterType="org.scoula.domain.Auth.vo.UserVo">
         INSERT INTO user (
-        username, password, name, nickname, phone_number, email,
-        created_at, updated_at, risk_type, provider, total_credit
+            username, password, name, nickname, phone_number, email,
+            created_at, updated_at, risk_type, provider, total_credit
         ) VALUES (
-        #{username}, #{password}, #{name}, #{nickname}, #{phoneNumber}, #{email},
-        NOW(), NOW(), 'CSD', 'local', 0
-        )
+                     #{username}, #{password}, #{name}, #{nickname}, #{phoneNumber}, #{email},
+                     NOW(), NOW(), #{riskType}, #{provider}, #{totalCredit}
+                 )
     </insert>
-
-    <select id="findByUsernameAndPassword" resultType="com.finz.vo.User">
-        SELECT * FROM user
-        WHERE username = #{username}
-        AND password = #{password}
-    </select>
 
     <select id="existsByUsername" resultType="int">
         SELECT COUNT(*) FROM user WHERE username = #{username}
+    </select>
+
+    <select id="findByUsernameAndPassword" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user
+        WHERE username = #{username} AND password = #{password}
     </select>
 
 </mapper>
