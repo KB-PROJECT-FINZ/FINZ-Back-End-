@@ -1,0 +1,23 @@
+<mapper namespace="com.finz.mapper.AuthMapper">
+
+    <insert id="insertUser" parameterType="User">
+        INSERT INTO user (
+        username, password, name, nickname, phone_number, email,
+        created_at, updated_at, risk_type, provider, total_credit
+        ) VALUES (
+        #{username}, #{password}, #{name}, #{nickname}, #{phoneNumber}, #{email},
+        NOW(), NOW(), 'CSD', 'local', 0
+        )
+    </insert>
+
+    <select id="findByUsernameAndPassword" resultType="com.finz.vo.User">
+        SELECT * FROM user
+        WHERE username = #{username}
+        AND password = #{password}
+    </select>
+
+    <select id="existsByUsername" resultType="int">
+        SELECT COUNT(*) FROM user WHERE username = #{username}
+    </select>
+
+</mapper>
