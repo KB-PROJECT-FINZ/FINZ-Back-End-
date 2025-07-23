@@ -13,7 +13,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/market")
 @Log4j2
-@CrossOrigin(origins = "*") // 개발 환경용
+// ✅ @CrossOrigin 제거 - ServletConfig에서 전역으로 처리
 public class MarketController {
 
     @Autowired
