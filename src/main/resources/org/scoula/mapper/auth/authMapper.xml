@@ -15,8 +15,12 @@
                  )
     </insert>
 
-    <select id="existsByUsername" resultType="int">
+    <select id="existsByUsername" parameterType="string" resultType="int">
         SELECT COUNT(*) FROM user WHERE username = #{username}
+    </select>
+
+    <select id="existsByNickname" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
     </select>
 
     <select id="findByUsernameAndPassword" resultType="org.scoula.domain.Auth.vo.UserVo">

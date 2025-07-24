@@ -13,14 +13,20 @@ public class AuthService {
     private AuthMapper authMapper;
 
     public boolean isUsernameAvailable(String username) {
+        System.out.println("중복확인 요청된 username: " + username);
         return authMapper.existsByUsername(username) == 0;
     }
+
 
     public boolean register(UserVo user) {
         user.setProvider("local");
         user.setRiskType("CSD");
         user.setTotalCredit(0L);
         return authMapper.insertUser(user) > 0;
+    }
+
+    public boolean isNicknameAvailable(String nickname) {
+        return authMapper.existsByNickname(nickname) == 0;
     }
 
     public UserVo login(String username, String password) {
