@@ -9,6 +9,8 @@ CREATE TABLE investment_types (
                                   description TEXT
 );
 
+INSERT INTO investment_types (risk_type) VALUES ('TEC');
+
 CREATE TABLE user (
                       id INT PRIMARY KEY AUTO_INCREMENT,
                       username VARCHAR(50) NOT NULL UNIQUE,
@@ -140,12 +142,16 @@ CREATE TABLE investment_journal_trade (
 
 
 INSERT INTO investment_types (risk_type, name_kr, group_code, description) VALUES
-                                                                               ('CSD', '신중한 안정형', 'CONSERVATIVE', '안정적이고 신중한 투자자 성향'),
-                                                                               ('BAL', '균형형', 'BALANCED', '위험과 수익의 균형을 추구하는 성향'),
-                                                                               ('AGR', '적극형', 'AGGRESSIVE', '높은 수익을 추구하는 공격형 투자자'),
-                                                                               ('ANA', '분석형', 'ANALYTICAL', '수치와 분석을 중시하는 성향'),
-                                                                               ('EMO', '감정형', 'EMOTIONAL', '감정에 영향을 많이 받는 성향');
-
+                                                                               ('CAG', '신중한 성장형', 'CONSERVATIVE', '분산 투자, 우량주 중심'),
+                                                                               ('BSS', '균형 잡힌 수익 추구형', 'BALANCED', '위험과 수익의 균형'),
+                                                                               ('BGT', '균형 잡힌 도전형', 'BALANCED', '우량+중소형 전략'),
+                                                                               ('AID', '적극적 안정형', 'AGGRESSIVE', '기본은 안정, 교체는 자주'),
+                                                                               ('EXP', '실험적 모험가형', 'AGGRESSIVE', 'AI, 코인, 바이오 등'),
+                                                                               ('FAD', '감정적 결정형', 'EMOTIONAL', '충동 매매 경향'),
+                                                                               ('SYS', '시스템 트레이더형', 'ANALYTICAL', '데이터 기반 트레이딩'),
+                                                                               ('DTA', '단타 추구형', 'AGGRESSIVE', '급등주 중심'),
+                                                                               ('TEC', '기술적 분석형', 'ANALYTICAL', '지표 기반 투자'),
+                                                                               ('THE', '이론형', 'ANALYTICAL', '기초 이론에 충실한 스타일');
 
 INSERT INTO user (
     username, password, name, nickname, profile_image,

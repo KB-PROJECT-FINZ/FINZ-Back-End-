@@ -21,7 +21,7 @@ public class UserController {
 
     @PostMapping("/risk_type")
     public ResponseEntity<?> updateRiskType(@RequestBody RiskTypeUpdateDto dto) {
-        System.out.println("✅ POST /api/user/risk_type 호출됨");
+        System.out.println(" POST /api/user/risk_type 호출됨");
         System.out.println("username: " + dto.getUsername());
         System.out.println("riskType: " + dto.getRiskType());
 
