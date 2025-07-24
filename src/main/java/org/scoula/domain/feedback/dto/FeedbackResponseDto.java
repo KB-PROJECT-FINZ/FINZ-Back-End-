@@ -12,4 +12,5 @@ public class FeedbackResponseDto {
     private Date weekStart;
     private Date weekEnd;
     private String feedback;
+    private String statusMessage;
 }

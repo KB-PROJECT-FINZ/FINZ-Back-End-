@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -33,6 +32,16 @@ public class GptTestController {
         LocalDate monday = today.with(DayOfWeek.MONDAY);
         LocalDate friday = monday.plusDays(4);
 
+        if (today.isBefore(friday.plusDays(1))) {
+            return new FeedbackResponseDto(
+                    userId,
+                    Date.valueOf(monday),
+                    Date.valueOf(friday),
+                    null,
+                    "이번 주 피드백은 월요일~금요일 데이터를 기반으로 제공됩니다. 아직 생성 중입니다."
+            );
+        }
+
         Date start = Date.valueOf(monday);
         Date end = Date.valueOf(friday);
 
@@ -43,7 +52,8 @@ public class GptTestController {
                     feedback.getUserId(),
                     feedback.getWeekStart(),
                     feedback.getWeekEnd(),
-                    feedback.getFeedback()
+                    feedback.getFeedback(),
+                    null
             );
         }
 
@@ -65,7 +75,8 @@ public class GptTestController {
                 newFeedback.getUserId(),
                 newFeedback.getWeekStart(),
                 newFeedback.getWeekEnd(),
-                newFeedback.getFeedback()
+                newFeedback.getFeedback(),
+                null
         );
     }
 }
