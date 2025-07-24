@@ -1,19 +1,20 @@
-package org.scoula.controller;
+package org.scoula.controller.ranking;
 
 
-import org.scoula.domain.MyRankingDto;
-import org.scoula.domain.Top5StockDto;
-import org.scoula.domain.WeeklyRankingDto;
-import org.scoula.service.RankingService;
+import lombok.RequiredArgsConstructor;
+import org.scoula.domain.ranking.MyRankingDto;
+import org.scoula.domain.ranking.Top5StockDto;
+import org.scoula.domain.ranking.WeeklyRankingDto;
+import org.scoula.service.ranking.RankingService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/ranking")
+@RequestMapping("/api/ranking")
+@RequiredArgsConstructor
 public class RankingController {
 
     @Autowired
@@ -29,8 +30,8 @@ public class RankingController {
     //인기 종목 Top5
 
     @GetMapping("/top5")
-    public List<Top5StockDto>getTop5Stock(@RequestParam String week, @RequestParam String traitType){
-        return rankingService.getTop5Stocks(week,traitType);
+    public List<Top5StockDto>getTop5Stock(@RequestParam String week){
+        return rankingService.getTop5Stocks(week);
     }
 
     //주간 랭킹

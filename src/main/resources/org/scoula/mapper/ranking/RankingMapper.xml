@@ -3,10 +3,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.RankingMapper">
+<mapper namespace="org.scoula.mapper.ranking.RankingMapper">
 
     <!-- (1) 성향 그룹별 주간 랭킹 -->
-    <select id="selectGroupedWeeklyRanking" resultType="org.scoula.domain.WeeklyRankingWithGroupDto">
+    <select id="selectGroupedWeeklyRanking" resultType="org.scoula.domain.ranking.WeeklyRankingWithGroupDto">
         SELECT rw.user_id, u.name, rw.gain_rate, rw.ranking, tt.trait_group
         FROM ranking_weekly rw
                  JOIN user u ON rw.user_id = u.id
@@ -16,7 +16,7 @@
     </select>
 
     <!-- (2) 내 수익률 및 순위 -->
-    <select id="selectMyRanking" resultType="org.scoula.domain.MyRankingDto">
+    <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto">
         SELECT p.user_id, p.gain_rate,
         (SELECT COUNT(*) + 1 FROM portfolios WHERE gain_rate > p.gain_rate) AS ranking,
         (SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM portfolios), 2)
@@ -26,15 +26,15 @@
     </select>
 
     <!-- (3) 인기 종목 Top5 -->
-    <select id="selectTop5Stocks" resultType="org.scoula.domain.Top5StockDto">
+    <select id="selectTop5Stocks" resultType="org.scoula.domain.ranking.Top5StockDto">
         SELECT stock_code, stock_name, investor_count, avg_gain_rate, ranking
         FROM ranking_top5_stocks
-        WHERE week = #{week} AND trait_type = #{traitType}
+        WHERE week = #{week}
         ORDER BY ranking ASC
     </select>
 
     <!-- (4) 주간 전체 랭킹 -->
-    <select id="selectWeeklyRanking" resultType="org.scoula.domain.WeeklyRankingDto">
+    <select id="selectWeeklyRanking" resultType="org.scoula.domain.ranking.WeeklyRankingDto">
         SELECT rw.user_id, u.name, rw.gain_rate, rw.ranking
         FROM ranking_weekly rw
                  JOIN user u ON rw.user_id = u.id

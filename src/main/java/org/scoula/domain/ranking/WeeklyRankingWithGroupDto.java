@@ -1,4 +1,4 @@
-package org.scoula.domain;
+package org.scoula.domain.ranking;
 
 
 

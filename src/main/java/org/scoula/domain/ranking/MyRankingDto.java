@@ -1,6 +1,5 @@
-package org.scoula.domain;
+package org.scoula.domain.ranking;
 
-import io.swagger.models.auth.In;
 import lombok.Data;
 
 import java.math.BigDecimal;

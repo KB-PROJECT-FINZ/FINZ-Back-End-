@@ -1,7 +1,11 @@
-package org.scoula.service;
+package org.scoula.service.ranking;
 
-import org.scoula.domain.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.scoula.domain.ranking.MyRankingDto;
+import org.scoula.domain.ranking.Top5StockDto;
+import org.scoula.domain.ranking.WeeklyRankingDto;
+import org.scoula.domain.ranking.WeeklyRankingWithGroupDto;
+import org.scoula.mapper.ranking.RankingMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,32 +13,33 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-public class RankingServiceImpl implements RankingService{
+@RequiredArgsConstructor
+public class RankingServiceImpl implements RankingService {
 
-    @Autowired
-    private RankingDao rankingDao;
+    private final RankingMapper rankingMapper;
+
 
     //내수익률 및 순위
     @Override
     public MyRankingDto getMyRanking(Long userId) {
-        return rankingDao.getMyRanking(userId);
+        return rankingMapper.selectMyRanking(userId);
     }
 
     //인기 종목 Top5
     @Override
-    public List<Top5StockDto> getTop5Stocks(String week, String traitType) {
-        return rankingDao.getTop5Stocks(week,traitType);
+    public List<Top5StockDto> getTop5Stocks(String week) {
+        return rankingMapper.selectTop5Stocks(week);
     }
     //주간 랭킹
     @Override
     public List<WeeklyRankingDto> getWeeklyRanking(String week) {
-        return rankingDao.getWeeklyRanking(week);
+        return rankingMapper.selectWeeklyRanking(week);
     }
 
     //주간 성향별 랭킹
     @Override
     public Map<String, List<WeeklyRankingDto>> getGroupedWeeklyRanking(String week) {
-        List<WeeklyRankingWithGroupDto> rawList = rankingDao.getGroupedWeeklyRanking(week);
+        List<WeeklyRankingWithGroupDto> rawList = rankingMapper.selectGroupedWeeklyRanking(week);
         return rawList.stream()
                 .collect(Collectors.groupingBy(
                         WeeklyRankingWithGroupDto::getTraitGroup,
@@ -48,10 +53,7 @@ public class RankingServiceImpl implements RankingService{
                         }, Collectors.toList())
                 ));
     }
-
-
-
-
-
-
 }
+
+
+
