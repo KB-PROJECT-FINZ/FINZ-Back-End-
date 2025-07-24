@@ -10,42 +10,43 @@ import org.springframework.web.servlet.view.InternalResourceViewResolver;
 
 @EnableWebMvc
 @ComponentScan(basePackages = {
-        "org.scoula.exception",
-        "org.scoula.controller",
-        "org.scoula.mocktrading.controller"
+        "org.scoula"
 })
 public class ServletConfig implements WebMvcConfigurer {
 
-    // ✅ 환경에 따른 CORS 설정
-    @Value("${server.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
-    private String allowedOrigins;
-
-    @Value("${server.cors.allow-credentials:true}")
-    private boolean allowCredentials;
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/")
+                .setViewName("forward:/resources/index.html");
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // Vue.js 빌드 파일을 위한 리소스 핸들러
         registry.addResourceHandler("/resources/**")
                 .addResourceLocations("/resources/");
+
+        // Vue.js 에셋 파일을 위한 핸들러
+        registry.addResourceHandler("/assets/**")
+                .addResourceLocations("/resources/assets/");
+
+        // Swagger UI 리소스를 위한 핸들러 설정
+        registry.addResourceHandler("/swagger-ui.html")
+                .addResourceLocations("classpath:/META-INF/resources/");
+
+        // Swagger WebJar 리소스 설정
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
+
+        // Swagger 리소스 설정
+        registry.addResourceHandler("/swagger-resources/**")
+                .addResourceLocations("classpath:/META-INF/resources/");
+
+        registry.addResourceHandler("/v2/api-docs")
+                .addResourceLocations("classpath:/META-INF/resources/");
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        // ✅ allowedOrigins 대신 allowedOriginPatterns 사용
-        registry.addMapping("/api/**")
-                .allowedOriginPatterns(allowedOrigins.split(","))
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(allowCredentials)
-                .maxAge(3600);
 
-        // ✅ 개발 환경에서의 추가 로깅
-        if (allowedOrigins.contains("localhost")) {
-            System.out.println("🔧 CORS 설정 (개발 모드):");
-            System.out.println("   - Allowed Origin Patterns: " + allowedOrigins);
-            System.out.println("   - Allow Credentials: " + allowCredentials);
-        }
-    }
 
     @Bean
     public MultipartResolver multipartResolver() {

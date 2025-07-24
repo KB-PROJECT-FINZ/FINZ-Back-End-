@@ -25,6 +25,7 @@ import javax.sql.DataSource;
         "org.scoula.mocktrading.scheduler",
         "org.scoula.mocktrading.external"
 })
+@MapperScan(basePackages = {"org.scoula.mapper"})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
@@ -67,5 +68,4 @@ public class RootConfig {
         DataSourceTransactionManager manager = new DataSourceTransactionManager(dataSource());
         return manager;
     }
-
 }
