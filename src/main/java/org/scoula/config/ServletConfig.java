@@ -6,6 +6,7 @@ import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
+import org.springframework.web.servlet.config.annotation.*;
 import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.config.annotation.*;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
@@ -20,14 +21,22 @@ import javax.websocket.server.ServerContainer;
 @ComponentScan(basePackages = {"org.scoula"})        // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 public class ServletConfig implements WebMvcConfigurer {
     @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addViewController("/")
+
+                .setViewName("forward:/resources/index.html");
+
+    }
+
+    @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/resources/**")    // url이 /resources/로 시작하는 모든 경로
             .addResourceLocations("/resources/");       // webapp/resources/ 경로로 매핑
-        
+
         // Swagger UI 리소스 핸들러 추가
         registry.addResourceHandler("swagger-ui.html")
             .addResourceLocations("classpath:/META-INF/resources/");
-        
+
         registry.addResourceHandler("/webjars/**")
             .addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
@@ -61,33 +70,4 @@ public class ServletConfig implements WebMvcConfigurer {
         StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
         return resolver;
     }
-
-//    @Override
-//    public void onStartup(ServletContext servletContext) throws ServletException {
-//        // 기존 설정
-//        AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-//        context.register(RootConfig.class);
-//        servletContext.addListener(new ContextLoaderListener(context));
-//
-//        ServletRegistration.Dynamic dispatcher = servletContext.addServlet("dispatcher",
-//                new DispatcherServlet(context));
-//        dispatcher.setLoadOnStartup(1);
-//        dispatcher.addMapping("/");
-//
-//        // ✅ WebSocket 엔드포인트 수동 등록
-//        try {
-//            ServerContainer serverContainer =
-//                    (ServerContainer) servletContext.getAttribute("javax.websocket.server.ServerContainer");
-//
-//            if (serverContainer != null) {
-//                serverContainer.addEndpoint(Class.forName("org.scoula.controller.mocktrading.StockRelaySocket"));
-//                System.out.println("✅ WebSocket 엔드포인트 등록 완료 (/ws/stock)");
-//            } else {
-//                System.err.println("❌ WebSocket ServerContainer가 null입니다.");
-//            }
-//        } catch (Exception e) {
-//            System.err.println("❌ WebSocket 등록 중 예외 발생: " + e.getMessage());
-//        }
-//    }
-
 }
