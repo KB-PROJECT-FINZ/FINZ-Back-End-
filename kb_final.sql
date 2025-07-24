@@ -1,3 +1,7 @@
+CREATE DATABASE kb_final_db ;
+
+use kb_final_db;
+
 CREATE TABLE investment_types (
                                   risk_type VARCHAR(10) PRIMARY KEY,        -- 예: CSD, AGR
                                   name_kr VARCHAR(100) NOT NULL,            -- 예: 신중한 안정형
@@ -131,9 +135,6 @@ CREATE TABLE investment_journal_trade (
                                           FOREIGN KEY (journal_id) REFERENCES investment_journal(id),
                                           FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id)
 );
-
-
-
 
 INSERT INTO user (
     username, password, name, nickname, profile_image,
