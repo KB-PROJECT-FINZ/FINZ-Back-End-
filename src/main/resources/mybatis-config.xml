@@ -9,6 +9,8 @@
         <mapper resource="org/scoula/mapper/journal/InvestmentJournalMapper.xml"/>
         <mapper resource="org/scoula/mapper/auth/authMapper.xml"/>
         <mapper resource="org/scoula/mapper/feedback/JournalFeedbackMapper.xml"/>
+        <mapper resource="org/scoula/mapper/learning/LearningMapper.xml"/>
     </mappers>
 
 </configuration>
+
