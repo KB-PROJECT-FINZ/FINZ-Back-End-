@@ -83,7 +83,7 @@ public class TokenManager {
      * 기존 유효한 토큰 조회
      */
     private String getExistingValidToken(Connection conn) throws SQLException {
-        String sql = "SELECT access_token, expire_time FROM token_store WHERE id = 1";
+        String sql = "SELECT access_token, expire_time FROM token_store WHERE token_id = 1";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -180,7 +180,7 @@ public class TokenManager {
      * 토큰을 데이터베이스에 저장
      */
     private void saveTokenToDatabase(Connection conn, String token, long expireTime) throws SQLException {
-        String sql = "REPLACE INTO token_store (id, access_token, expire_time) VALUES (1, ?, ?)";
+        String sql = "REPLACE INTO token_store (token_id, access_token, expire_time) VALUES (1, ?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, token);
@@ -205,7 +205,7 @@ public class TokenManager {
         try (Connection conn = DriverManager.getConnection(cleanDbUrl, dbUser, dbPassword)) {
             // MySQL 호환 테이블 생성 SQL
             String createTableSql = "CREATE TABLE IF NOT EXISTS token_store (" +
-                    "id INT PRIMARY KEY, " +
+                    "token_id INT PRIMARY KEY, " +
                     "access_token TEXT, " +
                     "expire_time BIGINT" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
