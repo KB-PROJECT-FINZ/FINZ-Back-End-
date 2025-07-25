@@ -2,6 +2,7 @@
     <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
     <mapper namespace="org.scoula.mapper.chatbot.ChatBotMapper">
 
+
         <insert id="insertChatMessage"
                 parameterType="org.scoula.domain.chatbot.dto.ChatMessageDto"
                 useGeneratedKeys="true"
@@ -47,9 +48,11 @@
             WHERE id = #{sessionId}
         </update>
 
+
     <insert id="insertChatError" parameterType="org.scoula.domain.chatbot.dto.ChatErrorDto">
         INSERT INTO chat_errors (user_id, error_message, error_type)
         VALUES (#{userId}, #{errorMessage}, #{errorType.name})
     </insert>
+
 
 </mapper>

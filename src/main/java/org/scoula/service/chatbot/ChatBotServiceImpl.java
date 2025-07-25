@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
+
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -86,6 +88,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                 headers.setBearerAuth(openaiApiKey);
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+
                 ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
                 JsonNode json = objectMapper.readTree(gptResponse.getBody());
@@ -101,7 +105,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                             IntentType.UNKNOWN
                     );
                 }
-
 
                 request.setIntentType(intentType);
             }
@@ -196,7 +199,6 @@ public class ChatBotServiceImpl implements ChatBotService {
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
 
-
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
                     .content(content.trim())
@@ -244,6 +246,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .intentType(IntentType.ERROR)
                 .build();
     }
+
 
     // 메세지 저장 함수
     private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {

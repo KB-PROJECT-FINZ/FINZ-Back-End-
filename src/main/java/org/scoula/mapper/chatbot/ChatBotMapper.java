@@ -29,4 +29,5 @@ public interface ChatBotMapper {
     // 에러 저장
     void insertChatError(ChatErrorDto errorDto);
 
+
 }

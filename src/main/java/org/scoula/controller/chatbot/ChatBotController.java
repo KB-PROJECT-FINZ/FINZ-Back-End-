@@ -18,10 +18,14 @@ public class ChatBotController {
 
     private final ChatBotService chatBotService;
 
+
     @PostMapping("/message")
     public ResponseEntity<ChatResponseDto> chat(@RequestBody ChatRequestDto request) {
+
         ChatResponseDto response = chatBotService.getChatResponse(request);
         return ResponseEntity.ok(response);
     }
+
+
 
 }
