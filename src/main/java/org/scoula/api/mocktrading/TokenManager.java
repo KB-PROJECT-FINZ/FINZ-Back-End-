@@ -3,20 +3,18 @@ package org.scoula.api.mocktrading;
 import okhttp3.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.scoula.util.mocktrading.ConfigManager;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.*;
 import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
-@Component
+
 public class TokenManager {
 
     // DB 연결 정보
-
-    private static final String DB_URL = "jdbc:mysql://kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com:3306/kb_dev?serverTimezone=Asia/Seoul";
-    private static final String DB_USER = "admin";
+    private static final String DB_URL = ConfigManager.get("jdbc.url");
+    private static final String DB_USER = ConfigManager.get("jdbc.username");
     private static final String DB_PASSWORD = ConfigManager.get("jdbc.password");
 
     // 한국투자증권 모의투자 API 정보

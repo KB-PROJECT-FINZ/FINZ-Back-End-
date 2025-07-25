@@ -27,7 +27,6 @@ import javax.sql.DataSource;
         "org.scoula.mocktrading.external"
 })
 @MapperScan(basePackages = {"org.scoula.mapper"})
-@PropertySource({"classpath:/application.properties"})
 @Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
 public class RootConfig {
@@ -60,6 +59,10 @@ public class RootConfig {
         config.setMinimumIdle(1);
         config.setIdleTimeout(300000);
         config.setMaxLifetime(600000);
+
+
+
+        HikariDataSource dataSource = new HikariDataSource(config);
 
         return new HikariDataSource(config);
     }
