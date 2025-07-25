@@ -1,8 +1,9 @@
-package org.scoula.mocktrading.external;
+package org.scoula.api.mocktrading;
 
 import okhttp3.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.scoula.util.mocktrading.ConfigManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,12 +21,8 @@ public class MarketIndexApi {
     @Autowired
     private TokenManager tokenManager;
 
-    // ✅ 환경변수로 관리되는 설정값들
-    @Value("${kis.api.app-key}")
-    private String appKey;
-
-    @Value("${kis.api.app-secret}")
-    private String appSecret;
+    private static final String APP_KEY = ConfigManager.get("app.key");
+    private static final String APP_SECRET = ConfigManager.get("app.secret");
 
     @Value("${kis.api.base-url}")
     private String baseUrl;
@@ -56,8 +53,8 @@ public class MarketIndexApi {
                 .url(url)
                 .get()
                 .addHeader("Authorization", "Bearer " + token)
-                .addHeader("appkey", appKey)
-                .addHeader("appsecret", appSecret)
+                .addHeader("appkey", APP_KEY)
+                .addHeader("appsecret", APP_SECRET)
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .addHeader("tr_id", "FHPUP02100000")
                 .addHeader("custtype", "P")
@@ -234,11 +231,11 @@ public class MarketIndexApi {
      * API 인증정보 검증
      */
     private void validateApiCredentials() throws IOException {
-        if (appKey == null || appKey.trim().isEmpty() || appKey.contains("your_default")) {
+        if (APP_KEY == null || APP_KEY.trim().isEmpty() || APP_KEY.contains("your_default")) {
             throw new IOException("KIS API 키가 설정되지 않았습니다. 환경변수를 확인하세요.");
         }
 
-        if (appSecret == null || appSecret.trim().isEmpty() || appSecret.contains("your_default")) {
+        if (APP_SECRET == null || APP_SECRET.trim().isEmpty() || APP_SECRET.contains("your_default")) {
             throw new IOException("KIS API 시크릿이 설정되지 않았습니다. 환경변수를 확인하세요.");
         }
 
