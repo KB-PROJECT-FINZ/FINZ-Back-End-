@@ -1,0 +1,17 @@
+Index: src/main/java/org/scoula/controller/Type/UserController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package org.scoula.controller.Type;\r\n\r\nimport org.scoula.domain.type.dto.RiskTypeUpdateDto;\r\nimport org.scoula.service.Auth.UserService;\r\nimport org.springframework.http.HttpStatus;\r\nimport org.springframework.http.ResponseEntity;\r\nimport org.springframework.web.bind.annotation.PostMapping;\r\nimport org.springframework.web.bind.annotation.RequestBody;\r\nimport org.springframework.web.bind.annotation.RequestMapping;\r\nimport org.springframework.web.bind.annotation.RestController;\r\n\r\n@RestController\r\n@RequestMapping(\"/api/user\")\r\npublic class UserController {\r\n\r\n    private final UserService userService;\r\n\r\n    public UserController(UserService userService) {\r\n        this.userService = userService;\r\n    }\r\n\r\n    @PostMapping(\"/risk_type\")\r\n    public ResponseEntity<?> updateRiskType(@RequestBody RiskTypeUpdateDto dto) {\r\n        System.out.println(\"✅ POST /api/user/risk_type 호출됨\");\r\n        System.out.println(\"username: \" + dto.getUsername());\r\n        System.out.println(\"riskType: \" + dto.getRiskType());\r\n\r\n        boolean success = userService.updateRiskType(dto.getUsername(), dto.getRiskType());\r\n        return success\r\n                ? ResponseEntity.ok(\"성향 저장 성공\")\r\n                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body(\"저장 실패\");\r\n    }\r\n}\r\n
+===================================================================
+diff --git a/src/main/java/org/scoula/controller/Type/UserController.java b/src/main/java/org/scoula/controller/Type/UserController.java
+--- a/src/main/java/org/scoula/controller/Type/UserController.java	(revision 5e1b51430a884b5f81d55d0fe244f510ef4e59e5)
++++ b/src/main/java/org/scoula/controller/Type/UserController.java	(date 1753343331707)
+@@ -21,7 +21,7 @@
+ 
+     @PostMapping("/risk_type")
+     public ResponseEntity<?> updateRiskType(@RequestBody RiskTypeUpdateDto dto) {
+-        System.out.println("✅ POST /api/user/risk_type 호출됨");
++        System.out.println("POST /api/user/risk_type 호출됨");
+         System.out.println("username: " + dto.getUsername());
+         System.out.println("riskType: " + dto.getRiskType());
+ 
