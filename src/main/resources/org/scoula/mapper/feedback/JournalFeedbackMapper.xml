@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.JournalFeedbackMapper">
+
+    <resultMap id="journalResultMap" type="org.scoula.domain.journal.vo.InvestmentJournalVO">
+        <id property="id" column="id"/>
+        <result property="journalDate" column="journal_date"/>
+        <result property="emotion" column="emotion"/>
+        <result property="reason" column="reason"/>
+        <result property="mistake" column="mistake"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="userId" column="user_id"/>
+    </resultMap>
+    <resultMap id="feedbackResultMap" type="org.scoula.domain.feedback.vo.JournalFeedback">
+        <id property="id" column="id"/>
+        <result property="weekStart" column="week_start"/>
+        <result property="weekEnd" column="week_end"/>
+        <result property="generatedAt" column="generated_at"/>
+        <result property="userId" column="user_id"/>
+        <result property="feedback" column="feedback"/>
+    </resultMap>
+
+    <select id="getJournalsByUserAndDateRange" resultMap="journalResultMap">
+        SELECT * FROM investment_journal
+        WHERE user_id = #{userId} AND journal_date BETWEEN #{start} AND #{end}
+    </select>
+
+    <insert id="insertFeedback" parameterType="org.scoula.domain.feedback.vo.JournalFeedback" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO journal_feedback (week_start, week_end, feedback, user_id)
+        VALUES (#{weekStart}, #{weekEnd}, #{feedback}, #{userId})
+    </insert>
+
+    <insert id="insertFeedbackMapping">
+        INSERT INTO journal_feedback_mapping (journal_id, feedback_id)
+        VALUES (#{journalId}, #{feedbackId})
+    </insert>
+    <select id="findFeedbackByUserAndWeek" resultMap="feedbackResultMap">
+        SELECT * FROM journal_feedback
+        WHERE user_id = #{userId}
+          AND week_start = #{start}
+          AND week_end = #{end}
+    </select>
+
+
+    <select id="findAllFeedbacks" resultMap="feedbackResultMap">
+        SELECT * FROM journal_feedback
+    </select>
+
+
+
+
+
+</mapper>

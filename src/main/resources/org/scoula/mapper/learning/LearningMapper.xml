@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.LearningMapper">
+
+    <!--콘텐츠 전체 조회-->
+    <select id="getAllContents" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT * FROM learning_contents
+    </select>
+
+    <!--특정 콘텐츠의 퀴즈 조회-->
+    <select id="getQuizByContentId" parameterType="int" resultType="org.scoula.domain.learning.vo.LearningQuizVO">
+        SELECT * FROM learning_quiz WHERE quiz_id = #{contentId}
+    </select>
+
+    <!--퀴즈 한 개를 quiz_id 기준으로 조회-->
+    <select id="getQuizById" resultType="org.scoula.domain.learning.vo.LearningQuizVO">
+        SELECT * FROM learning_quiz WHERE quiz_id = #{quizId}
+    </select>
+
+    <!--콘텐츠 상세 조회-->
+    <select id="getContentById" parameterType="int" resultType="org.scoula.domain.learning.dto.LearningContentDTO">
+        SELECT * FROM learning_contents WHERE content_id = #{id}
+    </select>
+
+    <resultMap id="LearningContentMap" type="org.scoula.domain.learning.vo.LearningContentVO">
+      <id property="contentId" column="content_id"/>
+      <result property="type" column="type"/>
+      <result property="title" column="title"/>
+      <result property="body" column="body"/>
+      <result property="imageUrl" column="image_url"/>
+      <result property="youtubeUrl" column="youtube_url"/>
+      <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!--투자 성향별 콘텐츠 필터링-->
+    <select id="getContentsByGroupCode" parameterType="String" resultMap="LearningContentMap">
+        SELECT lc.*
+        FROM learning_contents lc
+                 JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
+        WHERE tag.group_code = #{groupCode}
+    </select>
+</mapper>

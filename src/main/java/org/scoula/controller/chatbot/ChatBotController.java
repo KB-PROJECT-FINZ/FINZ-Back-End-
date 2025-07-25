@@ -24,6 +24,4 @@ public class ChatBotController {
         return ResponseEntity.ok(response);
     }
 
-
-
 }
