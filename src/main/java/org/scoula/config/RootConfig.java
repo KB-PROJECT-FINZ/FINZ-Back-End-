@@ -8,16 +8,21 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 
 import javax.sql.DataSource;
 
 @Configuration
-@PropertySource({"classpath:/application.properties"})
+@ComponentScan(basePackages = {
+    "org.scoula.service",           // 서비스 레이어
+    "org.scoula.api",              // API 클라이언트들
+    "org.scoula.config"            // 설정 클래스들
+})
 @MapperScan(basePackages = {"org.scoula.mapper"})
+@PropertySource({"classpath:/application.properties"})
+@Import(SwaggerConfig.class)  // SwaggerConfig 추가
+//@MapperScan(basePackages = {})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
