@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chatbot")
 @RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"})
 @Api(tags = "AI 챗봇 API", description = "사용자와의 대화를 처리하는 AI 챗봇 기능을 제공합니다")
@@ -28,8 +28,11 @@ public class ChatBotController {
     public ResponseEntity<ChatResponseDto> chat(
             @ApiParam(value = "사용자 채팅 요청 정보", required = true)
             @RequestBody ChatRequestDto request) {
+
         ChatResponseDto response = chatBotService.getChatResponse(request);
         return ResponseEntity.ok(response);
     }
+
+
 
 }
