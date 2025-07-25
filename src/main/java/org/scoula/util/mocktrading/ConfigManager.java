@@ -10,7 +10,7 @@ public class ConfigManager {
 
     static {
         try (InputStream input = ConfigManager.class.getClassLoader()
-                .getResourceAsStream("config.properties")) {
+                .getResourceAsStream("application.properties")) {
             if (input == null) {
                 throw new RuntimeException("config.properties not found");
             }

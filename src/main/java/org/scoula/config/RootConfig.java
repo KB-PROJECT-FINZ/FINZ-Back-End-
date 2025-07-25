@@ -27,7 +27,6 @@ import javax.sql.DataSource;
         "org.scoula.mocktrading.external"
 })
 @MapperScan(basePackages = {"org.scoula.mapper"})
-@PropertySource({"classpath:/application.properties"})
 @Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
 public class RootConfig {
