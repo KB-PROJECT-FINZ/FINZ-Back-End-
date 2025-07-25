@@ -51,8 +51,13 @@ public class RootConfig {
         config.setUsername(username);
         config.setPassword(password);
 
-        HikariDataSource dataSource = new HikariDataSource(config);
-        return dataSource;
+        // 👉 커넥션 풀 제한 설정 추가!
+        config.setMaximumPoolSize(3);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(600000);
+
+        return new HikariDataSource(config);
     }
 
     @Bean
