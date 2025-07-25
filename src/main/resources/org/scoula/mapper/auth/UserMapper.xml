@@ -10,5 +10,10 @@
         SET risk_type = #{riskType}
         WHERE username = #{username}
     </update>
-
+    <select id="findRiskTypeNameByUsername" resultType="string">
+        SELECT it.name_kr
+        FROM user u
+                 LEFT JOIN investment_types it ON u.risk_type = it.risk_type
+        WHERE u.username = #{username}
+    </select>
 </mapper>

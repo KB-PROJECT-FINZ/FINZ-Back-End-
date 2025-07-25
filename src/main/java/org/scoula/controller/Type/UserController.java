@@ -4,10 +4,7 @@ import org.scoula.domain.type.dto.RiskTypeUpdateDto;
 import org.scoula.service.Auth.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/user")
@@ -30,4 +27,12 @@ public class UserController {
                 ? ResponseEntity.ok("성향 저장 성공")
                 : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("저장 실패");
     }
+    @GetMapping("/risk-type-name")
+    public ResponseEntity<String> getRiskTypeName(@RequestParam String username) {
+        String nameKr = userService.getRiskTypeNameByUsername(username);
+        return nameKr != null
+                ? ResponseEntity.ok(nameKr)
+                : ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 사용자");
+    }
+
 }
