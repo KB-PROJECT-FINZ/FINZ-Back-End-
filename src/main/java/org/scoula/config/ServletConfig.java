@@ -44,11 +44,11 @@ public class ServletConfig implements WebMvcConfigurer {
     // CORS 설정 추가
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:8080")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        registry.addMapping("/**")  // 모든 경로에 대해 CORS 허용
+                .allowedOriginPatterns("*")  // allowCredentials=true일 때는 allowedOriginPatterns 사용
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
-                .allowCredentials(true)
+                .allowCredentials(false)  // credentials를 false로 설정
                 .maxAge(3600);
     }
 

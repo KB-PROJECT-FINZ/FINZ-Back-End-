@@ -3,10 +3,14 @@ package org.scoula.config;
 import org.springframework.web.context.ContextLoaderListener;
 import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.servlet.*;
+import java.util.Arrays;
 
 public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
 
@@ -32,15 +36,28 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         return new String[] {"/"};
     }
 
-    // POST body 문자 인코딩 필터 설정 - UTF-8 설정
+    // POST body 문자 인코딩 필터 설정 - UTF-8 설정 및 CORS 필터 추가
     @Override
     protected Filter[] getServletFilters() {
+        // 문자 인코딩 필터
         CharacterEncodingFilter characterEncodingFilter = new CharacterEncodingFilter();
-
         characterEncodingFilter.setEncoding("UTF-8");
         characterEncodingFilter.setForceEncoding(true);
 
-        return new Filter[] {characterEncodingFilter};
+        // CORS 필터 설정
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.setAllowCredentials(false);        // credentials를 false로 설정
+        corsConfig.addAllowedOriginPattern("*");      // 모든 도메인 허용
+        corsConfig.addAllowedHeader("*");             // 모든 헤더 허용
+        corsConfig.addAllowedMethod("*");             // 모든 HTTP 메서드 허용
+        corsConfig.setMaxAge(3600L);                  // preflight 캐시 시간
+
+        UrlBasedCorsConfigurationSource corsSource = new UrlBasedCorsConfigurationSource();
+        corsSource.registerCorsConfiguration("/**", corsConfig);
+        
+        CorsFilter corsFilter = new CorsFilter(corsSource);
+
+        return new Filter[] {characterEncodingFilter, corsFilter};
     }
 
     // 멀티 파트 관련 + 404에러 처리 관련 설정

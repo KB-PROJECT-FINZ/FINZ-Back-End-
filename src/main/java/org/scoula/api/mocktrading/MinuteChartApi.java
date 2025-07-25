@@ -2,60 +2,103 @@ package org.scoula.api.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
-import org.scoula.util.mocktrading.CandleAggregator;
+import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.scoula.api.mocktrading.TokenManager;
 import org.scoula.util.mocktrading.ConfigManager;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
+@Slf4j
+@Service
 public class MinuteChartApi {
 
-    private static final String APP_KEY = ConfigManager.get("app.key");
-    private static final String APP_SECRET = ConfigManager.get("app.secret");
-    private static final String BASE_URL = "https://openapivts.koreainvestment.com:29443";
+    private final OkHttpClient client = new OkHttpClient();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ConfigManager configManager = new ConfigManager();
 
-    public static void getAndAggregateChart(String stockCode, int intervalMinutes) throws IOException {
-        String token = TokenManager.getAccessToken();
+    /**
+     * 분봉 차트 데이터 조회 - 원본 API 응답 반환
+     *
+     * @param stockCode 종목코드
+     * @return 한국투자증권 API 원본 응답 데이터
+     */
+    public JsonNode getRawMinuteChartData(String stockCode) {
+        log.info("Fetching raw minute chart data for stock: {}", stockCode);
 
-        HttpUrl url = HttpUrl.parse(BASE_URL + "/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice")
-                .newBuilder()
-                .addQueryParameter("FID_COND_MRKT_DIV_CODE", "J")       // 코스피
-                .addQueryParameter("FID_INPUT_ISCD", stockCode)         // 종목 코드
-                .addQueryParameter("FID_INPUT_HOUR_1", "113000")        // 몇 시까지 조회할지 (HHMMSS)
-                .addQueryParameter("FID_PW_DATA_INCU_YN", "N")          // 체결 데이터 포함 여부
-                .addQueryParameter("FID_ETC_CLS_CODE", "00")            // 기타 구분 코드
-                .build();
+        try {
+            // 한국투자증권 API 호출하여 원본 응답 반환
+            JsonNode response = fetchRawMinuteData(stockCode);
+
+            if (response == null) {
+                log.warn("No minute data received for stock: {}", stockCode);
+                return null;
+            }
+
+            log.info("Successfully fetched raw chart data for stock: {}", stockCode);
+            return response;
+
+        } catch (Exception e) {
+            log.error("Error fetching raw minute chart data for stock: {}", stockCode, e);
+            return null;
+        }
+    }
+
+    /**
+     * 한국투자증권 API에서 원본 응답 데이터 조회
+     */
+    private JsonNode fetchRawMinuteData(String stockCode) throws IOException {
+        String url = buildMinuteChartUrl(stockCode);
+        String accessToken = TokenManager.getAccessToken();
+
+        String appKey = ConfigManager.get("app.key");
+        String appSecret = ConfigManager.get("app.secret");
+
+        log.debug("Requesting minute data from URL: {}", url);
 
         Request request = new Request.Builder()
                 .url(url)
-                .get()
-                .addHeader("Authorization", "Bearer " + token)
-                .addHeader("appkey", APP_KEY)
-                .addHeader("appsecret", APP_SECRET)
                 .addHeader("Content-Type", "application/json")
-                .addHeader("tr_id", "FHKST03010200") // 분봉 조회 TR ID
+                .addHeader("authorization", "Bearer " + accessToken)
+                .addHeader("appkey", appKey)
+                .addHeader("appsecret", appSecret)
+                .addHeader("tr_id", "FHKST03010200")
                 .build();
 
-        OkHttpClient client = new OkHttpClient();
-        Response response = client.newCall(request).execute();
-
-        if (response.isSuccessful()) {
-            String responseBody = response.body().string();
-
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode json = mapper.readTree(responseBody);
-            JsonNode output = json.path("output2");
-
-            List<CandleAggregator.Candle> candles = CandleAggregator.aggregate(output, intervalMinutes);
-
-            for (CandleAggregator.Candle candle : candles) {
-                System.out.println(candle);
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                log.error("Failed to fetch minute data. HTTP code: {}, message: {}",
+                        response.code(), response.message());
+                return null;
             }
 
-        } else {
-            System.err.println("분봉 조회 실패: " + response.code());
-            System.err.println("응답 본문: " + response.body().string());
+            String responseBody = response.body().string();
+            log.debug("Received response: {}", responseBody.substring(0, Math.min(200, responseBody.length())));
+
+            // 원본 응답을 그대로 JsonNode로 반환
+            return objectMapper.readTree(responseBody);
         }
+    }
+
+    /**
+     * 분봉 차트 조회 URL 생성
+     */
+    private String buildMinuteChartUrl(String stockCode) {
+        String baseUrl = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice";
+        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+
+        return String.format("%s?FID_ETC_CLS_CODE=" +
+                        "&FID_COND_MRKT_DIV_CODE=J" +
+                        "&FID_INPUT_ISCD=%s" +
+                        "&FID_INPUT_HOUR_1=%s" +
+                        "&FID_PW_DATA_INCU_YN=N",
+                baseUrl, stockCode, currentTime);
     }
 }
