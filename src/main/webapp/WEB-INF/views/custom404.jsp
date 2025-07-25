@@ -6,6 +6,6 @@
     <title>Insert title here</title>
 </head>
 <body>
-<h1>해당 URL(${uri})은 존재하지 않습니다.</h1>
+    <h1>해당 URL(${uri})은 존재하지 않습니다.</h1>
 </body>
 </html>

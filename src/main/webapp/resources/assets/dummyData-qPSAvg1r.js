@@ -1,1 +1,0 @@
-const e=[{code:"005930",name:"삼성전자"},{code:"000660",name:"SK하이닉스"},{code:"035420",name:"NAVER"},{code:"005380",name:"현대차"},{code:"051910",name:"LG화학"},{code:"006400",name:"삼성SDI"},{code:"035720",name:"카카오"},{code:"207940",name:"삼성바이오로직스"},{code:"068270",name:"셀트리온"},{code:"323410",name:"카카오뱅크"}];export{e as stockList};
