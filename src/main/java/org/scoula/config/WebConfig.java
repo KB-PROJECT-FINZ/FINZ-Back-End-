@@ -1,12 +1,12 @@
 package org.scoula.config;
 
+import org.springframework.web.context.ContextLoaderListener;
+import org.springframework.web.context.support.AnnotationConfigWebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
-import javax.servlet.Filter;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.ServletRegistration;
+import javax.servlet.*;
 
 public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
 
@@ -26,36 +26,40 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         return new Class[] {ServletConfig.class};
     }
 
-    //  스프링의 FrontController인 DispatcherServlet이 담당할 Url 매핑 패턴, /: 모든 요청에 대해 매핑
+    // 중요: 모든 요청을 DispatcherServlet이 처리하도록 설정
     @Override
     protected String[] getServletMappings() {
-        return new String[] {"/"};
+        return new String[] {"/"};  // 모든 요청 매핑
     }
 
     // POST body 문자 인코딩 필터 설정 - UTF-8 설정
     @Override
     protected Filter[] getServletFilters() {
         CharacterEncodingFilter characterEncodingFilter = new CharacterEncodingFilter();
-
         characterEncodingFilter.setEncoding("UTF-8");
         characterEncodingFilter.setForceEncoding(true);
-
         return new Filter[] {characterEncodingFilter};
     }
 
     // 멀티 파트 관련 + 404에러 처리 관련 설정
     @Override
     protected void customizeRegistration(ServletRegistration.Dynamic registration) {
+        // 404 에러 처리를 위한 설정
         registration.setInitParameter("throwExceptionIfNoHandlerFound", "true");
 
         MultipartConfigElement multipartConfig = new MultipartConfigElement(
                 LOCATION,               // 업로드 처리 디렉터리 경로
                 MAX_FILE_SIZE,          // 업로드 가능한 파일 하나의 최대 크기
-                MAX_REQUEST_SIZE,       // 업로드 가능한 전체 최대 크기(여러 파일 업로드 하는 경우)
-                FILE_SIZE_THRESHOLD     // 메모리 파일의 최대 크기(이보다 작으면 실제 메모리에서만 작업)
+                MAX_REQUEST_SIZE,       // 업로드 가능한 전체 최대 크기
+                FILE_SIZE_THRESHOLD     // 메모리 파일의 최대 크기
         );
         registration.setMultipartConfig(multipartConfig);
+
+        // 디버깅을 위한 로그
+        System.out.println("=== WebConfig 초기화 ===");
+        System.out.println("Servlet Mappings: " + String.join(", ", getServletMappings()));
+        System.out.println("Root Config Classes: " + java.util.Arrays.toString(getRootConfigClasses()));
+        System.out.println("Servlet Config Classes: " + java.util.Arrays.toString(getServletConfigClasses()));
+        System.out.println("========================");
     }
-
-
 }
