@@ -48,6 +48,11 @@ public class RootConfig {
     ApplicationContext applicationContext;
 
     @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
 
