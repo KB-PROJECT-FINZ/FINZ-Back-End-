@@ -3,6 +3,7 @@ package org.scoula.api.mocktrading;
 import okhttp3.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.scoula.util.mocktrading.ConfigManager;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.*;
@@ -10,6 +11,7 @@ import java.sql.Connection;
 import java.util.HashMap;
 import java.util.Map;
 
+@Component
 public class TokenManager {
 
     // DB 연결 정보
