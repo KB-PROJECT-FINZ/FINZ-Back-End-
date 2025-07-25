@@ -293,6 +293,4 @@ public class ChatBotServiceImpl implements ChatBotService {
     """.formatted(userMessage);
     }
 
-
-
 }
