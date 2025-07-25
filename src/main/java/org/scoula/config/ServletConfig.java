@@ -21,6 +21,8 @@ import javax.websocket.server.ServerContainer;
 @ComponentScan(basePackages = {
         "org.scoula"
 })
+//@ComponentScan(basePackages = {"org.scoula"})
+// Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
