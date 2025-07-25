@@ -1,4 +1,4 @@
-package org.scoula.controller;
+package org.scoula.controller.mocktrading;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Controller;
@@ -32,12 +32,11 @@ public class HomeController {
         String path = request.getRequestURI();
         log.info("Vue Router: {} -> index.html", path);
         return "forward:/resources/index.html";
-
     }
-
     @GetMapping("/api-docs")
     public String apiDocs() {
         log.info("====================> Redirecting to Swagger UI");
         return "redirect:/swagger-ui.html";
     }
 }
+
