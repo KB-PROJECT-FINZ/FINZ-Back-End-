@@ -1,8 +1,13 @@
 package org.scoula.config;
 import org.springframework.web.filter.CharacterEncodingFilter;
+import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.servlet.*;
+import java.util.Arrays;
 
 public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitializer {
 
@@ -31,7 +36,9 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
     // POST body 문자 인코딩 필터 설정 - UTF-8 설정
     @Override
     protected Filter[] getServletFilters() {
+        // 문자 인코딩 필터
         CharacterEncodingFilter characterEncodingFilter = new CharacterEncodingFilter();
+
         characterEncodingFilter.setEncoding("UTF-8");
         characterEncodingFilter.setForceEncoding(true);
         return new Filter[] {characterEncodingFilter};
