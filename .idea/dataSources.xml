@@ -1,35 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-<<<<<<< HEAD
+    <data-source source="LOCAL" name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="27a4a33b-67bc-4b13-b88c-12334155a689">
     <data-source source="LOCAL" name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="275b26b1-e8f2-4715-843b-a8d373c5816e">
+
       <driver-ref>mysql_aurora.aws_wrapper</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>software.amazon.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:aws-wrapper:mysql://kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com:3306/kb_dev</jdbc-url>
-=======
-<<<<<<< HEAD
+
     <data-source source="LOCAL" name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="ec6ee05d-4a28-48ca-81b1-af8d83ac8729">
       <driver-ref>mysql_aurora.aws_wrapper</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>software.amazon.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:aws-wrapper:mysql://kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com:3306/kb_dev</jdbc-url>
-=======
-<<<<<<< HEAD
+
     <data-source source="LOCAL" name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="cb4d35bd-0219-4be5-8913-b91adcebad46">
       <driver-ref>mysql_aurora.aws_wrapper</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>software.amazon.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:aws-wrapper:mysql://kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com:3306/kb_dev</jdbc-url>
-=======
+
     <data-source source="LOCAL" name="mock_trading_db@localhost" uuid="0d0a24a8-c7c5-4b14-825f-4a2231bdba44">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://localhost:3306/mock_trading_db</jdbc-url>
->>>>>>> b676e5a45a243bd51b13d0e836ef1c9a0fe796e9
->>>>>>> develop
->>>>>>> 2c7fc8177d11d084594a2c383e705249baeba8d8
+
       <jdbc-additional-properties>
         <property name="com.intellij.clouds.kubernetes.db.host.port" />
         <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
