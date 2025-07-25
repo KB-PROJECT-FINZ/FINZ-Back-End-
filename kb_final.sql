@@ -149,3 +149,5 @@ select * from journal_feedback;
 delete from journal_feedback;
 select * from journal_feedback_mapping;
 SELECT week_start FROM journal_feedback WHERE user_id = 1;
+
+SHOW PROCESSLIST;
