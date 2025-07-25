@@ -20,7 +20,6 @@ public class HomeController {
         return "forward:/resources/index.html";
     }
 
-
     /**
      * Vue Router 경로들을 index.html로 포워딩
      * Vue.js SPA 라우팅 지원
@@ -38,10 +37,8 @@ public class HomeController {
     public String apiDocs() {
         log.info("====================> Redirecting to Swagger UI");
         return "redirect:/swagger-ui.html";
-    };
+    }
 }
-
-
 
 
 

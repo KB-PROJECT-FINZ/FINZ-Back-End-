@@ -1,8 +1,8 @@
-package org.scoula.mocktrading.service;
+package org.scoula.service.mocktrading;
 
 import lombok.extern.log4j.Log4j2;
-import org.scoula.mocktrading.external.MarketIndexApi;
-import org.scoula.mocktrading.external.VolumeRankingApi;
+import org.scoula.api.mocktrading.MarketIndexApi;
+import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

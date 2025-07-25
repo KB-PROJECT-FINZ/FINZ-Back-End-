@@ -1,43 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ArtifactsWorkspaceSettings">
-    <artifacts-to-build>
-      <artifact name="Gradle : org.scoula : FinzBack-1.0-SNAPSHOT.war" />
-    </artifacts-to-build>
-  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5e753fd4-64cb-4991-ae38-5a816187ca36" name="변경" comment="fix: 테스트 성향 DB연동">
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/config.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/chatbot/ChatBotServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/chatbot/ChatBotServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/custom404.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/error_page.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/index.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/css/index-vpUPjmJ1.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/dummyData-qPSAvg1r.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-BR5R_2Xd.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-BWC94E3L.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-CIRZ7Fz5.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-COefCGie.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-CXVDl8Yq.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-Cc4FYPXE.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-CftzqOdf.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-D5rY4Y0h.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-DigyeDHV.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-NGCuGS4N.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-OW2tQSIe.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-eALm1oXA.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-eQyHe_Xx.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/index-hkvLXKJa.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/js/index-O7ZWcntN.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/assets/wave-Ba5lIBXQ.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/favicon.ico" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/resources/index.html" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,9 +20,6 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
-        <task path="$PROJECT_DIR$">
-          <activation />
-        </task>
         <projects_view>
           <tree_state>
             <expand>
@@ -69,50 +34,9 @@
       </state>
     </system>
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Class" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
-    <excluded-from-favorite>
-      <branch-storage>
-        <map>
-          <entry type="REMOTE">
-            <value>
-              <list>
-                <branch-info repo="$PROJECT_DIR$" source="origin/main" />
-              </list>
-            </value>
-          </entry>
-        </map>
-      </branch-storage>
-    </excluded-from-favorite>
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="feature/chatbot-session-management" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;history&quot;: [
-    {
-      &quot;state&quot;: &quot;OPEN&quot;
-    }
-  ],
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git&quot;,
-    &quot;accountId&quot;: &quot;21b6c44b-3b1d-4aa1-a87b-d0bf5770f06c&quot;
-  }
-}</component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -120,25 +44,16 @@
     <option name="FILTER_DEBUG" value="true" />
     <option name="CUSTOM_FILTER" />
   </component>
-  <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
-  </component>
   <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 7
 }</component>
-  <component name="ProjectId" id="2zzGD5wXuUPYiZars7NW6wTE9h6" />
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Gradle.FinzBack 빌드.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "Tomcat 서버.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "feature/LoginForm",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/tuffh/Desktop/국민은행 파이널 프로젝트/FinzBack",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -153,18 +68,7 @@
     ]
   }
 }]]></component>
-  <component name="QodanaReportsService">
-    <option name="descriptions">
-      <ReportDescription localRun="true" path="C:\Users\tuffh\AppData\Local\Temp\qodana_output\qodana.sarif.json" reportGuid="ffab2bf3-86aa-4887-be5a-b5661cbed470" reportId="FinzBack/qodana/2025-07-17" />
-    </option>
-  </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\resources" />
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\webapp\WEB-INF" />
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\webapp\resources" />
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\resources\org\scoula\mapper\auth" />
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\resources\org\scoula\mapper" />
     </key>
   </component>
   <component name="RunManager">
@@ -178,7 +82,6 @@
         </artifact>
       </deployment>
       <server-settings>
-        <option name="BASE_DIRECTORY_NAME" value="03b7a3bf-6745-4d2a-9e46-ed43bde3e4fc" />
       </server-settings>
       <predefined_log_file enabled="true" id="Tomcat" />
       <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -186,7 +89,6 @@
       <predefined_log_file id="Tomcat Host Manager" />
       <predefined_log_file id="Tomcat Localhost Access" />
       <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="7365" />
       </RunnerSettings>
       <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
         <option name="USE_ENV_VARIABLES" value="true" />
@@ -264,113 +166,13 @@
       </set>
     </attachedChunks>
   </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="애플리케이션 수준" UseSingleDictionary="true" transferred="true" />
-  <component name="StructureViewState">
-    <option name="selectedTab" value="논리" />
-  </component>
   <component name="TaskManager">
-    <task active="true" id="Default" summary="디폴트 작업">
-      <changelist id="5e753fd4-64cb-4991-ae38-5a816187ca36" name="변경" comment="" />
-      <created>1752726366705</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1752726366705</updated>
-      <workItem from="1752726367865" duration="801000" />
-      <workItem from="1752739286497" duration="53000" />
-      <workItem from="1753152222072" duration="53217000" />
-      <workItem from="1753406358813" duration="2817000" />
-      <workItem from="1753418382864" duration="25995000" />
     </task>
-    <task id="LOCAL-00001" summary="초기 탬플릿">
-      <option name="closed" value="true" />
-      <created>1752726622053</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1752726622053</updated>
-    </task>
-    <task id="LOCAL-00002" summary="초기 탬플릿">
-      <option name="closed" value="true" />
-      <created>1752726670211</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1752726670211</updated>
-    </task>
-    <task id="LOCAL-00003" summary="feat: 인증 controller, mapper생성">
-      <option name="closed" value="true" />
-      <created>1753165359013</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1753165359013</updated>
-    </task>
-    <task id="LOCAL-00004" summary="fix: Mapper  경로 수정">
-      <option name="closed" value="true" />
-      <created>1753169930735</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1753169930735</updated>
-    </task>
-    <task id="LOCAL-00005" summary="fix: Mapper  경로 수정">
-      <option name="closed" value="true" />
-      <created>1753322844983</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1753322844983</updated>
-    </task>
-    <task id="LOCAL-00006" summary="fix: test">
-      <option name="closed" value="true" />
-      <created>1753332056434</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1753332056434</updated>
-    </task>
-    <task id="LOCAL-00007" summary="fix: 테스트 성향 DB연동">
-      <option name="closed" value="true" />
-      <created>1753342205594</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1753342205594</updated>
-    </task>
-    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="초기 탬플릿" />
-    <MESSAGE value="feat: 인증 controller, mapper생성" />
-    <MESSAGE value="fix: Mapper  경로 수정" />
-    <MESSAGE value="fix: test" />
-    <MESSAGE value="fix: 테스트 성향 DB연동" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: 테스트 성향 DB연동" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java</url>
-          <line>9</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
