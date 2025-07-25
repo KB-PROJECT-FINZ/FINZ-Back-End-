@@ -61,6 +61,10 @@ public class RootConfig {
         config.setIdleTimeout(300000);
         config.setMaxLifetime(600000);
 
+
+
+        HikariDataSource dataSource = new HikariDataSource(config);
+
         return new HikariDataSource(config);
     }
 

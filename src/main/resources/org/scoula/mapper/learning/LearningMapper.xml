@@ -24,10 +24,18 @@
         SELECT * FROM learning_contents WHERE content_id = #{id}
     </select>
 
+    <resultMap id="LearningContentMap" type="org.scoula.domain.learning.vo.LearningContentVO">
+      <id property="contentId" column="content_id"/>
+      <result property="type" column="type"/>
+      <result property="title" column="title"/>
+      <result property="body" column="body"/>
+      <result property="imageUrl" column="image_url"/>
+      <result property="youtubeUrl" column="youtube_url"/>
+      <result property="createdAt" column="created_at"/>
+    </resultMap>
 
     <!--투자 성향별 콘텐츠 필터링-->
-    <select id="getContentsByGroupCode" parameterType="String"
-            resultType="org.scoula.domain.learning.vo.LearningContentVO">
+    <select id="getContentsByGroupCode" parameterType="String" resultMap="LearningContentMap">
         SELECT lc.*
         FROM learning_contents lc
                  JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
