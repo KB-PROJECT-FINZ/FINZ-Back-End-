@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
 
@@ -35,6 +36,11 @@ public class RootConfig {
     ApplicationContext applicationContext;
 
     @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
 
@@ -42,6 +48,12 @@ public class RootConfig {
         config.setJdbcUrl(url);
         config.setUsername(username);
         config.setPassword(password);
+
+        // 👉 커넥션 풀 제한 설정 추가!
+        config.setMaximumPoolSize(3);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(600000);
 
         HikariDataSource dataSource = new HikariDataSource(config);
         return dataSource;

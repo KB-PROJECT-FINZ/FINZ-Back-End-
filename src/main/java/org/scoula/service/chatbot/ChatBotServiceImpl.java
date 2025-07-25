@@ -4,10 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.scoula.domain.chatbot.dto.ChatMessageDto;
-import org.scoula.domain.chatbot.dto.ChatRequestDto;
-import org.scoula.domain.chatbot.dto.ChatResponseDto;
-import org.scoula.domain.chatbot.dto.ChatSessionDto;
+import org.scoula.domain.chatbot.dto.*;
+import org.scoula.domain.chatbot.enums.ErrorType;
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +42,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     //    return callOpenAiAndBuildResponse(request.getMessage(), "GENERAL", request);
     //    }
 
+    private final RestTemplate restTemplate;
 
     @Value("${openai.api.key}")
     private String openaiApiKey;
@@ -87,7 +86,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                 headers.setBearerAuth(openaiApiKey);
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-                RestTemplate restTemplate = new RestTemplate();
                 ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
                 JsonNode json = objectMapper.readTree(gptResponse.getBody());
@@ -96,8 +94,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                 try {
                     intentType = IntentType.valueOf(intentText); // enum 파싱
                 } catch (IllegalArgumentException ex) {
-                    intentType = IntentType.UNKNOWN; // 실패 fallback
+                    // GPT 응답이 enum에 해당하지 않음 → fallback 처리
+                    return handleError(
+                            new IllegalArgumentException("의도 분류 실패: GPT 응답 = " + intentText),
+                            userId,
+                            IntentType.UNKNOWN
+                    );
                 }
+
 
                 request.setIntentType(intentType);
             }
@@ -141,33 +145,25 @@ public class ChatBotServiceImpl implements ChatBotService {
                 }
             }
             // ====================== 3. 의도 분류 ======================
-            // TODO: intentType이 없는 경우 → intent 분류 시도  //null
-            // if (intentType == null) {
-                // TODO: GPT를 활용한 의도 분류 시도 or 하드코딩 분류
-            //    intentType = classifyIntent(userMessage);
-            //}
-
-            // 분류함수 하드코딩 -> 나중에 GPT로 바꿔야함
-//                  private String classifyIntent(String message) {
-//                        if (message.contains("추천")) return "RECOMMEND_PROFILE";
-//                        else if (message.contains("분석")) return "ANALYZE_STOCK";
-//                        else return null; // 분류 실패
-//                  }
 
 
-            // TODO: intent 분류 실패 시 fallback 처리 및 chat_errors 저장
-
-            //    if (intentType == null) {
-            //            return handleError(
-            //                    new IllegalArgumentException("의도 분류 실패: fallback 응답 처리"),
-            //                    userId,
-            //                    "UNKNOWN_INTENT"
-            //            );
-            //        }
 
             // ====================== 4. 사용자 메시지 저장 ======================
-            // TODO: chat_messages 테이블에 사용자 메시지 저장
+            // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
+            
+            // 에러 발생시 저장
+//            if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
+//                ErrorType errorType;
+//                ChatErrorDto errorDto = ChatErrorDto.builder()
+//                        .userId(userId)
+//                        .errorMessage(userMessage)  // 사용자가 입력한 내용 자체 저장
+//                        .errorType(ErrorType.GPT)
+//                        .build();
+//                chatBotMapper.insertChatError(errorDto);
+//            }
+
+
 
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
@@ -185,7 +181,6 @@ public class ChatBotServiceImpl implements ChatBotService {
             headers.setBearerAuth(openaiApiKey);
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            RestTemplate restTemplate = new RestTemplate();
             ResponseEntity<String> response = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
             // ====================== 6. 응답 성공 여부 확인 ======================
@@ -198,11 +193,8 @@ public class ChatBotServiceImpl implements ChatBotService {
             String content = root.path("choices").get(0).path("message").path("content").asText();
 
             // ====================== 8. GPT 응답 저장 ======================
-            // TODO: chat_messages 테이블에 GPT 응답 저장
+            // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
-
-
-            // TODO: 세션에 마지막 intent 저장 + 세션 종료 조건 검사 및 update
 
 
             // ====================== 9. 최종 응답 반환 ======================
@@ -214,7 +206,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                     .build();
 
         } catch (Exception e) {
-            return handleError(e, request.getUserId(), request.getIntentType());
+            return handleError(e, request.getUserId(), request.getIntentType() != null ? request.getIntentType() : IntentType.UNKNOWN);
+
         }
     }
 
@@ -222,7 +215,28 @@ public class ChatBotServiceImpl implements ChatBotService {
     private ChatResponseDto handleError(Exception e, Integer userId, IntentType intentType) {
         log.error("OpenAI 호출 중 예외 발생", e);
 
-        // TODO: chat_errors 테이블 저장
+        // chat_errors 테이블 저장
+
+        // 에러 타입 분기
+        ErrorType errorType;
+
+        if (e instanceof org.springframework.web.client.RestClientException) {
+            errorType = ErrorType.API;
+        } else if (e instanceof java.sql.SQLException || e.getMessage().contains("MyBatis")) {
+            errorType = ErrorType.DB;
+        } else if (e.getMessage().contains("OpenAI")) {
+            errorType = ErrorType.GPT;
+        } else {
+            errorType = ErrorType.ETC;
+        }
+
+        ChatErrorDto errorDto = ChatErrorDto.builder()
+                .userId(userId)
+                .errorMessage(e.getMessage())
+                .errorType(errorType)
+                .build();
+
+        chatBotMapper.insertChatError(errorDto);
 
 
         return ChatResponseDto.builder()
