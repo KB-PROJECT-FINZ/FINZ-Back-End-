@@ -7,6 +7,7 @@ import org.scoula.mapper.JournalFeedbackMapper;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,5 +25,9 @@ public class JournalFeedbackServiceImpl implements JournalFeedbackService {
                 .build();
 
         journalFeedbackMapper.insertFeedback(feedBack);
+    }
+    @Override
+    public List<JournalFeedback> getAllFeedbacks() {
+        return journalFeedbackMapper.findAllFeedbacks();
     }
 }

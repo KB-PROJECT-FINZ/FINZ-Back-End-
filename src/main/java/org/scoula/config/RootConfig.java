@@ -8,16 +8,28 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
+@EnableScheduling
+@ComponentScan(basePackages = {
+        // develop 브랜치의 패키지들 (서비스 레이어, API 클라이언트, 설정 클래스)
+        "org.scoula.service",           // 서비스 레이어
+        "org.scoula.api",              // API 클라이언트들
+        "org.scoula.config",           // 설정 클래스들
+        // HEAD 브랜치의 패키지들 (mocktrading 관련 기능)
+        "org.scoula.mocktrading.service",
+        "org.scoula.mocktrading.external"
+})
 @MapperScan(basePackages = {"org.scoula.mapper"})
+@PropertySource({"classpath:/application.properties"})
+@Import(SwaggerConfig.class)  // SwaggerConfig 추가
+//@MapperScan(basePackages = {})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
@@ -50,8 +62,10 @@ public class RootConfig {
         config.setMaxLifetime(600000);
 
 
+
         HikariDataSource dataSource = new HikariDataSource(config);
-        return dataSource;
+
+        return new HikariDataSource(config);
     }
 
     @Bean
@@ -67,5 +81,4 @@ public class RootConfig {
         DataSourceTransactionManager manager = new DataSourceTransactionManager(dataSource());
         return manager;
     }
-
 }

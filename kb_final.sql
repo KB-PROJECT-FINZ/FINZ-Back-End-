@@ -136,17 +136,6 @@ CREATE TABLE investment_journal_trade (
                                           FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id)
 );
 
-
-
-
-INSERT INTO investment_types (risk_type, name_kr, group_code, description) VALUES
-                                                                               ('CSD', '신중한 안정형', 'CONSERVATIVE', '안정적이고 신중한 투자자 성향'),
-                                                                               ('BAL', '균형형', 'BALANCED', '위험과 수익의 균형을 추구하는 성향'),
-                                                                               ('AGR', '적극형', 'AGGRESSIVE', '높은 수익을 추구하는 공격형 투자자'),
-                                                                               ('ANA', '분석형', 'ANALYTICAL', '수치와 분석을 중시하는 성향'),
-                                                                               ('EMO', '감정형', 'EMOTIONAL', '감정에 영향을 많이 받는 성향');
-
-
 INSERT INTO user (
     username, password, name, nickname, profile_image,
     created_at, updated_at, risk_type, phone_number,
@@ -156,3 +145,9 @@ INSERT INTO user (
              NOW(), NOW(), 'AGR', '010-1234-5678',
              'testuser1@example.com', 'local', 100000
          );
+select * from journal_feedback;
+delete from journal_feedback;
+select * from journal_feedback_mapping;
+SELECT week_start FROM journal_feedback WHERE user_id = 1;
+
+SHOW PROCESSLIST;
