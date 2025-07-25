@@ -65,22 +65,6 @@ public class GptServiceImpl implements GptService {
             JsonNode root = objectMapper.readTree(response.getBody());
             String content = root.path("choices").get(0).path("message").path("content").asText();
 
-            // 날짜 계산
-            LocalDate today = LocalDate.now();
-            Date weekStart = Date.valueOf(today.with(DayOfWeek.MONDAY));
-            Date weekEnd = Date.valueOf(today.with(DayOfWeek.MONDAY).plusDays(4));
-            int userId = journals.get(0).getUserId();
-
-            // DB 저장
-            FeedbackSaveDto dto = FeedbackSaveDto.builder()
-                    .userId(userId)
-                    .weekStart(weekStart)
-                    .weekEnd(weekEnd)
-                    .feedback(content)
-                    .build();
-
-            journalFeedbackService.saveFeedback(dto);
-
             return content;
 
         } catch (Exception e) {

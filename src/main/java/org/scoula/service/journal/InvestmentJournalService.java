@@ -10,4 +10,5 @@ public interface InvestmentJournalService {
     InvestmentJournalDto getJournalById(int id);
     void updateJournal(InvestmentJournalDto dto);
     void deleteJournal(int id);
+
 }

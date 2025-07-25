@@ -14,6 +14,9 @@ public interface JournalFeedbackMapper {
                                                             @Param("end") Date end);
 
     void insertFeedback(JournalFeedback feedback);
-
     void insertFeedbackMapping(@Param("journalId") int journalId, @Param("feedbackId") int feedbackId);
+    JournalFeedback findFeedbackByUserAndWeek(@Param("userId") int userId,
+                                              @Param("start") Date start,
+                                              @Param("end") Date end);
+    List<JournalFeedback> findAllFeedbacks();
 }
