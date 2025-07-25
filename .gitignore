@@ -5,6 +5,7 @@ build/
 !**/src/test/**/build/
 # application.properties 무시
 src/main/resources/application.properties
+src/main/resources/config.properties
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
