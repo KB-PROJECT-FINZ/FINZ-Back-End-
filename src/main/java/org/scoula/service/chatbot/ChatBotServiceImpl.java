@@ -153,15 +153,15 @@ public class ChatBotServiceImpl implements ChatBotService {
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
             
             // 에러 발생시 저장
-//            if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
-//                ErrorType errorType;
-//                ChatErrorDto errorDto = ChatErrorDto.builder()
-//                        .userId(userId)
-//                        .errorMessage(userMessage)  // 사용자가 입력한 내용 자체 저장
-//                        .errorType(ErrorType.GPT)
-//                        .build();
-//                chatBotMapper.insertChatError(errorDto);
-//            }
+            if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
+                ErrorType errorType;
+                ChatErrorDto errorDto = ChatErrorDto.builder()
+                        .userId(userId)
+                        .errorMessage(userMessage)  // 사용자가 입력한 내용 자체 저장
+                        .errorType(ErrorType.GPT)
+                        .build();
+                chatBotMapper.insertChatError(errorDto);
+            }
 
 
 
