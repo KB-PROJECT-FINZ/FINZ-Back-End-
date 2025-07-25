@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
@@ -38,6 +39,11 @@ public class RootConfig {
     ApplicationContext applicationContext;
 
     @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
 
@@ -54,8 +60,7 @@ public class RootConfig {
 
 
         HikariDataSource dataSource = new HikariDataSource(config);
-
-        return new HikariDataSource(config);
+        return dataSource;
     }
 
     @Bean
@@ -71,4 +76,5 @@ public class RootConfig {
         DataSourceTransactionManager manager = new DataSourceTransactionManager(dataSource());
         return manager;
     }
+
 }

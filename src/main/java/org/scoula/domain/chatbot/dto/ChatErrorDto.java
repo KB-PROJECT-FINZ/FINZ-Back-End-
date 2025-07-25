@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.scoula.domain.chatbot.enums.ErrorType;
+
 
 import java.time.LocalDateTime;
 
@@ -17,6 +19,7 @@ public class ChatErrorDto {
     private Integer id;
     private Integer userId;
     private String errorMessage;
-    private String errorType;     // GPT / DB / API 등
+
+    private ErrorType errorType;
     private LocalDateTime createdAt;
 }

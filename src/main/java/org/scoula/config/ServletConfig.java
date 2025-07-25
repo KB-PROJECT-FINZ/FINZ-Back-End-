@@ -8,7 +8,6 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.*;
-import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
@@ -80,6 +79,7 @@ public class ServletConfig implements WebMvcConfigurer {
         registry.viewResolver(bean);
     }
 
+    // Servlet 3.0 파일 업로드 사용 시 - MultipartResolver 빈 등록
     @Bean
     public MultipartResolver multipartResolver() {
         StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();

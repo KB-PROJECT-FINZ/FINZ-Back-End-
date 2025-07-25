@@ -19,7 +19,6 @@ public class HomeController {
         log.info("====================> HomeController / -> Vue.js");
         return "forward:/resources/index.html";
     }
-<<<<<<< HEAD
 
     /**
      * Vue Router 경로들을 index.html로 포워딩
@@ -34,13 +33,14 @@ public class HomeController {
         log.info("Vue Router: {} -> index.html", path);
         return "forward:/resources/index.html";
     }
-}
-=======
-    
     @GetMapping("/api-docs")
     public String apiDocs() {
         log.info("====================> Redirecting to Swagger UI");
         return "redirect:/swagger-ui.html";
     }
 }
->>>>>>> b676e5a45a243bd51b13d0e836ef1c9a0fe796e9
+
+
+
+
+
