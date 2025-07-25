@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.scoula.mapper.ranking.AnalysisMapper">
+
+    <!-- 성향별 보유 비중 데이터 조회 -->
+    <select id="findTraitStocks" parameterType="long" resultType="org.scoula.domain.ranking.TraitStockDto">
+        SELECT name, gain, logo,
+               attack_ratio AS attackRatio,
+               neutral_ratio AS neutralRatio,
+               stable_ratio AS stableRatio
+        FROM stock_trait_distribution
+                 LIMIT 5;
+    </select>
+
+    <!-- 내 수익률 분포 위치 데이터 조회 -->
+    <select id="findMyDistribution" resultType="org.scoula.domain.ranking.MyDistributionDto" parameterType="long">
+        SELECT s.name, h.gain, h.position_index AS positionIndex, h.position_label,
+               h.distribution_bin1, h.distribution_bin2, h.distribution_bin3,
+               h.distribution_bin4, h.distribution_bin5, h.distribution_bin6,
+               s.color
+        FROM holdings_distribution h
+                 JOIN stocks s ON h.stock_id = s.id
+        WHERE h.user_id = #{userId}
+    </select>
+
+    <!-- 유사 성향 투자자 인기 종목 조회 -->
+    <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+        SELECT name, trait, gain, logo
+        FROM stock_user_distribution
+        WHERE trait = #{trait}
+        ORDER BY popularity DESC
+            LIMIT 50
+    </select>
+
+
+</mapper>
