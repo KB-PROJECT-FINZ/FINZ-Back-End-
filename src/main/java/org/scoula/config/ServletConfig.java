@@ -8,7 +8,6 @@ import org.springframework.web.context.support.AnnotationConfigWebApplicationCon
 import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 import org.springframework.web.servlet.config.annotation.*;
-import org.springframework.web.servlet.DispatcherServlet;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
 import org.springframework.web.servlet.view.JstlView;
 
@@ -21,6 +20,8 @@ import javax.websocket.server.ServerContainer;
 @ComponentScan(basePackages = {
         "org.scoula"
 })
+//@ComponentScan(basePackages = {"org.scoula"})
+// Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 public class ServletConfig implements WebMvcConfigurer {
 
     @Override
@@ -78,6 +79,7 @@ public class ServletConfig implements WebMvcConfigurer {
         registry.viewResolver(bean);
     }
 
+    // Servlet 3.0 파일 업로드 사용 시 - MultipartResolver 빈 등록
     @Bean
     public MultipartResolver multipartResolver() {
         StandardServletMultipartResolver resolver = new StandardServletMultipartResolver();
