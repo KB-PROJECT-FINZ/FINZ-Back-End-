@@ -92,7 +92,13 @@ public class MinuteChartApi {
     private String buildMinuteChartUrl(String stockCode) {
         String baseUrl = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice";
         String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HHmmss"));
+        LocalTime now = LocalTime.now();
+        String currentTime;
+        if (now.isAfter(LocalTime.of(15, 30, 0))) {
+            currentTime = "153000";
+        } else {
+            currentTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
+        }
 
         return String.format("%s?FID_ETC_CLS_CODE=" +
                         "&FID_COND_MRKT_DIV_CODE=J" +
