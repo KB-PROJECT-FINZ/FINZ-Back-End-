@@ -1,8 +1,9 @@
-package org.scoula.mocktrading.external;
+package org.scoula.api.mocktrading;
 
 import okhttp3.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.scoula.util.mocktrading.ConfigManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -26,11 +27,8 @@ public class VolumeRankingApi {
     @Autowired
     private DataSource dataSource;
 
-    @Value("${kis.api.app-key}")
-    private String appKey;
-
-    @Value("${kis.api.app-secret}")
-    private String appSecret;
+    private static final String APP_KEY = ConfigManager.get("app.key");
+    private static final String APP_SECRET = ConfigManager.get("app.secret");
 
     @Value("${kis.api.base-url}")
     private String baseUrl;
@@ -63,8 +61,8 @@ public class VolumeRankingApi {
                 .url(url)
                 .get()
                 .addHeader("Authorization", "Bearer " + token)
-                .addHeader("appkey", appKey)
-                .addHeader("appsecret", appSecret)
+                .addHeader("appkey", APP_KEY)
+                .addHeader("appsecret", APP_SECRET)
                 .addHeader("Content-Type", "application/json; charset=utf-8")
                 .addHeader("tr_id", "FHPST01710000") // 거래량순위 조회용 TR ID
                 .addHeader("custtype", "P")
