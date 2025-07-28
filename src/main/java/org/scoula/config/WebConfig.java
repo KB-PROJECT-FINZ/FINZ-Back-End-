@@ -1,9 +1,11 @@
 package org.scoula.config;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.servlet.*;
@@ -64,5 +66,16 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         System.out.println("Root Config Classes: " + java.util.Arrays.toString(getRootConfigClasses()));
         System.out.println("Servlet Config Classes: " + java.util.Arrays.toString(getServletConfigClasses()));
         System.out.println("========================");
+    }
+    @Configuration
+    public class CorsConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+            registry.addMapping("/**")
+                    .allowedOrigins("http://localhost:5173") // Vue 개발 서버 주소
+                    .allowedMethods("*")
+                    .allowCredentials(true); // 세션 쿠키 전송 허용
+        }
     }
 }
