@@ -16,4 +16,7 @@ public class UserService {
     public String getRiskTypeNameByUsername(String username) {
         return userMapper.findRiskTypeNameByUsername(username);
     }
+    public String getUsernameByUserId(Integer userId) {
+        return userMapper.findUsernameByUserId(userId);
+    }
 }
