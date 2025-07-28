@@ -20,5 +20,4 @@ public interface LearningMapper {
     void insertLearningHistory(LearningHistoryDto dto);
     int isUserIdAndContentId(@Param("userId") int userId, @Param("contentId") int contentId);
     List<LearningHistoryVO> getLearningHistoryList(@Param("userId") int userId);
-
-}
+   }

@@ -56,4 +56,6 @@
         SELECT * FROM user_learning_history
         WHERE user_id = #{userId}
     </select>
+
+
 </mapper>
