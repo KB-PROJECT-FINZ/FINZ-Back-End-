@@ -65,6 +65,12 @@ public class ChartController {
     }
 
     @GetMapping("/trading")
+    @RequestMapping({
+            "/trading",
+            "/mock-trading/**",
+            "/chart/**"
+            // 필요하면 다른 SPA 라우트도 추가
+    })
     @ApiOperation(
             value = "트레이딩 페이지 접근 시 실시간 웹소켓 시작",
             notes = "stockCode 파라미터를 받아 해당 종목의 실시간 호가 웹소켓을 시작합니다."
