@@ -8,17 +8,19 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
-@MapperScan(basePackages = "org.scoula.mapper.chatbot")
+@MapperScan(basePackages = {"org.scoula.mapper"})
+@Import(SwaggerConfig.class)  // SwaggerConfig 추가
+//@MapperScan(basePackages = {})
+//@MapperScan(basePackages = "org.scoula.mapper.chatbot")
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
@@ -54,6 +56,7 @@ public class RootConfig {
         config.setMinimumIdle(1);
         config.setIdleTimeout(300000);
         config.setMaxLifetime(600000);
+
 
         HikariDataSource dataSource = new HikariDataSource(config);
         return dataSource;

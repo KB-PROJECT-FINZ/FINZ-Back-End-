@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
+
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     private final RestTemplate restTemplate;
 
+    private final PromptBuilder promptBuilder;
+
     @Value("${openai.api.key}")
     private String openaiApiKey;
 
@@ -52,7 +57,9 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     @Value("${openai.model}")
     private String model;
-    
+
+    @Autowired
+    private UserProfileService userProfileService;
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -65,6 +72,8 @@ public class ChatBotServiceImpl implements ChatBotService {
             IntentType intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
+
+            log.info("초기 intentType = {}", intentType);
 
 
 
@@ -86,6 +95,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                 headers.setBearerAuth(openaiApiKey);
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+
+
                 ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
 
                 JsonNode json = objectMapper.readTree(gptResponse.getBody());
@@ -93,6 +104,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                 try {
                     intentType = IntentType.valueOf(intentText); // enum 파싱
+                    log.info("GPT 의도 분류 결과: {}", intentText);
+
                 } catch (IllegalArgumentException ex) {
                     // GPT 응답이 enum에 해당하지 않음 → fallback 처리
                     return handleError(
@@ -102,8 +115,9 @@ public class ChatBotServiceImpl implements ChatBotService {
                     );
                 }
 
-
                 request.setIntentType(intentType);
+
+
             }
 
             // ========================2. 전처리======================
@@ -167,9 +181,47 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
+
+            String prompt;
+            switch (intentType) {
+                case RECOMMEND_PROFILE:
+                    String summary = userProfileService.buildProfileSummaryByUserId(userId);
+                    prompt = promptBuilder.buildForProfile(userId, summary);
+                    break;
+
+                case RECOMMEND_KEYWORD:
+                    prompt = promptBuilder.buildForKeyword(userMessage);
+                    break;
+
+                case STOCK_ANALYZE:
+                    prompt = promptBuilder.buildForAnalysis(userMessage);
+                    break;
+
+                case PORTFOLIO_ANALYZE:
+                    prompt = promptBuilder.buildForPortfolioAnalysis(userId);
+                    break;
+
+                case SESSION_END:
+                    prompt = "대화를 종료합니다. 감사합니다.";
+                    break;
+
+                case ERROR:
+                    prompt = "사용자 입력에 오류가 있습니다. 다시 확인해주세요.";
+                    break;
+
+                case UNKNOWN:
+                    prompt = "요청 내용을 이해하지 못했습니다. 다시 질문해주세요.";
+                    break;
+
+                case MESSAGE:
+                default:
+                    prompt = userMessage;
+                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
+                    break;
+            }
             Map<String, Object> message = new HashMap<>();
             message.put("role", "user");
-            message.put("content", userMessage);
+            message.put("content", prompt);
 
             Map<String, Object> body = new HashMap<>();
             body.put("model", model);
@@ -195,8 +247,25 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
-
-
+            // TODO: 종목코드 추출 API 연동 필요 -> 추천 데이터 저장
+//            if (intentType == IntentType.RECOMMEND_PROFILE || intentType == IntentType.RECOMMEND_KEYWORD) {
+//
+//                // ex "삼성전자(005930)는..." → 종목코드 추출함수(content)
+//                String ticker = 종목코드 추출함수 (content);
+//
+//                if (ticker != null) {
+//                    ChatRecommendationDto recommendation = ChatRecommendationDto.builder()
+//                            .userId(userId)
+//                            .ticker(ticker)
+//                            .recommendType(intentType.name()) // PROFILE or KEYWORD
+//                            .reason(content.length() > 2000 ? content.substring(0, 2000) : content)
+//                            .expectedReturn(null)
+//                            .riskLevel(null)
+//                            .build();
+//
+//                    chatBotMapper.insertChatRecommendation(recommendation);
+//                }
+//            }
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
                     .content(content.trim())
@@ -245,6 +314,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .build();
     }
 
+
     // 메세지 저장 함수
     private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
         ChatMessageDto message = ChatMessageDto.builder()
@@ -277,22 +347,28 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     Just return the intent type only, no explanation.
 
-    Example 1:
-    User: "AI 관련된 주식 추천해줘"
-    Answer: RECOMMEND_KEYWORD
-
-    Example 2:
-    User: "삼성전자 분석해줘"
-    Answer: STOCK_ANALYZE
-    
-    Example 3:
-    User: "가치주 추천"
-    Answer: RECOMMEND_KEYWORD
+                Example 1:
+                User: "AI 관련된 주식 추천해줘"
+                Answer: RECOMMEND_KEYWORD
+                
+                Example 2:
+                User: "내 투자 성향으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 3:
+                User: "내 성향에 맞는 주식 뭐야?"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 4:
+                User: "성향 기반으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 5:
+                User: "삼성전자 분석해줘"
+                Answer: STOCK_ANALYZE
 
     User: %s
     """.formatted(userMessage);
     }
-
-
 
 }
