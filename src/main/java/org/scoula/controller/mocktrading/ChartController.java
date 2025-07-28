@@ -90,11 +90,19 @@ public class ChartController {
                 return ResponseEntity.badRequest().body("유효하지 않은 종목코드입니다.");
             }
 
-            // 실시간 호가 웹소켓 시작
-            RealtimeBidsAndAsksClient.startWebSocket(stockCode);
-            
-            log.info("Successfully started realtime WebSocket for stock: {}", stockCode);
-            return ResponseEntity.ok("실시간 웹소켓이 시작되었습니다: " + stockCode);
+
+            // 15:30 이후에는 NXT, 이전에는 기존 KRX
+            java.time.LocalTime now = java.time.LocalTime.now();
+            java.time.LocalTime krxClose = java.time.LocalTime.of(15, 30);
+            if (now.isBefore(krxClose)) {
+                RealtimeBidsAndAsksClient.startWebSocket(stockCode);
+                log.info("Successfully started realtime WebSocket for stock: {} (KRX)", stockCode);
+                return ResponseEntity.ok("실시간 웹소켓이 시작되었습니다: " + stockCode + " (KRX)");
+            } else {
+                org.scoula.api.mocktrading.RealtimeNxtBidsAndAsksClient.startWebSocket(stockCode);
+                log.info("Successfully started realtime WebSocket for stock: {} (NXT)", stockCode);
+                return ResponseEntity.ok("실시간 웹소켓이 시작되었습니다: " + stockCode + " (NXT)");
+            }
 
         } catch (Exception e) {
             log.error("Error starting WebSocket for stock: {}", stockCode, e);
