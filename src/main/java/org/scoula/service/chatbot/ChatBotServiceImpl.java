@@ -54,7 +54,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     @Value("${openai.model}")
     private String model;
-    
+
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -154,7 +154,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
-            
+
             // 에러 발생시 저장
             if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
                 ErrorType errorType;
