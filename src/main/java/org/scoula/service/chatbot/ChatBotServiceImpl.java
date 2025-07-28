@@ -55,7 +55,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Value("${openai.api.url}")
     private String openaiApiUrl;
 
-    @Value("${openai.model}")
+    @Value("${openai.api.model}")
     private String model;
 
     @Autowired
