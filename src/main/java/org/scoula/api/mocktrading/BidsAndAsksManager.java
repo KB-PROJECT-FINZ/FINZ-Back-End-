@@ -34,7 +34,7 @@ public class BidsAndAsksManager {
         try {
             if (!isKrxActive) {
                 System.out.println("🚀 [KRX] 한국거래소 실시간 호가 시작");
-                RealtimeBidsAndAsksClient.startWebSocket();
+                // RealtimeBidsAndAsksClient.startWebSocket(); // 자동 시작 제거됨 - ChartController에서 수동 호출
                 isKrxActive = true;
             }
         } catch (Exception e) {
@@ -46,7 +46,7 @@ public class BidsAndAsksManager {
         try {
             if (!isNxtActive) {
                 System.out.println("🚀 [NXT] 대체거래소 실시간 호가 시작");
-                RealtimeNxtBidsAndAsksClient.startWebSocket();
+                // RealtimeNxtBidsAndAsksClient.startWebSocket(); // 자동 시작 제거됨 - ChartController에서 수동 호출
                 isNxtActive = true;
             }
         } catch (Exception e) {

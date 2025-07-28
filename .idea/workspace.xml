@@ -5,13 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/RootConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/RootConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/util/mocktrading/ConfigManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/util/mocktrading/ConfigManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/BidsAndAsksManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/BidsAndAsksManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeBidsAndAsksClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeBidsAndAsksClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/ServletConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/ServletConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/RealtimeExecutionRunner.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/RealtimeExecutionRunner.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -226,7 +225,7 @@
       <workItem from="1753661981617" duration="3690000" />
       <workItem from="1753665818909" duration="1831000" />
       <workItem from="1753667684656" duration="292000" />
-      <workItem from="1753667989182" duration="1057000" />
+      <workItem from="1753667989182" duration="7663000" />
     </task>
     <servers />
   </component>
