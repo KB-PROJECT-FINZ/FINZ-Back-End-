@@ -91,10 +91,13 @@ public class MinuteChartApi {
      */
     private String buildMinuteChartUrl(String stockCode) {
         String baseUrl = "https://openapi.koreainvestment.com:9443/uapi/domestic-stock/v1/quotations/inquire-time-itemchartprice";
-        String today = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        LocalDate today = LocalDate.now();
         LocalTime now = LocalTime.now();
         String currentTime;
-        if (now.isAfter(LocalTime.of(15, 30, 0))) {
+        // 주말이면 무조건 15:30:00
+        if (today.getDayOfWeek().getValue() == 6 || today.getDayOfWeek().getValue() == 7) {
+            currentTime = "153000";
+        } else if (now.isAfter(LocalTime.of(15, 30, 0))) {
             currentTime = "153000";
         } else {
             currentTime = now.format(DateTimeFormatter.ofPattern("HHmmss"));
@@ -104,7 +107,7 @@ public class MinuteChartApi {
                         "&FID_COND_MRKT_DIV_CODE=J" +
                         "&FID_INPUT_ISCD=%s" +
                         "&FID_INPUT_HOUR_1=%s" +
-                        "&FID_PW_DATA_INCU_YN=N",
+                        "&FID_PW_DATA_INCU_YN=Y",
                 baseUrl, stockCode, currentTime);
     }
 }
