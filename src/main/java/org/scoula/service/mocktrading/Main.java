@@ -22,7 +22,7 @@ public class Main {
             // 분봉 조회
 //            MinuteChartApi.getAndAggregateChart("005930", 5);  // 삼성전자 5분봉
 
-            RealtimeExecutionClient.startWebSocket();
+//            RealtimeExecutionClient.startWebSocket();
 
 
         } catch (Exception e) {
