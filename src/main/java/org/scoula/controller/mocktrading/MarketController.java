@@ -1,7 +1,7 @@
-package org.scoula.mocktrading.controller;
+package org.scoula.controller.mocktrading;
 
 import lombok.extern.log4j.Log4j2;
-import org.scoula.mocktrading.service.MarketService;
+import org.scoula.service.mocktrading.MarketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
