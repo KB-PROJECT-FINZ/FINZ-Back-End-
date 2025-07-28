@@ -49,4 +49,17 @@ public class LearningServiceImpl implements LearningService {
     public void saveLearningHistory(LearningHistoryDto dto) {
         learningMapper.insertLearningHistory(dto);
     }
+
+    @Override
+    public boolean hasCompleted(int userId, int contentId){
+        return learningMapper.isUserIdAndContentId(userId,contentId)>0;
+    }
+
+    @Override
+    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
+        return learningMapper.getLearningHistoryList(userId)
+                .stream()
+                .map(vo -> new LearningHistoryDto(vo))
+                .collect(Collectors.toList());
+    }
 }
