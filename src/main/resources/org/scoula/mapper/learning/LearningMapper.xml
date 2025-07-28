@@ -46,4 +46,11 @@
         INSERT INTO user_learning_history(user_id, content_id, viewed_at)
         VALUES  (#{userId}, #{contentId}, NOW())
     </insert>
+
+    <!-- 사용자 크레딧 업데이트 -->
+    <update id="updateUserCredit" parameterType="map">
+        UPDATE user 
+        SET total_credit = total_credit + #{creditAmount}
+        WHERE id = #{userId}
+    </update>
 </mapper>

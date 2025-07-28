@@ -50,4 +50,16 @@ public class LearningController {
             return ResponseEntity.status(500).body("학습 기록 저장 실패");
         }
     }
+
+    // 퀴즈 정답 시 크레딧 지급
+    @PostMapping("/quiz/credit")
+    public ResponseEntity<String> awardQuizCredit(@RequestParam int userId, @RequestParam int quizId) {
+        try {
+            int creditAmount = learningService.awardQuizCredit(userId, quizId);
+            return ResponseEntity.ok("크레딧 " + creditAmount + "개 지급 완료");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("크레딧 지급 실패");
+        }
+    }
 }

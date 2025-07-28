@@ -49,4 +49,16 @@ public class LearningServiceImpl implements LearningService {
     public void saveLearningHistory(LearningHistoryDto dto) {
         learningMapper.insertLearningHistory(dto);
     }
+
+    @Override
+    public int awardQuizCredit(int userId, int quizId) {
+        // 퀴즈 정보 조회
+        LearningQuizDTO quiz = getQuizByContentId(quizId);
+        int creditAmount = quiz.getCreditReward();
+        
+        // 사용자 크레딧 업데이트
+        learningMapper.updateUserCredit(userId, creditAmount);
+        
+        return creditAmount;
+    }
 }
