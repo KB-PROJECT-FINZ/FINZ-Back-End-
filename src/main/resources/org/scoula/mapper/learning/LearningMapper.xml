@@ -41,4 +41,9 @@
                  JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
         WHERE tag.group_code = #{groupCode}
     </select>
+
+    <insert id="insertLearningHistory" parameterType="org.scoula.domain.learning.dto.LearningHistoryDto">
+        INSERT INTO user_learning_history(user_id, content_id, viewed_at)
+        VALUES  (#{userId}, #{contentId}, NOW())
+    </insert>
 </mapper>
