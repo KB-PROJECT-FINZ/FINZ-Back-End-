@@ -8,17 +8,19 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
 @MapperScan(basePackages = {"org.scoula.mapper"})
+@Import(SwaggerConfig.class)  // SwaggerConfig 추가
+//@MapperScan(basePackages = {})
+//@MapperScan(basePackages = "org.scoula.mapper.chatbot")
 @ComponentScan(basePackages = {"org.scoula.service","org.scoula.domain","org.scoula.controller"})
 public class RootConfig {
     @Value("${jdbc.driver}")
@@ -37,6 +39,11 @@ public class RootConfig {
     ApplicationContext applicationContext;
 
     @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
 
@@ -51,7 +58,9 @@ public class RootConfig {
         config.setIdleTimeout(300000);
         config.setMaxLifetime(600000);
 
-        return new HikariDataSource(config);
+
+        HikariDataSource dataSource = new HikariDataSource(config);
+        return dataSource;
     }
 
     @Bean
