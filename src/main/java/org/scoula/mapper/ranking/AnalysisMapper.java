@@ -1,7 +1,6 @@
 package org.scoula.mapper.ranking;
 
 import org.apache.ibatis.annotations.Mapper;
-import org.scoula.domain.ranking.MyDistributionDto;
 import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.TraitStockDto;
 

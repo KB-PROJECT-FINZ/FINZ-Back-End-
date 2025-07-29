@@ -1,6 +1,5 @@
 package org.scoula.service.ranking;
 
-import org.scoula.domain.ranking.MyDistributionDto;
 import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.TraitStockDto;
 

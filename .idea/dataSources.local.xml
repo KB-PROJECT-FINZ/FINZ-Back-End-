@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="dataSourceStorageLocal" created-in="IU-243.26053.27">
-    <data-source name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="9eca543b-1f91-4639-805b-9eb6756e0503">
-      <database-info product="MySQL" version="8.0.41" jdbc-version="4.2" driver-name="Amazon Web Services (AWS) Advanced JDBC Wrapper" driver-version="Amazon Web Services (AWS) Advanced JDBC Wrapper 2.3.7 ( Revision: 7591851e8da4e1c705ba232a8bd07824a5cfd276 )" dbms="MYSQL" exact-version="8.0.41" exact-driver-version="2.3">
+  <component name="dataSourceStorageLocal" created-in="IU-241.18034.62">
+    <data-source name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="1bb3924b-7c1a-4319-87ee-b1bf56cfee93">
+      <database-info product="MySQL" version="8.0.41" jdbc-version="4.2" driver-name="Amazon Web Services (AWS) JDBC Driver for MySQL" driver-version="aws-mysql-connector-java-1.1.14 (Revision: 4629bb4ea3ade12a811483453fafcb8fc2a66bb5)" dbms="MYSQL" exact-version="8.0.41" exact-driver-version="1.1">
         <extra-name-characters>#@</extra-name-characters>
         <identifier-quote-string>`</identifier-quote-string>
       </database-info>

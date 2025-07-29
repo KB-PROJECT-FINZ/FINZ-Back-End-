@@ -3,8 +3,7 @@ package org.scoula.controller.ranking;
 
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.ranking.MyRankingDto;
-import org.scoula.domain.ranking.Top5StockDto;
-import org.scoula.domain.ranking.WeeklyRankingDto;
+import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.service.ranking.RankingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -18,34 +17,30 @@ import java.util.Map;
 public class RankingController {
 
     @Autowired
-    private RankingService rankingService;
+    private final RankingService rankingService;
 
-    // 내수익률 및 순위
-
+    // 내 수익률 및 순위
     @GetMapping("/user/{userId}")
     public MyRankingDto getMyRanking(@PathVariable Long userId) {
         return rankingService.getMyRanking(userId);
     }
 
-    //인기 종목 Top5
-
+    // 전체 인기 종목 Top5 (매수 + 매도 합산 기준)
     @GetMapping("/top5")
-    public List<Top5StockDto>getTop5Stock(@RequestParam String week){
-        return rankingService.getTop5Stocks(week);
+    public List<PopularStockDto> getTop5Stocks(@RequestParam String dateType, @RequestParam String baseDate) {
+        return rankingService.getTop5Stocks(dateType, baseDate);
     }
 
-    //주간 랭킹
-    @GetMapping("/weekly")
-    public List<WeeklyRankingDto> getWeeklyRanking(@RequestParam String week){
-
-        return rankingService.getWeeklyRanking(week);
+    // 전체 사용자 랭킹 Top100
+    @GetMapping("/ranking")
+    public List<RankingByTraitGroupDto> getAllRanking(@RequestParam String dateType, @RequestParam String baseDate) {
+        return rankingService.getAllRanking(dateType, baseDate);
     }
 
-    //주간 성향별 랭킹
-    @GetMapping("/weekly/grouped")
-    public Map<String, List<WeeklyRankingDto>> getGroupedWeeklyRanking(@RequestParam String week) {
-        return rankingService.getGroupedWeeklyRanking(week);
+    // 성향 그룹별 사용자 랭킹 Top100
+    @GetMapping("/ranking/grouped")
+    public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking(@RequestParam String dateType, @RequestParam String baseDate) {
+        return rankingService.getGroupedRanking(dateType, baseDate);
     }
-
-
 }
+

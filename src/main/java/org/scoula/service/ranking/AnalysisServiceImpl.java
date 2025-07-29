@@ -1,7 +1,6 @@
 package org.scoula.service.ranking;
 
 import lombok.RequiredArgsConstructor;
-import org.scoula.domain.ranking.MyDistributionDto;
 import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.TraitStockDto;
 import org.scoula.mapper.ranking.AnalysisMapper;

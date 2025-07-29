@@ -5,41 +5,69 @@
 
 <mapper namespace="org.scoula.mapper.ranking.RankingMapper">
 
-    <!-- (1) 성향 그룹별 주간 랭킹 -->
-    <select id="selectGroupedWeeklyRanking" resultType="org.scoula.domain.ranking.WeeklyRankingWithGroupDto">
-        SELECT rw.user_id, u.name, rw.gain_rate, rw.ranking, tt.trait_group
-        FROM ranking_weekly rw
-                 JOIN user u ON rw.user_id = u.id
-                 JOIN trait_types tt ON u.risk_type = tt.trait_type
-        WHERE rw.week = #{week}
-        ORDER BY tt.trait_group, rw.ranking
-    </select>
-
-    <!-- (2) 내 수익률 및 순위 -->
+    <!-- 1. 내 수익률 및 순위 -->
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto">
-        SELECT p.user_id, p.gain_rate,
-        (SELECT COUNT(*) + 1 FROM portfolios WHERE gain_rate > p.gain_rate) AS ranking,
-        (SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM portfolios), 2)
-         FROM portfolios WHERE gain_rate &lt;= p.gain_rate) AS top_percent
-        FROM portfolios p
-        WHERE p.user_id = #{userId}
+        SELECT
+        u.id AS userId,
+        ah.profit_rate AS gainRate,
+        (
+        SELECT COUNT(*) + 1
+        FROM asset_history sub
+        WHERE sub.record_date = ah.record_date AND sub.profit_rate > ah.profit_rate
+        ) AS ranking,
+        (
+        SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = ah.record_date), 2)
+        FROM asset_history
+        WHERE record_date = ah.record_date AND profit_rate <= ah.profit_rate
+        ) AS topPercent
+        FROM asset_history ah
+        JOIN user_accounts ua ON ah.account_id = ua.account_id
+        JOIN user u ON ua.user_id = u.id
+        WHERE u.id = #{userId} AND ah.record_date = (SELECT MAX(record_date) FROM asset_history)
     </select>
 
-    <!-- (3) 인기 종목 Top5 -->
-    <select id="selectTop5Stocks" resultType="org.scoula.domain.ranking.Top5StockDto">
-        SELECT stock_code, stock_name, investor_count, avg_gain_rate, ranking
-        FROM ranking_top5_stocks
-        WHERE week = #{week}
+    <!-- 2. 전체 인기 종목 Top5 (매수+매도 합산) -->
+    <select id="selectTop5Stocks" resultType="org.scoula.domain.ranking.PopularStockDto">
+        SELECT
+            stock_code,
+            stock_name,
+            SUM(transaction_count) AS transactionCount,
+            ranking
+        FROM popular_stocks
+        WHERE date_type = #{dateType} AND base_date = #{baseDate}
+        GROUP BY stock_code, stock_name, ranking
         ORDER BY ranking ASC
+            LIMIT 5
     </select>
 
-    <!-- (4) 주간 전체 랭킹 -->
-    <select id="selectWeeklyRanking" resultType="org.scoula.domain.ranking.WeeklyRankingDto">
-        SELECT rw.user_id, u.name, rw.gain_rate, rw.ranking
-        FROM ranking_weekly rw
-                 JOIN user u ON rw.user_id = u.id
-        WHERE rw.week = #{week}
-        ORDER BY rw.ranking ASC
+    <!-- 3. 전기간 수익률 상위 TOP100 랭킹 -->
+    <select id="selectOverallRanking" resultType="org.scoula.domain.ranking.UserRankingDto">
+        SELECT
+            u.id AS userId,
+            u.name,
+            ah.profit_rate AS gainRate,
+            ROW_NUMBER() OVER (ORDER BY ah.profit_rate DESC) AS ranking
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
+        WHERE ah.record_date = #{recordDate}
+        ORDER BY ah.profit_rate DESC
+            LIMIT 100
+    </select>
+
+    <!-- 4. 성향 그룹별 수익률 TOP100 -->
+    <select id="selectTraitGroupRanking" resultType="org.scoula.domain.ranking.UserRankingDto">
+        SELECT
+            u.id AS userId,
+            u.name,
+            ah.profit_rate AS gainRate,
+            ROW_NUMBER() OVER (ORDER BY ah.profit_rate DESC) AS ranking
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
+                 JOIN trait_types tt ON u.risk_type = tt.trait_type
+        WHERE ah.record_date = #{recordDate} AND tt.trait_group = #{traitGroup}
+        ORDER BY ah.profit_rate DESC
             LIMIT 100
     </select>
 
