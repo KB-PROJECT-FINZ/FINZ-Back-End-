@@ -2,6 +2,7 @@ package org.scoula.service.learning;
 
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.LearningContentDTO;
+import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
 
 import org.scoula.domain.learning.vo.LearningQuizVO;
@@ -42,5 +43,23 @@ public class LearningServiceImpl implements LearningService {
     @Override
     public LearningContentDTO getContentById(int id) {
         return learningMapper.getContentById(id);
+    }
+
+    @Override
+    public void saveLearningHistory(LearningHistoryDto dto) {
+        learningMapper.insertLearningHistory(dto);
+    }
+
+    @Override
+    public boolean hasCompleted(int userId, int contentId){
+        return learningMapper.isUserIdAndContentId(userId,contentId)>0;
+    }
+
+    @Override
+    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
+        return learningMapper.getLearningHistoryList(userId)
+                .stream()
+                .map(vo -> new LearningHistoryDto(vo))
+                .collect(Collectors.toList());
     }
 }

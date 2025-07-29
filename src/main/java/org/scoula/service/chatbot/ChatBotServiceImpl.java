@@ -55,11 +55,12 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Value("${openai.api.url}")
     private String openaiApiUrl;
 
-    @Value("${openai.api.model}")
+    @Value("${openai.model}")
     private String model;
 
     @Autowired
     private UserProfileService userProfileService;
+
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();

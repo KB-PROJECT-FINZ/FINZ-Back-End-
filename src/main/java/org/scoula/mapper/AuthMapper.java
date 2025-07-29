@@ -12,4 +12,5 @@ public interface AuthMapper {
     int existsByNickname(String nickname);
     UserVo findByUsernameAndPassword(@Param("username") String username,
                                      @Param("password") String password);
+
 }
