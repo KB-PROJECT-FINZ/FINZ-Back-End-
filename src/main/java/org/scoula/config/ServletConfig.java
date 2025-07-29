@@ -24,14 +24,24 @@ import javax.websocket.server.ServerContainer;
 // Spring MVC용 컴포넌트 등록을 위한 스캔 패키지
 public class ServletConfig implements WebMvcConfigurer {
 
-    @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/")
-                .setViewName("forward:/resources/index.html");
-    }
+    // 뷰 컨트롤러 제거 - 리소스 핸들러로 처리
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 모든 경로를 정적 리소스에서 우선 처리
+    registry.addResourceHandler("/**")
+            .addResourceLocations("/resources/")
+            .setCachePeriod(0)
+            .resourceChain(true)
+            .addResolver(new org.springframework.web.servlet.resource.PathResourceResolver() {
+                @Override
+                protected org.springframework.core.io.Resource getResource(String resourcePath, org.springframework.core.io.Resource location) throws java.io.IOException {
+                    org.springframework.core.io.Resource requestedResource = super.getResource(resourcePath, location);
+                    // 실제 파일이 있으면 그대로 반환, 없으면 index.html 반환
+                    return requestedResource != null ? requestedResource : location.createRelative("index.html");
+                }
+            });
+        
         // 기본 리소스 핸들러 (develop 브랜치에서)
         registry.addResourceHandler("/resources/**")    // url이 /resources/로 시작하는 모든 경로
                 .addResourceLocations("/resources/");       // webapp/resources/ 경로로 매핑
