@@ -156,3 +156,4 @@ INSERT INTO user (
              NOW(), NOW(), 'AGR', '010-1234-5678',
              'testuser1@example.com', 'local', 100000
          );
+

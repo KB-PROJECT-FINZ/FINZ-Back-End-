@@ -65,14 +65,26 @@ public class GptContentServiceImpl implements GptContentService {
 
     private String buildPrompt(String groupCode, List<String> existingTitles) {
         return String.format("""
-                사용자 성향 그룹: %s
-                기존에 생성된 콘텐츠 제목 목록: %s
+            당신은 투자 교육 콘텐츠 전문가입니다.
+            아래의 사용자 성향에 맞는 새로운 투자 학습 콘텐츠를 작성해주세요.
 
-                이 성향에 적합하면서도 새로운 주제를 가진 콘텐츠를 작성해주세요.
-                아래 형식으로 답변해주세요:
+            [사용자 성향 그룹]: %s
+            [기존 콘텐츠 제목 목록]: %s
 
-                title: 콘텐츠 제목
-                body: 콘텐츠 본문
-                """, groupCode, String.join(", ", existingTitles));
+            조건:
+            - 기존 콘텐츠와 중복되지 않는 새로운 주제를 선정할 것
+            - 콘텐츠는 투자 초보자도 이해할 수 있도록 하되, 깊이 있고 전문적으로 작성할 것
+            - 줄글 형태로 800자 이상 작성할 것
+            - 콘텐츠는 하나의 명확한 주제에 집중할 것
+
+            출력 형식:
+            title: (콘텐츠 제목)
+            body: (전체 아티클 줄글)
+
+            예시:
+            title: ETF란 무엇인가 – 상장지수펀드의 개념과 활용법
+            body: (줄글 형식으로 아티클이 이어짐... )
+            """, groupCode, String.join(", ", existingTitles));
+
     }
 }
