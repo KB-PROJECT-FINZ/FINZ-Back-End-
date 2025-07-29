@@ -16,4 +16,11 @@
                  LEFT JOIN investment_types it ON u.risk_type = it.risk_type
         WHERE u.username = #{username}
     </select>
+
+    <select id="findGroupCodeByRiskType" parameterType="String" resultType="String">
+        SELECT group_code
+        FROM investment_types
+        WHERE risk_type = #{riskType}
+    </select>
+
 </mapper>
