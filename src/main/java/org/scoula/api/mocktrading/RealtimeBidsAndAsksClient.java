@@ -13,11 +13,20 @@ import java.time.format.DateTimeFormatter;
 // 한국투자증권 실시간 호가 API 받아오는 역할
 public class RealtimeBidsAndAsksClient {
 
+    // 종목코드별 최초 1회만 메시지 출력
+    private static final java.util.Set<String> startedStocks = new java.util.HashSet<>();
+
     private static WebSocketClient client;
     private static final String WS_URL = "ws://ops.koreainvestment.com:21000/tryitout/H0STASP0";
 
-    public static void startWebSocket() throws Exception {
+    public static void startWebSocket(String stockCode) throws Exception {
         String approvalKey = TokenManager.getTokenInfo().getApprovalKey();
+
+         // 기존 연결이 있으면 먼저 종료
+    if (client != null && client.isOpen()) {
+        client.close();
+        System.out.println("🔄 기존 WebSocket 연결 종료 후 재연결");
+    }
 
         client = new WebSocketClient(new URI(WS_URL)) {
             @Override
@@ -34,7 +43,7 @@ public class RealtimeBidsAndAsksClient {
 
                     ObjectNode input = mapper.createObjectNode();
                     input.put("tr_id", "H0STASP0");
-                    input.put("tr_key", "005930"); // 예: 삼성전자
+                    input.put("tr_key", stockCode);
 
                     ObjectNode body = mapper.createObjectNode();
                     body.set("input", input);
@@ -146,11 +155,13 @@ public class RealtimeBidsAndAsksClient {
                         dto.setOvertimeBidChange(getFieldSafely(fields, 57)); // OVTM_TOTAL_BIDP_ICDC
 
                         // 📊 간단한 호가 정보 요약 출력
+
                         String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-                        System.out.println("📊 [" + currentTime + "] 호가 수신: " + dto.getStockCode() + 
-                                         " | 매도1: " + dto.getAskPrice1() + "(" + dto.getAskQty1() + ")" +
-                                         " | 매수1: " + dto.getBidPrice1() + "(" + dto.getBidQty1() + ")" +
-                                         " | 총매도: " + dto.getTotalAskQty() + " | 총매수: " + dto.getTotalBidQty());
+                        String stockCodeForMsg = dto.getStockCode();
+                        if (!startedStocks.contains(stockCodeForMsg)) {
+                            System.out.println("📊 [" + currentTime + "]" + stockCodeForMsg + " 호가 정상 시작됨");
+                            startedStocks.add(stockCodeForMsg);
+                        }
 
                         // 호가 데이터 브로드캐스트
                         StockRelaySocket.broadcastBidsAndAsks(dto);
