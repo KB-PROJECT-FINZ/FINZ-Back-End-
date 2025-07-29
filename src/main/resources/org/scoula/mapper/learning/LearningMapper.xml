@@ -64,4 +64,26 @@
         SET total_credit = total_credit + #{creditAmount}
         WHERE id = #{userId}
     </update>
+
+    <!-- 사용자 크레딧 조회 -->
+    <select id="getUserCredit" parameterType="int" resultType="int">
+        SELECT total_credit FROM user WHERE id = #{userId}
+    </select>
+
+    <!-- 퀴즈 결과 확인 -->
+    <select id="hasQuizResult" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM user_quiz_results
+        WHERE user_id = #{userId} AND quiz_id = #{quizId}
+    </select>
+
+    <!-- 퀴즈 결과 저장 -->
+    <insert id="saveQuizResult">
+        INSERT INTO user_quiz_results (user_id, quiz_id, is_correct, selected_answer, credit_earned, attempted_at)
+        VALUES (#{userId}, #{quizId}, #{isCorrect}, #{selectedAnswer}, #{creditEarned}, NOW())
+        ON DUPLICATE KEY UPDATE
+        is_correct = #{isCorrect},
+        selected_answer = #{selectedAnswer},
+        credit_earned = #{creditEarned},
+        attempted_at = NOW()
+    </insert>
 </mapper>

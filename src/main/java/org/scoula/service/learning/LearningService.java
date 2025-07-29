@@ -11,7 +11,10 @@ public interface LearningService {
     LearningQuizDTO getQuizByContentId(int contentId);
     LearningContentDTO getContentById(int id);
     void saveLearningHistory(LearningHistoryDto dto);
-    int awardQuizCredit(int userId, int quizId);
+    int giveCredit(int userId, int quizId);
+    int getUserCredit(int userId);
+    boolean checkQuiz(int userId, int quizId);
     boolean hasCompleted(int userId, int contentId);
     List<LearningHistoryDto> getLearningHistoryList(int userId);
+    void saveResult(int userId, int quizId, boolean isCorrect, String selectedAnswer, int creditEarned);
 }

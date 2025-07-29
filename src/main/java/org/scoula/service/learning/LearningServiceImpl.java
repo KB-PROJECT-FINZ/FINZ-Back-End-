@@ -51,14 +51,14 @@ public class LearningServiceImpl implements LearningService {
     }
 
     @Override
-    public int awardQuizCredit(int userId, int quizId) {
+    public int giveCredit(int userId, int quizId) {
         // 퀴즈 정보 조회
         LearningQuizDTO quiz = getQuizByContentId(quizId);
         int creditAmount = quiz.getCreditReward();
-
+        
         // 사용자 크레딧 업데이트
         learningMapper.updateUserCredit(userId, creditAmount);
-
+        
         return creditAmount;
     }
 
@@ -73,5 +73,20 @@ public class LearningServiceImpl implements LearningService {
                 .stream()
                 .map(vo -> new LearningHistoryDto(vo))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public int getUserCredit(int userId) {
+        return learningMapper.getUserCredit(userId);
+    }
+
+    @Override
+    public boolean checkQuiz(int userId, int quizId) {
+        return learningMapper.hasQuizResult(userId, quizId);
+    }
+
+    @Override
+    public void saveResult(int userId, int quizId, boolean isCorrect, String selectedAnswer, int creditEarned) {
+        learningMapper.saveQuizResult(userId, quizId, isCorrect, selectedAnswer, creditEarned);
     }
 }
