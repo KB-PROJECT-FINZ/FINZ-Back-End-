@@ -40,7 +40,7 @@
     </select>
 
     <update id="updatePassword">
-        UPDATE users
+        UPDATE user
         SET password = #{newPassword}
         WHERE id = #{userId}
     </update>
