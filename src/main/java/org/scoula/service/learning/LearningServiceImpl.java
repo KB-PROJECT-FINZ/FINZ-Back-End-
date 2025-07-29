@@ -55,10 +55,23 @@ public class LearningServiceImpl implements LearningService {
         // 퀴즈 정보 조회
         LearningQuizDTO quiz = getQuizByContentId(quizId);
         int creditAmount = quiz.getCreditReward();
-        
+
         // 사용자 크레딧 업데이트
         learningMapper.updateUserCredit(userId, creditAmount);
-        
+
         return creditAmount;
+    }
+
+    @Override
+    public boolean hasCompleted(int userId, int contentId){
+        return learningMapper.isUserIdAndContentId(userId,contentId)>0;
+    }
+
+    @Override
+    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
+        return learningMapper.getLearningHistoryList(userId)
+                .stream()
+                .map(vo -> new LearningHistoryDto(vo))
+                .collect(Collectors.toList());
     }
 }

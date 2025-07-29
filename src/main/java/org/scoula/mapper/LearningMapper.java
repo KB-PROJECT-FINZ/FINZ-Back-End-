@@ -18,4 +18,7 @@ public interface LearningMapper {
     LearningContentDTO getContentById(int id);
     void insertLearningHistory(LearningHistoryDto dto);
     void updateUserCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
+    int isUserIdAndContentId(@Param("userId") int userId, @Param("contentId") int contentId);
+    List<LearningHistoryVO> getLearningHistoryList(@Param("userId") int userId);
 }
+

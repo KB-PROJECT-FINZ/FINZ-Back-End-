@@ -47,9 +47,20 @@
         VALUES  (#{userId}, #{contentId}, NOW())
     </insert>
 
+
+    <select id="isUserIdAndContentId" resultType="int">
+        SELECT COUNT(*) FROM user_learning_history
+        WHERE user_id=#{userId} AND content_id=#{contentId}
+    </select>
+
+    <select id="getLearningHistoryList" resultType="org.scoula.domain.learning.vo.LearningHistoryVO">
+        SELECT * FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
     <!-- 사용자 크레딧 업데이트 -->
     <update id="updateUserCredit" parameterType="map">
-        UPDATE user 
+        UPDATE user
         SET total_credit = total_credit + #{creditAmount}
         WHERE id = #{userId}
     </update>
