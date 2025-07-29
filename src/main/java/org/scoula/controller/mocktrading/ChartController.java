@@ -64,6 +64,47 @@ public class ChartController {
         }
     }
 
+    @GetMapping("/minute/{stockCode}/fullday")
+    @ApiOperation(
+            value = "일일 전체 분봉 차트 데이터 조회",
+            notes = "09:00부터 현재까지의 모든 분봉 차트 데이터를 병합하여 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공"),
+            @ApiResponse(code = 204, message = "데이터 없음"),
+            @ApiResponse(code = 400, message = "잘못된 요청"),
+            @ApiResponse(code = 500, message = "서버 에러")
+    })
+    public ResponseEntity<JsonNode> getFullDayMinuteChart(
+            @ApiParam(value = "종목코드 (예: 005930)", required = true)
+            @PathVariable String stockCode) {
+
+        log.info("Received request for full day minute chart - Stock: {}", stockCode);
+
+        try {
+            // 입력값 검증
+            if (stockCode == null || stockCode.trim().isEmpty()) {
+                log.warn("Invalid stock code provided: {}", stockCode);
+                return ResponseEntity.badRequest().build();
+            }
+
+            // 일일 전체 차트 데이터 조회
+            JsonNode chartData = minuteChartApi.getFullDayMinuteChartData(stockCode);
+
+            if (chartData == null) {
+                log.info("No full day chart data found for stock: {}", stockCode);
+                return ResponseEntity.noContent().build();
+            }
+
+            log.info("Successfully retrieved full day chart data for stock: {}", stockCode);
+            return ResponseEntity.ok(chartData);
+
+        } catch (Exception e) {
+            log.error("Error processing full day minute chart request for stock: {}", stockCode, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/trading")
     @RequestMapping({
             "/trading",
