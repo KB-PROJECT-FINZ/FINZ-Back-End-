@@ -5,39 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.corrupted.20250728-091632.reason.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.corrupted.20250728-091632.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24___4_48__________.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24___4_49__________.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_48,_업데이트_전에_커밋되지_않은_변경_내용_[변경]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_49,_체크아웃_전에_커밋되지_않은_변경_내용_[변경]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_49,_체크아웃_전에_커밋되지_않은_변경_내용_[변경]1/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/dto/LearningHistoryDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/config.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/dummyData-qPSAvg1r.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/index-CITlL29K.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/index-DSrB-X5Z.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/wave-Ba5lIBXQ.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/MailService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserServiceImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/root-context.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kb_final.sql" beforeDir="false" afterPath="$PROJECT_DIR$/kb_final.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/AuthService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/custom404.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/error_page.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/index.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/authMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/authMapper.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,6 +54,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -97,30 +78,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Gradle.Build FINZ-Back-End-.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.Build FinzBack.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Tomcat Server.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/mypage&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Gradle.Build FINZ-Back-End-.executor": "Run",
+    "Gradle.Build FinzBack.executor": "Run",
+    "Gradle.FinzBack 빌드.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Tomcat Server.Tomcat 9.0.105.executor": "Run",
+    "Tomcat 서버.Tomcat 9.0.105.executor": "Run",
+    "git-widget-placeholder": "feature/LoginForm",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;,
-      &quot;mysql_aurora&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "mysql",
+      "mysql_aurora"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\KB_Fullstack\FINZ-Back-End-\src\main\java\org\scoula\controller\mocktrading" />
@@ -240,5 +223,16 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>
