@@ -12,5 +12,9 @@ public interface AuthMapper {
     int existsByNickname(String nickname);
     UserVo findByUsernameAndPassword(@Param("username") String username,
                                      @Param("password") String password);
-
+    int updatePassword(@Param("userId") Long userId, @Param("newPassword") String newPassword);
+    UserVo findByEmail(@Param("email") String email);
+    UserVo findByNameAndEmail(@Param("name") String name, @Param("email") String email);
+    int countByNickname(@Param("nickname") String nickname);
 }
+
