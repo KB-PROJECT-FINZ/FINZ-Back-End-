@@ -20,4 +20,13 @@ public interface LearningMapper {
     void insertLearningHistory(LearningHistoryDto dto);
     int isUserIdAndContentId(@Param("userId") int userId, @Param("contentId") int contentId);
     List<LearningHistoryVO> getLearningHistoryList(@Param("userId") int userId);
-   }
+    String findGroupCodeByUserId(Long userId);
+    List<LearningContentVO> findUnreadContent(
+            @Param("groupCode") String groupCode,
+            @Param("userId") Long userId
+    );
+    List<String> findTitlesByGroupCode(String groupCode);
+    void insertContent(LearningContentVO content);
+    List<LearningContentVO> findCompletedContentByUserId(Long userId);
+
+}
