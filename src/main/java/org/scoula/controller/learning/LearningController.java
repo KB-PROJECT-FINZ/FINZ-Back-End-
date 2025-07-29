@@ -2,7 +2,9 @@ package org.scoula.controller.learning;
 
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.LearningContentDTO;
+import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
+import org.scoula.mapper.LearningMapper;
 import org.scoula.service.learning.LearningService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +17,6 @@ import java.util.List;
 public class LearningController {
 
     private final LearningService learningService;
-
     //콘텐츠 목록
     @GetMapping("/contents")
     public ResponseEntity<List<LearningContentDTO>> getAllContents() {
@@ -38,5 +39,15 @@ public class LearningController {
     @GetMapping("/contents/{id}")
     public ResponseEntity<LearningContentDTO> getContentById(@PathVariable int id) {
         return ResponseEntity.ok(learningService.getContentById(id));
+    }
+    @PostMapping("/history")
+    public ResponseEntity<String> insertLearningHistory(@RequestBody LearningHistoryDto dto) {
+        try {
+            learningService.saveLearningHistory(dto);
+            return ResponseEntity.ok("학습 기록 저장 완료");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("학습 기록 저장 실패");
+        }
     }
 }

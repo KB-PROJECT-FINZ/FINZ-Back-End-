@@ -2,6 +2,7 @@ package org.scoula.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.scoula.domain.learning.dto.LearningContentDTO;
+import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.vo.LearningContentVO;
 import org.scoula.domain.learning.vo.LearningQuizVO;
 
@@ -14,6 +15,5 @@ public interface LearningMapper {
     LearningQuizVO getQuizByContentId(int contentId);
     LearningQuizVO getQuizById(int quizId);
     LearningContentDTO getContentById(int id);
-
-
+    void insertLearningHistory(LearningHistoryDto dto);
 }

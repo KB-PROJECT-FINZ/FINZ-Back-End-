@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.StockMapper">
+
+    <select id="getStockByCode" parameterType="string" resultType="map">
+        SELECT code, name, image_url
+        FROM stocks
+        WHERE code = #{code}
+    </select>
+
+    <select id="getAllStocks" resultType="map">
+        SELECT code, name, image_url
+        FROM stocks
+        ORDER BY name
+    </select>
+
+</mapper>
