@@ -35,4 +35,7 @@ public class UserProfileService {
 
         return dto != null ? dto.getDescription() : "성향 정보 없음";
     }
+    public String getRiskTypeByUserId(Integer userId) {
+        return userService.getRiskTypeByUserId(userId);
+    }
 }

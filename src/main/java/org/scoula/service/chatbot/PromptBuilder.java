@@ -1,20 +1,31 @@
 package org.scoula.service.chatbot;
 
+import org.scoula.domain.chatbot.dto.ChatAnalysisDto;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class PromptBuilder {
 
     // 투자 성향 기반 추천
-    public String buildForProfile(Integer userId, String summary) {
-        return """
-    사용자 ID %d의 투자 성향에 기반하여 추천 종목을 제시해주세요.
+    public String buildForProfile(Integer userId, String summary, List<ChatAnalysisDto> analysisList) {
+        // analysisList 내용을 바탕으로 프롬프트 생성
+        StringBuilder sb = new StringBuilder();
+        sb.append("당신의 투자 성향은 다음과 같습니다: ").append(summary).append("\n\n");
+        sb.append("다음은 성향에 맞는 추천 종목입니다:\n");
 
-    - 성향 정보: %s
-    - 국내 및 해외 주식 각각 2개씩
-    - 각 종목: [종목명, 티커, 요약 설명, 기대 수익률] 형태로 간단히
-    """.formatted(userId, summary);
+        for (ChatAnalysisDto stock : analysisList) {
+            sb.append("- ").append(stock.getName())
+                    .append(": 현재가 ").append(stock.getPrice())
+                    .append(", PER ").append(stock.getPer())
+                    .append(", 거래량 ").append(stock.getVolume())
+                    .append("\n");
+        }
+
+        return sb.toString();
     }
+
 
 
     // 키워드 기반 추천

@@ -4,21 +4,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
+import org.scoula.util.chatbot.ProfileStockFilter;
+import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
 
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
+import org.scoula.util.chatbot.ChatAnalysisMapper;
+import org.scoula.util.chatbot.ProfileStockMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
@@ -58,12 +63,20 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Value("${openai.model}")
     private String model;
 
+    // 성향에 따른 종목 추천 유틸
+    @Autowired
+    private ProfileStockRecommender profileStockRecommender;
+
+    // 모의투자팀이 열심히 만든~ 볼륨랭킹
+    @Autowired
+    private VolumeRankingApi volumeRankingApi;
+
     @Autowired
     private UserProfileService userProfileService;
 
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
@@ -186,9 +199,45 @@ public class ChatBotServiceImpl implements ChatBotService {
             String prompt;
             switch (intentType) {
                 case RECOMMEND_PROFILE:
+                    // 1. 유저 성향 요약
                     String summary = userProfileService.buildProfileSummaryByUserId(userId);
-                    prompt = promptBuilder.buildForProfile(userId, summary);
+                    String riskType = userProfileService.getRiskTypeByUserId(userId);
+
+
+                    // 2. 종목 리스트 가져오기 (거래량 상위 등)
+                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(3, "0");
+
+
+                    // 3. 성향 기반 필터링
+                    List<RecommendationStock> recStocks = rawStocks.stream()
+                            .map(ProfileStockMapper::fromMap)
+                            .toList();
+
+                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, recStocks);
+
+                    // 4. 종목 코드/이름 추출
+                    List<String> tickers = filteredStocks.stream().map(RecommendationStock::getCode).toList();
+                    List<String> names = filteredStocks.stream().map(RecommendationStock::getName).toList();
+
+
+                    // 5. 상세 정보 조회 (PriceApi 이용)
+                    List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+
+                    // 6. DTO로 매핑 (ChatAnalysisDto)
+                    List<ChatAnalysisDto> analysisList = detailed.stream()
+                            .map(ChatAnalysisMapper::toDto)
+                            .toList();
+
+                    // 7. DB 저장 (선택사항)
+                    for (ChatAnalysisDto dto : analysisList) {
+                        chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
+                    }
+
+                    // 8. GPT 프롬프트 구성
+                    prompt = promptBuilder.buildForProfile(userId, summary, analysisList);
+
                     break;
+
 
                 case RECOMMEND_KEYWORD:
                     prompt = promptBuilder.buildForKeyword(userMessage);
@@ -249,24 +298,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
             // TODO: 종목코드 추출 API 연동 필요 -> 추천 데이터 저장
-//            if (intentType == IntentType.RECOMMEND_PROFILE || intentType == IntentType.RECOMMEND_KEYWORD) {
-//
-//                // ex "삼성전자(005930)는..." → 종목코드 추출함수(content)
-//                String ticker = 종목코드 추출함수 (content);
-//
-//                if (ticker != null) {
-//                    ChatRecommendationDto recommendation = ChatRecommendationDto.builder()
-//                            .userId(userId)
-//                            .ticker(ticker)
-//                            .recommendType(intentType.name()) // PROFILE or KEYWORD
-//                            .reason(content.length() > 2000 ? content.substring(0, 2000) : content)
-//                            .expectedReturn(null)
-//                            .riskLevel(null)
-//                            .build();
-//
-//                    chatBotMapper.insertChatRecommendation(recommendation);
-//                }
-//            }
+
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
                     .content(content.trim())
