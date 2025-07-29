@@ -40,6 +40,7 @@ public class LearningController {
     public ResponseEntity<LearningContentDTO> getContentById(@PathVariable int id) {
         return ResponseEntity.ok(learningService.getContentById(id));
     }
+
     @PostMapping("/history")
     public ResponseEntity<String> insertLearningHistory(@RequestBody LearningHistoryDto dto) {
         try {
@@ -50,4 +51,16 @@ public class LearningController {
             return ResponseEntity.status(500).body("학습 기록 저장 실패");
         }
     }
+    //컨텐츠 상세페이지에서 읽었는지 유무 판단하기 위해
+    @GetMapping("/history/complete")
+    public boolean userCompletedContent(@RequestParam int userId, @RequestParam int contentId) {
+        return learningService.hasCompleted(userId, contentId);
+    }
+
+    //컨텐츠 리스트 중 읽은 글은 회색 처리 하기 위해서
+    @GetMapping("/history/complete/list")
+    public ResponseEntity<List<LearningHistoryDto>> getLearningHistoryList(@RequestParam int userId) {
+        return ResponseEntity.ok(learningService.getLearningHistoryList(userId));
+    }
+
 }

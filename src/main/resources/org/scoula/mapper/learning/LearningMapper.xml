@@ -46,4 +46,16 @@
         INSERT INTO user_learning_history(user_id, content_id, viewed_at)
         VALUES  (#{userId}, #{contentId}, NOW())
     </insert>
+
+    <select id="isUserIdAndContentId" resultType="int">
+        SELECT COUNT(*) FROM user_learning_history
+        WHERE user_id=#{userId} AND content_id=#{contentId}
+    </select>
+
+    <select id="getLearningHistoryList" resultType="org.scoula.domain.learning.vo.LearningHistoryVO">
+        SELECT * FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
+
 </mapper>

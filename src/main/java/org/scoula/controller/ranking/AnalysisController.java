@@ -1,6 +1,7 @@
 package org.scoula.controller.ranking;
 
 import lombok.RequiredArgsConstructor;
+import org.scoula.domain.ranking.MyDistributionDto;
 import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.TraitStockDto;
 import org.scoula.service.ranking.AnalysisService;
@@ -17,24 +18,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AnalysisController {
 
-    @Autowired
-    private AnalysisService analysisService;
+    private final AnalysisService analysisService;
 
-    // 성향별 보유 비중
+    // (1) 성향별 보유 비중 조회
     @GetMapping("/trait-stock")
-    public List<TraitStockDto> getTraitStocks() {
-        return analysisService.getTraitStocks();
+    public List<TraitStockDto> getTraitStocks(@RequestParam Long userId) {
+        return analysisService.getTraitStocks(userId);
     }
 
-    // 내 수익률 분포 위치
+    // (2) 내 수익률 분포 위치 조회
     @GetMapping("/my-distribution")
     public List<MyDistributionDto> getMyDistribution(@RequestParam Long userId) {
         return analysisService.getMyDistribution(userId);
     }
 
-    // 유사 성향 투자자 인기 종목
+    // (3) 유사 성향 투자자 인기 종목 조회
     @GetMapping("/popular-stocks")
-    public List<PopularStockDto> getPopularStocks(@RequestParam String trait) {
-        return analysisService.getPopularStocksByTrait(trait);
+    public List<PopularStockDto> getPopularStocks(@RequestParam String traitGroup) {
+        return analysisService.getPopularStocksByTrait(traitGroup);
     }
 }

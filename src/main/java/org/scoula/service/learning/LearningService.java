@@ -11,4 +11,6 @@ public interface LearningService {
     LearningQuizDTO getQuizByContentId(int contentId);
     LearningContentDTO getContentById(int id);
     void saveLearningHistory(LearningHistoryDto dto);
+    boolean hasCompleted(int userId, int contentId);
+    List<LearningHistoryDto> getLearningHistoryList(int userId);
 }

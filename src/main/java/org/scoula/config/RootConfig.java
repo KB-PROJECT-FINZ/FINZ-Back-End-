@@ -18,6 +18,7 @@ import javax.sql.DataSource;
 @Configuration
 @PropertySource({"classpath:/application.properties"})
 @MapperScan(basePackages = {"org.scoula.mapper"})
+@ComponentScan(basePackages = {"org.scoula"})
 @Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
 //@MapperScan(basePackages = "org.scoula.mapper.chatbot")
