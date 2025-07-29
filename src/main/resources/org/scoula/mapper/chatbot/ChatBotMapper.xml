@@ -54,5 +54,46 @@
         VALUES (#{userId}, #{errorMessage}, #{errorType.name})
     </insert>
 
+<!--    종목 추천 저장 -->
+    <insert id="insertAnalysis" parameterType="org.scoula.domain.chatbot.dto.ChatAnalysisDto">
+        INSERT INTO chat_analysis (
+            ticker, name, region, per, roe, eps, price, updated_at,
+            pbr, open, high, low, volume, avg_price,
+            foreign_rate, turn_rate, high52w, low52w
+        ) VALUES (
+                     #{ticker}, #{name}, #{region}, #{per}, #{roe}, #{eps}, #{price}, #{updatedAt},
+                     #{pbr}, #{open}, #{high}, #{low}, #{volume}, #{avgPrice},
+                     #{foreignRate}, #{turnRate}, #{high52w}, #{low52w}
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 name = VALUES(name),
+                                 region = VALUES(region),
+                                 per = VALUES(per),
+                                 roe = VALUES(roe),
+                                 eps = VALUES(eps),
+                                 price = VALUES(price),
+                                 updated_at = VALUES(updated_at),
+                                 pbr = VALUES(pbr),
+                                 open = VALUES(open),
+                                 high = VALUES(high),
+                                 low = VALUES(low),
+                                 volume = VALUES(volume),
+                                 avg_price = VALUES(avg_price),
+                                 foreign_rate = VALUES(foreign_rate),
+                                 turn_rate = VALUES(turn_rate),
+                                 high52w = VALUES(high52w),
+                                 low52w = VALUES(low52w)
+    </insert>
+
+    <insert id="insertRecommendation" parameterType="org.scoula.domain.chatbot.dto.ChatRecommendationDto">
+        INSERT INTO chat_recommendation (
+            user_id, ticker, recommend_type, reason, expected_return, risk_level, created_at
+        ) VALUES (
+                     #{userId}, #{ticker}, #{recommendType}, #{reason}, #{expectedReturn}, #{riskLevel}, #{createdAt}
+                 )
+    </insert>
+
+
+
 
 </mapper>
