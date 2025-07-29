@@ -27,11 +27,8 @@ public class UserProfileService {
         return dto != null ? dto.getDescription() : "성향 정보 없음";
     }
     public String buildProfileSummaryByUserId(Integer userId) {
-        String username = userService.getUsernameByUserId(userId);
-        log.info("🔍 [UserProfile] userId={} -> username={}", userId, username);
-
-        String riskType = userService.getRiskTypeNameByUsername(username);
-        log.info("🔍 [UserProfile] username={} -> riskType={}", username, riskType);
+        String riskType = userService.getRiskTypeByUserId(userId);
+        log.info("🔍 [UserProfile] userId={} -> riskType={}", userId, riskType);
 
         var dto = investmentTypeMapper.findByRiskType(riskType);
         log.info("🔍 [UserProfile] riskType={} -> dto={}", riskType, dto);

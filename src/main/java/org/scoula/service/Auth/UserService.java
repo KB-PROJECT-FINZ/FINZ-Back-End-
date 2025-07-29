@@ -23,4 +23,13 @@ public class UserService {
     public String getUsernameByUserId(Integer userId) {
         return userMapper.findUsernameByUserId(userId);
     }
+    public String getRiskTypeByUsername(String username) {
+        return userMapper.findRiskTypeByUsername(username);
+    }
+    public String getRiskTypeByUserId(Integer userId) {
+        return userMapper.findRiskTypeByUserId(userId);
+    }
+
+
+
 }
