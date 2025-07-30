@@ -3,13 +3,18 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+
 # application.properties 무시
 src/main/resources/application.properties
 src/main/resources/config.properties
+
+# 실행 파일 무시
+src/main/webapp/assets/
 src/main/webapp/resources/assets/
 src/main/webapp/resources/index.html
 
 ### IntelliJ IDEA ###
+.idea/
 .idea/modules.xml
 .idea/workspace.xml
 .idea/jarRepositories.xml
@@ -22,6 +27,15 @@ src/main/webapp/resources/index.html
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
+# IDEA 내부 파일 충돌 방지
+.idea/shelf/
+.idea/**/shelf/
+.idea/**/dataSources/
+.idea/**/dataSources.local.xml
+.idea/**/workspace.xml
+.idea/**/*.corrupted.*
+.idea/**/shelved.patch
 
 ### Eclipse ###
 .apt_generated
