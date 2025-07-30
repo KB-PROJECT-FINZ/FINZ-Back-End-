@@ -27,8 +27,10 @@ public interface ChatBotMapper {
     // 에러 저장
     void insertChatError(ChatErrorDto errorDto);
 
-    // 종목추천 저장
+    // 종목 분석 내용 저장
     void insertAnalysis(ChatAnalysisDto dto);
+    
+    // 종목 추천 내용 저장
     void insertRecommendation(ChatRecommendationDto dto);
 
 

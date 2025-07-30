@@ -85,13 +85,16 @@
                                  low52w = VALUES(low52w)
     </insert>
 
-    <insert id="insertRecommendation" parameterType="org.scoula.domain.chatbot.dto.ChatRecommendationDto">
-        INSERT INTO chat_recommendation (
-            user_id, ticker, recommend_type, reason, expected_return, risk_level, created_at
+    <insert id="insertRecommendation" parameterType="org.scoula.domain.chatbot.dto.ChatRecommendationDto" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO chat_recommendations (
+            user_id, ticker, recommend_type, reason,
+            expected_return, risk_level, risk_type, created_at
         ) VALUES (
-                     #{userId}, #{ticker}, #{recommendType}, #{reason}, #{expectedReturn}, #{riskLevel}, #{createdAt}
+                     #{userId}, #{ticker}, #{recommendType}, #{reason},
+                     #{expectedReturn}, #{riskLevel}, #{riskType}, NOW()
                  )
     </insert>
+
 
 
 

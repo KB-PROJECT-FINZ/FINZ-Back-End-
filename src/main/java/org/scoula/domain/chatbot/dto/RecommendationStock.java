@@ -26,4 +26,9 @@ public class RecommendationStock {
     private String high52w;
     private String low52w;
 
+
+    // GPT나 내부 계산에서 나오는 예상 수익률, 리스크 정도
+    private String expectedReturn;  
+    private String riskLevel;       
+
 }
