@@ -1,0 +1,29 @@
+Index: .idea/dataSources.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"DataSourceManagerImpl\" format=\"xml\" multifile-model=\"true\">\n    <data-source source=\"LOCAL\" name=\"test@localhost\" uuid=\"0b064f24-2aff-4d63-bda1-0d2aad3fc4a9\">\n      <driver-ref>mysql.8</driver-ref>\n      <synchronize>true</synchronize>\n      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>\n      <jdbc-url>jdbc:mysql://localhost:3306/test</jdbc-url>\n      <jdbc-additional-properties>\n        <property name=\"com.intellij.clouds.kubernetes.db.host.port\" />\n        <property name=\"com.intellij.clouds.kubernetes.db.enabled\" value=\"false\" />\n        <property name=\"com.intellij.clouds.kubernetes.db.container.port\" />\n      </jdbc-additional-properties>\n      <working-dir>$ProjectFileDir$</working-dir>\n    </data-source>\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/dataSources.xml b/.idea/dataSources.xml
+--- a/.idea/dataSources.xml	(revision b70453b39a0a8c60702a256d5be13538a3b3355f)
++++ b/.idea/dataSources.xml	(date 1753337074053)
+@@ -13,5 +13,17 @@
+       </jdbc-additional-properties>
+       <working-dir>$ProjectFileDir$</working-dir>
+     </data-source>
++    <data-source source="LOCAL" name="kb_dev@kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com" uuid="daa883bf-d32b-4c6a-b334-62f2c7881fd8">
++      <driver-ref>mysql_aurora.aws_wrapper</driver-ref>
++      <synchronize>true</synchronize>
++      <jdbc-driver>software.amazon.jdbc.Driver</jdbc-driver>
++      <jdbc-url>jdbc:aws-wrapper:mysql://kb-project.c102ac0ikirs.ap-northeast-2.rds.amazonaws.com:3306/kb_dev</jdbc-url>
++      <jdbc-additional-properties>
++        <property name="com.intellij.clouds.kubernetes.db.host.port" />
++        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
++        <property name="com.intellij.clouds.kubernetes.db.container.port" />
++      </jdbc-additional-properties>
++      <working-dir>$ProjectFileDir$</working-dir>
++    </data-source>
+   </component>
+ </project>
+\ No newline at end of file
