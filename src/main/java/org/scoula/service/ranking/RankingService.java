@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface RankingService {
-    MyRankingDto getMyRanking(Long userId, String recordDate);
-    List<PopularStockDto> getTop5Stocks();
+    MyRankingDto getMyRanking(Long userId, String baseDate);
+    List<PopularStockDto> getTop5Stocks(String baseDate);
     List<RankingByTraitGroupDto> getWeeklyRanking();
     Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking();
 }

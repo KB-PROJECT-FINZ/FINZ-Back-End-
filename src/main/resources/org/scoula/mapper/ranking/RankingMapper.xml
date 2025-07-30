@@ -7,68 +7,72 @@
 
     <!-- (1) 내 수익률 및 전체 순위 -->
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
-      <![CDATA[
+       <![CDATA[
         SELECT
             ah.account_id AS user_id,
             ah.profit_rate AS gain_rate,
+            u.risk_type AS risk_type,
             (
                 SELECT COUNT(*) + 1
                 FROM asset_history sub
-                WHERE sub.record_date = #{recordDate}
+                WHERE sub.record_date = #{baseDate}
                   AND sub.profit_rate > ah.profit_rate
             ) AS ranking,
             (
-                SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{recordDate}), 2)
+                SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{baseDate}), 2)
                 FROM asset_history sub
-                WHERE sub.record_date = #{recordDate}
+                WHERE sub.record_date = #{baseDate}
                   AND sub.profit_rate <= ah.profit_rate
             ) AS top_percent
         FROM asset_history ah
+                 JOIN user u ON ah.account_id = u.id
         WHERE ah.account_id = #{userId}
-          AND ah.record_date = #{recordDate}
+          AND ah.record_date = #{baseDate}
         ]]>
     </select>
 
     <!-- (2) 전체 인기 종목 Top5 -->
     <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         SELECT
-            ps.stock_code,
-            ps.stock_name,
-            ps.transaction_count,
-            ps.ranking,
-            s.image_url
-        FROM popular_stocks ps
-                 JOIN stocks s ON ps.stock_code = s.code
-        WHERE ps.record_date = #{recordDate}
-        ORDER BY ps.ranking ASC
+            t.stock_code AS stock_code,
+            s.name AS stock_name,
+            COUNT(*) AS transaction_count,
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking,
+                s.image_url AS image_url
+        FROM transactions t
+                 JOIN stocks s ON t.stock_code = s.code
+        WHERE DATE(t.executed_at) = #{baseDate}
+        GROUP BY t.stock_code, s.name, s.image_url
+        ORDER BY transaction_count DESC
             LIMIT 5
     </select>
 
     <!-- (3) 전체 상위 수익률 TOP 100 -->
     <select id="selectTopRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="string">
         SELECT account_id AS user_id, profit_rate AS gain_rate, ranking,
-               NULL AS top_percent
+               NULL AS top_percent,
+               NULL AS risk_type
         FROM (
                  SELECT account_id, profit_rate,
                         RANK() OVER (ORDER BY profit_rate DESC) AS ranking
                  FROM asset_history
-                 WHERE record_date = #{recordDate}
+                 WHERE record_date = #{baseDate}
              ) ranked
             LIMIT 100
     </select>
 
     <!-- (4) 성향 그룹별 상위 수익률 TOP 100 -->
     <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="map">
-        SELECT ah.account_id AS user_id, tt.trait_group, ah.profit_rate AS gain_rate, ranking
+        SELECT ah.account_id AS user_id, tt.group_code AS trait_group, ah.profit_rate AS gain_rate, ranking
         FROM (
                  SELECT account_id, profit_rate,
                         RANK() OVER (ORDER BY profit_rate DESC) AS ranking
                  FROM asset_history
-                 WHERE record_date = #{recordDate}
+                 WHERE record_date = #{baseDate}
              ) ah
-                 JOIN users u ON ah.account_id = u.id
-                 JOIN trait_types tt ON u.risk_type = tt.code
-        WHERE tt.trait_group = #{traitGroup}
+                 JOIN user u ON ah.account_id = u.id
+                 JOIN risk_types tt ON u.risk_type = tt.code
+        WHERE tt.group_code = #{traitGroup}
             LIMIT 100
     </select>
 

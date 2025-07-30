@@ -25,23 +25,25 @@ public class RankingServiceImpl implements RankingService {
         return monday.toString(); // 'YYYY-MM-DD' 형식
     }
     @Override
-    public MyRankingDto getMyRanking(Long userId, String recordDate) {
-        if (recordDate == null || recordDate.isEmpty()) {
-            recordDate = getThisWeekMondayDate();
+    public MyRankingDto getMyRanking(Long userId, String baseDate) {
+        if (baseDate == null || baseDate.isBlank()) {
+            baseDate = getThisWeekMondayDate();
         }
-        return rankingMapper.selectMyRanking(userId, recordDate);
+        return rankingMapper.selectMyRanking(userId, baseDate);
     }
 
     @Override
-    public List<PopularStockDto> getTop5Stocks() {
-        String recordDate = getThisWeekMondayDate();
-        return rankingMapper.selectPopularStocks(recordDate);
+    public List<PopularStockDto> getTop5Stocks(String baseDate) {
+        if (baseDate == null || baseDate.isBlank()) {
+            baseDate = getThisWeekMondayDate();
+        }
+        return rankingMapper.selectPopularStocks(baseDate);
     }
 
     @Override
     public List<RankingByTraitGroupDto> getWeeklyRanking() {
-        String recordDate = getThisWeekMondayDate();
-        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(recordDate);
+        String baseDate = getThisWeekMondayDate();
+        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(baseDate);
         return top100.stream()
                 .map(dto -> new RankingByTraitGroupDto(dto.getUserId(), "UNKNOWN", dto.getGainRate(), dto.getRanking()))
                 .collect(Collectors.toList());
@@ -49,12 +51,12 @@ public class RankingServiceImpl implements RankingService {
 
     @Override
     public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking() {
-        String recordDate = getThisWeekMondayDate();
+        String baseDate = getThisWeekMondayDate();
         List<String> groups = List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "SPECIAL");
 
         Map<String, List<RankingByTraitGroupDto>> result = new HashMap<>();
         for (String group : groups) {
-            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, recordDate);
+            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, baseDate);
             result.put(group, list);
         }
         return result;

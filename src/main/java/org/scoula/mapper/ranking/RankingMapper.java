@@ -8,15 +8,15 @@ import java.util.List;
 
 @Mapper
 public interface RankingMapper {
-    MyRankingDto selectMyRanking(@Param("userId") Long userId,
-                                 @Param("recordDate") String recordDate);
+    MyRankingDto selectMyRanking(@Param("userId") Long userId, @Param("baseDate") String baseDate);
+    List<PopularStockDto> selectPopularStocks(@Param("baseDate") String baseDate);
 
-    List<PopularStockDto> selectPopularStocks(@Param("recordDate") String recordDate);
+    List<MyRankingDto> selectTopRanking(@Param("baseDate") String baseDate);
 
-    List<MyRankingDto> selectTopRanking(@Param("recordDate") String recordDate);
-
-    List<RankingByTraitGroupDto> selectTopRankingByTraitGroup(@Param("traitGroup") String traitGroup,
-                                                              @Param("recordDate") String recordDate);
+    List<RankingByTraitGroupDto> selectTopRankingByTraitGroup(
+            @Param("traitGroup") String traitGroup,
+            @Param("baseDate") String baseDate
+    );
 }
 
 
