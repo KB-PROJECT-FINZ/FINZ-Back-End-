@@ -49,7 +49,6 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -77,14 +76,12 @@
   "keyToString": {
     "Gradle.Build FINZ-Back-End-.executor": "Run",
     "Gradle.Build FinzBack.executor": "Run",
-    "Gradle.FinzBack 빌드.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "Tomcat 서버.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "feature/LoginForm",
+    "git-widget-placeholder": "#51 on Merging feature/mypage",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/tuffh/Desktop/국민은행 파이널 프로젝트/FinzBack/src/main/webapp/WEB-INF",
+    "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -101,12 +98,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\webapp\WEB-INF" />
       <recent name="C:\KB_Fullstack\FINZ-Back-End-\src\main\java\org\scoula\controller\mocktrading" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\resources" />
-      <recent name="C:\Users\tuffh\Desktop\국민은행 파이널 프로젝트\FinzBack\src\main\webapp\WEB-INF" />
     </key>
   </component>
   <component name="RunManager">
@@ -224,15 +216,7 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
+  <component name="VcsManagerConfiguration">
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
 </project>
