@@ -4,6 +4,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
+import org.scoula.domain.learning.dto.QuizResultDTO;
 import org.scoula.domain.learning.vo.LearningContentVO;
 import org.scoula.domain.learning.vo.LearningHistoryVO;
 import org.scoula.domain.learning.vo.LearningQuizVO;
@@ -18,7 +19,7 @@ public interface LearningMapper {
     LearningQuizVO getQuizById(int quizId);
     LearningContentDTO getContentById(int id);
     void insertLearningHistory(LearningHistoryDto dto);
-    void updateUserCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
+    int updateUserCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
     int getUserCredit(int userId);
     boolean hasQuizResult(@Param("userId") int userId, @Param("quizId") int quizId);
     void saveQuizResult(@Param("userId") int userId, @Param("quizId") int quizId, 
@@ -26,4 +27,5 @@ public interface LearningMapper {
                        @Param("creditEarned") int creditEarned);
     int isUserIdAndContentId(@Param("userId") int userId, @Param("contentId") int contentId);
     List<LearningHistoryVO> getLearningHistoryList(@Param("userId") int userId);
+    QuizResultDTO getQuizResult(@Param("userId") int userId, @Param("quizId") int quizId);
 }

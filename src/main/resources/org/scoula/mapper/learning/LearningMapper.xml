@@ -86,4 +86,17 @@
         credit_earned = #{creditEarned},
         attempted_at = NOW()
     </insert>
+
+    <!-- 퀴즈 결과 상세 조회 -->
+    <select id="getQuizResult" resultType="org.scoula.domain.learning.dto.QuizResultDTO">
+        SELECT 
+            user_id as userId,
+            quiz_id as quizId,
+            is_correct as isCorrect,
+            selected_answer as selectedAnswer,
+            credit_earned as creditEarned,
+            attempted_at as attemptedAt
+        FROM user_quiz_results 
+        WHERE user_id = #{userId} AND quiz_id = #{quizId}
+    </select>
 </mapper>

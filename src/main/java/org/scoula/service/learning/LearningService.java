@@ -3,6 +3,7 @@ package org.scoula.service.learning;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
+import org.scoula.domain.learning.dto.QuizResultDTO;
 import java.util.List;
 
 public interface LearningService {
@@ -17,4 +18,5 @@ public interface LearningService {
     boolean hasCompleted(int userId, int contentId);
     List<LearningHistoryDto> getLearningHistoryList(int userId);
     void saveResult(int userId, int quizId, boolean isCorrect, String selectedAnswer, int creditEarned);
+    QuizResultDTO getQuizResult(int userId, int quizId);
 }

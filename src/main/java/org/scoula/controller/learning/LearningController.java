@@ -107,6 +107,18 @@ public class LearningController {
         }
     }
 
+    // 퀴즈 결과 상세 조회
+    @GetMapping("/quiz/result/detail")
+    public ResponseEntity<QuizResultDTO> getQuizResult(@RequestParam int userId, @RequestParam int quizId) {
+        try {
+            QuizResultDTO result = learningService.getQuizResult(userId, quizId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
+    }
+
     // 퀴즈 결과 저장 (오답용)
     @PostMapping("/quiz/result/save")
     public ResponseEntity<String> saveQuizResult(@RequestBody QuizResultDTO dto) {
