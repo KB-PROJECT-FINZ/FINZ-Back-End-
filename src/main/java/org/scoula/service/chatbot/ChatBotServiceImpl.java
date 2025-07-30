@@ -342,34 +342,43 @@ public class ChatBotServiceImpl implements ChatBotService {
     }
 
     // 파싱 메서드
-    public List<ChatRecommendationDto> parseRecommendationText(String gptResponse, List<ChatAnalysisDto> stockList, Integer userId,  String riskType) {
+    public List<ChatRecommendationDto> parseRecommendationText(
+            String gptResponse, List<ChatAnalysisDto> stockList, Integer userId, String riskType) {
+
         List<ChatRecommendationDto> result = new ArrayList<>();
 
-        Map<String, String> reasonMap = new HashMap<>();
-        for (String line : gptResponse.split("\n")) {
-            if (line.contains(":")) {
-                String[] parts = line.split(":", 2);
-                String name = parts[0].replaceAll("[-•()\\s]", "").trim(); // 종목명
-                String reason = parts[1].trim();
-                reasonMap.put(name, reason);
-            }
-        }
+        try {
+            JsonNode root = objectMapper.readTree(gptResponse);
 
-        for (ChatAnalysisDto stock : stockList) {
-            String reason = reasonMap.getOrDefault(stock.getName().replaceAll("\\s+", ""), "추천 사유 없음");
-            result.add(ChatRecommendationDto.builder()
-                    .userId(userId)
-                    .ticker(stock.getTicker())
-                    .recommendType("RECOMMEND_PROFILE")
-                    .reason(reason)
-                    .riskLevel(null)  // 법적 제한으로 null
-                    .expectedReturn(null)  // 법적 제한으로 null
-                    .riskType(riskType)
-                    .createdAt(LocalDateTime.now())
-                    .build());
+            for (JsonNode node : root) {
+                String ticker = node.get("ticker").asText();
+                String reason = node.get("reason").asText();
+
+                ChatAnalysisDto stock = stockList.stream()
+                        .filter(s -> s.getTicker().equals(ticker))
+                        .findFirst()
+                        .orElse(null);
+
+                if (stock == null) continue;
+
+                result.add(ChatRecommendationDto.builder()
+                        .userId(userId)
+                        .ticker(ticker)
+                        .recommendType("RECOMMEND_PROFILE")
+                        .reason(reason)
+                        .riskLevel(null)
+                        .expectedReturn(null)
+                        .riskType(riskType)
+                        .createdAt(LocalDateTime.now())
+                        .build());
+            }
+
+        } catch (Exception e) {
+            log.warn("❗ GPT 응답 파싱 실패: {}", e.getMessage());
         }
 
         return result;
     }
+
 
 }
