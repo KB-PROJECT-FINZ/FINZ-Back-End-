@@ -4,18 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeExecutionClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeExecutionClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeNxtBidsAndAsksClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeNxtBidsAndAsksClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/StockController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/StockController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/mocktrading/RealtimeStockDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/mocktrading/RealtimeStockDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/Main.java" afterDir="false" />
-    </list>
+    <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
