@@ -5,19 +5,22 @@
 
     <!-- Root Context: defines shared resources visible to all other web components -->
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
-        <property name="host" value="smtp.naver.com" />
-        <property name="port" value="465" />
-        <property name="username" value="tuffhrgha704@naver.com" />
-        <property name="password" value="네이버 로그인 비밀번호" />
-        <property name="defaultEncoding" value="utf-8" />
+        <property name="host" value="smtp.naver.com"/>
+        <property name="port" value="465"/>
+        <property name="username" value="portfolio0704"/>
+        <property name="password" value="chlckddus1!"/>
+        <property name="defaultEncoding" value="utf-8"/>
 
         <property name="javaMailProperties">
             <props>
                 <prop key="mail.smtp.auth">true</prop>
                 <prop key="mail.smtp.ssl.enable">true</prop>
+                <prop key="mail.smtp.socketFactory.class">javax.net.ssl.SSLSocketFactory</prop>
+                <prop key="mail.smtp.socketFactory.port">465</prop>
+                <prop key="mail.smtp.socketFactory.fallback">false</prop>
                 <prop key="mail.smtp.ssl.trust">smtp.naver.com</prop>
-                <prop key="mail.smtp.ssl.checkserveridentity">false</prop>
                 <prop key="mail.debug">true</prop>
+                <prop key="mail.smtp.ssl.protocols">TLSv1.2</prop>
             </props>
         </property>
     </bean>
