@@ -66,6 +66,7 @@ public class AuthController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("userId", loginUser.getId());
+        result.put("username", loginUser.getUsername());
         result.put("name", loginUser.getName());
         result.put("riskType", loginUser.getRiskType());
         result.put("groupCode", groupCode);
