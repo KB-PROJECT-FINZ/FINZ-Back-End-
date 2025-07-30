@@ -1,7 +1,7 @@
 package org.scoula.domain.mocktrading;
 
 public class RealtimeStockDto {
-    
+
     // 기본 정보
     private String stockCode;           // MKSC_SHRN_ISCD - 유가증권 단축 종목코드
     private String contractTime;        // STCK_CNTG_HOUR - 주식 체결 시간
@@ -10,45 +10,45 @@ public class RealtimeStockDto {
     private String prevDayDiff;         // PRDY_VRSS - 전일 대비
     private String prevDayRate;         // PRDY_CTRT - 전일 대비율
     private String weightedAvgPrice;    // WGHN_AVRG_STCK_PRC - 가중 평균 주식 가격
-    
+
     // 시가/고가/저가
     private String openPrice;           // STCK_OPRC - 주식 시가
     private String highPrice;           // STCK_HGPR - 주식 최고가
     private String lowPrice;            // STCK_LWPR - 주식 최저가
-    
+
     // 호가 정보
     private String askPrice1;           // ASKP1 - 매도호가1
     private String bidPrice1;           // BIDP1 - 매수호가1
-    
+
     // 거래량 정보
     private String contractVolume;      // CNTG_VOL - 체결 거래량
     private String accumulatedVolume;   // ACML_VOL - 누적 거래량
     private String accumulatedAmount;   // ACML_TR_PBMN - 누적 거래 대금
-    
+
     // 체결 건수
     private String sellContractCount;   // SELN_CNTG_CSNU - 매도 체결 건수
     private String buyContractCount;    // SHNU_CNTG_CSNU - 매수 체결 건수
     private String netBuyCount;         // NTBY_CNTG_CSNU - 순매수 체결 건수
-    
+
     // 체결 정보
     private String contractIntensity;   // CTTR - 체결강도
     private String totalSellVolume;     // SELN_CNTG_SMTN - 총 매도 수량
     private String totalBuyVolume;      // SHNU_CNTG_SMTN - 총 매수 수량
-    private String contractType;        // CCLD_DVSN - 체결구분
+    private String contractClassCode;   // CNTG_CLS_CODE - 체결구분 (수정: contractType → contractClassCode)
     private String buyRate;             // SHNU_RATE - 매수비율
     private String volumeRate;          // PRDY_VOL_VRSS_ACML_VOL_RATE - 전일 거래량 대비 등락율
-    
+
     // 시간별 정보
     private String openTime;            // OPRC_HOUR - 시가 시간
     private String openVsCurrentSign;   // OPRC_VRSS_PRPR_SIGN - 시가대비구분
     private String openVsCurrentDiff;   // OPRC_VRSS_PRPR - 시가대비
-    private String highTime;            // HGPR_HOUR - 최고가 시간
+    private String highTime;            // HGPR_HOUR - 최고가 시간 (수정: 고가 → 최고가)
     private String highVsCurrentSign;   // HGPR_VRSS_PRPR_SIGN - 고가대비구분
     private String highVsCurrentDiff;   // HGPR_VRSS_PRPR - 고가대비
-    private String lowTime;             // LWPR_HOUR - 최저가 시간
+    private String lowTime;             // LWPR_HOUR - 최저가 시간 (수정: 저가 → 최저가)
     private String lowVsCurrentSign;    // LWPR_VRSS_PRPR_SIGN - 저가대비구분
     private String lowVsCurrentDiff;    // LWPR_VRSS_PRPR - 저가대비
-    
+
     // 기타 정보
     private String businessDate;        // BSOP_DATE - 영업 일자
     private String marketOperationCode; // NEW_MKOP_CLS_CODE - 신 장운영 구분 코드
@@ -62,27 +62,27 @@ public class RealtimeStockDto {
     private String prevSameTimeRate;    // PRDY_SMNS_HOUR_ACML_VOL_RATE - 전일 동시간 누적 거래량 비율
     private String hourCode;            // HOUR_CLS_CODE - 시간 구분 코드
     private String marketCloseCode;     // MRKT_TRTM_CLS_CODE - 임의종료구분코드
-    private String viStandardPrice;     // VI_STND_PRC - 정적VI발동기준가
+    private String viStandardPrice;     // VL_STND_PRC - 정적VI발동기준가 (수정: VI_STND_PRC → VL_STND_PRC)
 
     // ✅ 기본 생성자
     public RealtimeStockDto() {}
 
     // ✅ 모든 필드 생성자
-    public RealtimeStockDto(String stockCode, String contractTime, String currentPrice, 
-                           String prevDaySign, String prevDayDiff, String prevDayRate,
-                           String weightedAvgPrice, String openPrice, String highPrice, 
-                           String lowPrice, String askPrice1, String bidPrice1,
-                           String contractVolume, String accumulatedVolume, String accumulatedAmount,
-                           String sellContractCount, String buyContractCount, String netBuyCount,
-                           String contractIntensity, String totalSellVolume, String totalBuyVolume,
-                           String contractType, String buyRate, String volumeRate,
-                           String openTime, String openVsCurrentSign, String openVsCurrentDiff,
-                           String highTime, String highVsCurrentSign, String highVsCurrentDiff,
-                           String lowTime, String lowVsCurrentSign, String lowVsCurrentDiff,
-                           String businessDate, String marketOperationCode, String tradeHaltYn,
-                           String askRemainQty1, String bidRemainQty1, String totalAskRemainQty,
-                           String totalBidRemainQty, String volumeTurnoverRate, String prevSameTimeVolume,
-                           String prevSameTimeRate, String hourCode, String marketCloseCode, String viStandardPrice) {
+    public RealtimeStockDto(String stockCode, String contractTime, String currentPrice,
+                            String prevDaySign, String prevDayDiff, String prevDayRate,
+                            String weightedAvgPrice, String openPrice, String highPrice,
+                            String lowPrice, String askPrice1, String bidPrice1,
+                            String contractVolume, String accumulatedVolume, String accumulatedAmount,
+                            String sellContractCount, String buyContractCount, String netBuyCount,
+                            String contractIntensity, String totalSellVolume, String totalBuyVolume,
+                            String contractClassCode, String buyRate, String volumeRate,
+                            String openTime, String openVsCurrentSign, String openVsCurrentDiff,
+                            String highTime, String highVsCurrentSign, String highVsCurrentDiff,
+                            String lowTime, String lowVsCurrentSign, String lowVsCurrentDiff,
+                            String businessDate, String marketOperationCode, String tradeHaltYn,
+                            String askRemainQty1, String bidRemainQty1, String totalAskRemainQty,
+                            String totalBidRemainQty, String volumeTurnoverRate, String prevSameTimeVolume,
+                            String prevSameTimeRate, String hourCode, String marketCloseCode, String viStandardPrice) {
         this.stockCode = stockCode;
         this.contractTime = contractTime;
         this.currentPrice = currentPrice;
@@ -104,7 +104,7 @@ public class RealtimeStockDto {
         this.contractIntensity = contractIntensity;
         this.totalSellVolume = totalSellVolume;
         this.totalBuyVolume = totalBuyVolume;
-        this.contractType = contractType;
+        this.contractClassCode = contractClassCode;
         this.buyRate = buyRate;
         this.volumeRate = volumeRate;
         this.openTime = openTime;
@@ -132,8 +132,8 @@ public class RealtimeStockDto {
     }
 
     // ✅ 편의 메서드들
-    public String getContractTypeDescription() {
-        switch (contractType) {
+    public String getContractClassCodeDescription() {
+        switch (contractClassCode) {
             case "1": return "매수";
             case "3": return "장전";
             case "5": return "매도";
@@ -174,7 +174,7 @@ public class RealtimeStockDto {
     public String getContractIntensity() { return contractIntensity; }
     public String getTotalSellVolume() { return totalSellVolume; }
     public String getTotalBuyVolume() { return totalBuyVolume; }
-    public String getContractType() { return contractType; }
+    public String getContractClassCode() { return contractClassCode; }
     public String getBuyRate() { return buyRate; }
     public String getVolumeRate() { return volumeRate; }
     public String getOpenTime() { return openTime; }
@@ -222,7 +222,7 @@ public class RealtimeStockDto {
     public void setContractIntensity(String contractIntensity) { this.contractIntensity = contractIntensity; }
     public void setTotalSellVolume(String totalSellVolume) { this.totalSellVolume = totalSellVolume; }
     public void setTotalBuyVolume(String totalBuyVolume) { this.totalBuyVolume = totalBuyVolume; }
-    public void setContractType(String contractType) { this.contractType = contractType; }
+    public void setContractClassCode(String contractClassCode) { this.contractClassCode = contractClassCode; }
     public void setBuyRate(String buyRate) { this.buyRate = buyRate; }
     public void setVolumeRate(String volumeRate) { this.volumeRate = volumeRate; }
     public void setOpenTime(String openTime) { this.openTime = openTime; }
@@ -247,4 +247,16 @@ public class RealtimeStockDto {
     public void setHourCode(String hourCode) { this.hourCode = hourCode; }
     public void setMarketCloseCode(String marketCloseCode) { this.marketCloseCode = marketCloseCode; }
     public void setViStandardPrice(String viStandardPrice) { this.viStandardPrice = viStandardPrice; }
+
+    // ✅ 하위 호환성을 위한 deprecated 메서드들 (필요한 경우)
+    @Deprecated
+    public String getContractType() { return contractClassCode; }
+
+    @Deprecated
+    public void setContractType(String contractType) { this.contractClassCode = contractType; }
+
+    @Deprecated
+    public String getContractTypeDescription() {
+        return getContractClassCodeDescription();
+    }
 }

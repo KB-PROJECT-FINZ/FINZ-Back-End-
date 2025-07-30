@@ -65,7 +65,7 @@ public class TokenManager {
         // SUB 토큰도 백그라운드에서 함께 발급 (실패해도 MAIN 토큰은 정상 반환)
         try {
             getTokenInfo(TokenType.SUB);
-            System.out.println("[TokenManager] MAIN + SUB 토큰 모두 발급 완료");
+            // System.out.println("[TokenManager] MAIN + SUB 토큰 모두 발급 완료");
         } catch (Exception e) {
             System.err.println("[TokenManager] SUB 토큰 발급 실패 (MAIN은 정상): " + e.getMessage());
         }
@@ -93,7 +93,7 @@ public class TokenManager {
                 long expireTime = rs.getLong("expire_time");
 
                 if (System.currentTimeMillis() < expireTime) {
-                    System.out.println("[TokenManager] 기존 토큰 사용 (" + type + ")");
+                    // System.out.println("[TokenManager] 기존 토큰 사용 (" + type + ")");
                     return new TokenInfo(token, approvalKey, expireTime);
                 }
             }
