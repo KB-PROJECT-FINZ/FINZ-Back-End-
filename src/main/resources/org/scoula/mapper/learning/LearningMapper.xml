@@ -57,11 +57,10 @@
     <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
         SELECT lc.*
         FROM learning_contents lc
+                 LEFT JOIN user_learning_history ulh
+                           ON lc.content_id = ulh.content_id AND ulh.user_id = #{userId}
         WHERE lc.group_code = #{groupCode}
-          AND lc.content_id NOT IN (
-            SELECT content_id FROM user_learning_history
-            WHERE user_id = #{userId}
-        )
+          AND ulh.content_id IS NULL
     </select>
 
     <select id="findTitlesByGroupCode" resultType="string">
