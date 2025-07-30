@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,16 +180,21 @@ public class ChatBotServiceImpl implements ChatBotService {
                         chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
                     }
 
-                    // 8-1. GPT 분석 요청 프롬프트
+                    // 8-1. GPT 분석 요청 프롬프트에 요청 ( 응답 json)
                     String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
+                    String analysisResponse = openAiClient.getChatCompletion(analysisPrompt);
 
+                    // 8-3. 추천 사유 파싱 → DB 저장
 
-                    // 5,6 에서 저장된 추천 종목의 값을 gpt로 보내서 상세한 분석 요청
-                    // 분석 후 이유와 상세한 기술적 지표, 설명 등 응답 하게 만듦.
-                    // 추천한 이유를 DB에 저장(ChatRecommendationDto.reason)
+                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType);
+                    for (ChatRecommendationDto dto : recResults) {
+                        chatBotMapper.insertRecommendation(dto);
+                    }
+
 
                     // 8. GPT 프롬프트 구성
-                    prompt = promptBuilder.buildForProfile(userId, summary, analysisList);
+                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults,analysisList);
+
 
                     break;
 
@@ -332,6 +339,37 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     User: %s
     """.formatted(userMessage);
+    }
+
+    // 파싱 메서드
+    public List<ChatRecommendationDto> parseRecommendationText(String gptResponse, List<ChatAnalysisDto> stockList, Integer userId,  String riskType) {
+        List<ChatRecommendationDto> result = new ArrayList<>();
+
+        Map<String, String> reasonMap = new HashMap<>();
+        for (String line : gptResponse.split("\n")) {
+            if (line.contains(":")) {
+                String[] parts = line.split(":", 2);
+                String name = parts[0].replaceAll("[-•()\\s]", "").trim(); // 종목명
+                String reason = parts[1].trim();
+                reasonMap.put(name, reason);
+            }
+        }
+
+        for (ChatAnalysisDto stock : stockList) {
+            String reason = reasonMap.getOrDefault(stock.getName().replaceAll("\\s+", ""), "추천 사유 없음");
+            result.add(ChatRecommendationDto.builder()
+                    .userId(userId)
+                    .ticker(stock.getTicker())
+                    .recommendType("RECOMMEND_PROFILE")
+                    .reason(reason)
+                    .riskLevel(null)  // 법적 제한으로 null
+                    .expectedReturn(null)  // 법적 제한으로 null
+                    .riskType(riskType)
+                    .createdAt(LocalDateTime.now())
+                    .build());
+        }
+
+        return result;
     }
 
 }
