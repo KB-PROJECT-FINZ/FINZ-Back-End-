@@ -5,51 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/org/scoula/util/mocktrading/ConfigManager.class" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/vo/LearningHistoryVO.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/StockMapper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/mocktrading/StockMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/1bb3924b-7c1a-4319-87ee-b1bf56cfee93.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/1bb3924b-7c1a-4319-87ee-b1bf56cfee93.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kb_final.sql" beforeDir="false" afterPath="$PROJECT_DIR$/kb_final.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/BidsAndAsksManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/BidsAndAsksManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeBidsAndAsksClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeBidsAndAsksClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeNxtBidsAndAsksClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/RealtimeNxtBidsAndAsksClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/VolumeRankingApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/VolumeRankingApi.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/RootConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/RootConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/ServletConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/ServletConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/MarketController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/MarketController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/AnalysisController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/AnalysisController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/RankingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/RankingController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/dto/LearningHistoryDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/dto/LearningHistoryDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/MyRankingDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/MyRankingDto.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/PopularStockDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/PopularStockDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/TraitStockDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/TraitStockDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/WeeklyRankingDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/WeeklyRankingWithGroupDto.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/AnalysisMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/AnalysisMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/RankingByTraitGroupDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/RankingByTraitGroupDto.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/RankingMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/RankingMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/learning/LearningService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/learning/LearningService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/learning/LearningServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/learning/LearningServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/MarketService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/MarketService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/RealtimeExecutionRunner.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/mocktrading/RealtimeExecutionRunner.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/AnalysisService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/AnalysisService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/AnalysisServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/AnalysisServiceImpl.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingServiceImpl.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/util/mocktrading/ConfigManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/util/mocktrading/ConfigManager.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/AnalysisMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/AnalysisMapper.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/RankingMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/RankingMapper.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -94,6 +58,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Hwang-Dawon&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git&quot;,
+    &quot;accountId&quot;: &quot;bdcbd646-9958-458a-9c4e-dd709fde7b25&quot;
+  }
+}</component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -110,30 +86,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Gradle.Build FINZ-Back-End-.executor": "Run",
-    "Gradle.Build FinzBack.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "Merging feature/ranking",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.Build FINZ-Back-End-.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Build FinzBack.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Tomcat Server.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/ranking&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql",
-      "mysql_aurora"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;,
+      &quot;mysql_aurora&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\KB_Fullstack\FINZ-Back-End-\src\main\java\org\scoula\controller\mocktrading" />
@@ -232,8 +208,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-a94e463ab2e7-intellij.indexing.shared.core-IU-243.26053.27" />
-        <option value="bundled-js-predefined-d6986cc7102b-1632447f56bf-JavaScript-IU-243.26053.27" />
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
       </set>
     </attachedChunks>
   </component>
@@ -248,10 +224,23 @@
       <workItem from="1753366429098" duration="893000" />
       <workItem from="1753401933744" duration="14188000" />
       <workItem from="1753421535521" duration="23043000" />
+      <workItem from="1753775303735" duration="17817000" />
+      <workItem from="1753857971371" duration="7711000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

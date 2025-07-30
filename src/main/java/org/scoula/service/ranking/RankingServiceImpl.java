@@ -6,10 +6,10 @@ import org.scoula.mapper.ranking.RankingMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -18,68 +18,45 @@ public class RankingServiceImpl implements RankingService {
 
     private final RankingMapper rankingMapper;
 
+    private String getThisWeekMondayDate() {
+        LocalDate today = LocalDate.now();
+        // 이번 주 월요일 계산
+        LocalDate monday = today.with(DayOfWeek.MONDAY);
+        return monday.toString(); // 'YYYY-MM-DD' 형식
+    }
     @Override
-    public MyRankingDto getMyRanking(Long userId) {
-        MyRankingDto dto = new MyRankingDto();
-        dto.setUserId(userId);
-        dto.setGainRate(BigDecimal.valueOf(12.75));
-        dto.setRanking(17);
-        dto.setTopPercent(5.3); // 상위 5.3%
-        return dto;
+    public MyRankingDto getMyRanking(Long userId, String recordDate) {
+        if (recordDate == null || recordDate.isEmpty()) {
+            recordDate = getThisWeekMondayDate();
+        }
+        return rankingMapper.selectMyRanking(userId, recordDate);
     }
 
     @Override
     public List<PopularStockDto> getTop5Stocks() {
-        return List.of(
-                createStock("005930", "삼성전자", 3050, 1),
-                createStock("000660", "SK하이닉스", 2412, 2),
-                createStock("035720", "카카오", 1888, 3),
-                createStock("035420", "NAVER", 1742, 4),
-                createStock("051910", "LG화학", 1621, 5)
-        );
-    }
-
-    private PopularStockDto createStock(String code, String name, int txCount, int rank) {
-        PopularStockDto dto = new PopularStockDto();
-        dto.setStockCode(code);
-        dto.setStockName(name);
-        dto.setTransactionCount(txCount);
-        dto.setRanking(rank);
-        return dto;
+        String recordDate = getThisWeekMondayDate();
+        return rankingMapper.selectPopularStocks(recordDate);
     }
 
     @Override
     public List<RankingByTraitGroupDto> getWeeklyRanking() {
-        List<RankingByTraitGroupDto> list = new ArrayList<>();
-        for (int i = 1; i <= 10; i++) {
-            RankingByTraitGroupDto dto = new RankingByTraitGroupDto();
-            dto.setUserId((long) i);
-            dto.setTraitGroup(i % 2 == 0 ? "AGGRESSIVE" : "BALANCED");
-            dto.setGainRate(BigDecimal.valueOf(20.0 - i));
-            dto.setRanking(i);
-            list.add(dto);
-        }
-        return list;
+        String recordDate = getThisWeekMondayDate();
+        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(recordDate);
+        return top100.stream()
+                .map(dto -> new RankingByTraitGroupDto(dto.getUserId(), "UNKNOWN", dto.getGainRate(), dto.getRanking()))
+                .collect(Collectors.toList());
     }
 
     @Override
     public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking() {
-        Map<String, List<RankingByTraitGroupDto>> map = new LinkedHashMap<>();
+        String recordDate = getThisWeekMondayDate();
+        List<String> groups = List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "SPECIAL");
 
-        String[] groups = {"CONSERVATIVE", "BALANCED", "AGGRESSIVE", "ANALYTICAL", "EMOTIONAL"};
+        Map<String, List<RankingByTraitGroupDto>> result = new HashMap<>();
         for (String group : groups) {
-            List<RankingByTraitGroupDto> list = new ArrayList<>();
-            for (int i = 1; i <= 5; i++) {
-                RankingByTraitGroupDto dto = new RankingByTraitGroupDto();
-                dto.setUserId((long) (i + 100));
-                dto.setTraitGroup(group);
-                dto.setGainRate(BigDecimal.valueOf(10.0 + i));
-                dto.setRanking(i);
-                list.add(dto);
-            }
-            map.put(group, list);
+            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, recordDate);
+            result.put(group, list);
         }
-
-        return map;
+        return result;
     }
 }

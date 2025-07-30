@@ -6,64 +6,70 @@
 <mapper namespace="org.scoula.mapper.ranking.RankingMapper">
 
     <!-- (1) 내 수익률 및 전체 순위 -->
-    <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto">
+    <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
+      <![CDATA[
         SELECT
-        ah.user_id,
-        ah.profit_rate AS gain_rate,
-        (
-        SELECT COUNT(*) + 1
-        FROM asset_history sub
-        WHERE sub.date_type = #{dateType}
-        AND sub.base_date = #{baseDate}
-        AND sub.profit_rate > ah.profit_rate
-        ) AS ranking,
-        (
-        SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE date_type = #{dateType} AND base_date = #{baseDate}), 2)
-        FROM asset_history sub
-        WHERE sub.date_type = #{dateType}
-        AND sub.base_date = #{baseDate}
-        AND sub.profit_rate <= ah.profit_rate
-        ) AS top_percent
+            ah.account_id AS user_id,
+            ah.profit_rate AS gain_rate,
+            (
+                SELECT COUNT(*) + 1
+                FROM asset_history sub
+                WHERE sub.record_date = #{recordDate}
+                  AND sub.profit_rate > ah.profit_rate
+            ) AS ranking,
+            (
+                SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{recordDate}), 2)
+                FROM asset_history sub
+                WHERE sub.record_date = #{recordDate}
+                  AND sub.profit_rate <= ah.profit_rate
+            ) AS top_percent
         FROM asset_history ah
-        WHERE ah.user_id = #{userId}
-        AND ah.date_type = #{dateType}
-        AND ah.base_date = #{baseDate}
+        WHERE ah.account_id = #{userId}
+          AND ah.record_date = #{recordDate}
+        ]]>
     </select>
 
-    <!-- (2) 전체 인기 종목 Top5 (거래수 기준) -->
-    <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto">
-        SELECT stock_code, stock_name, transaction_count, ranking
-        FROM popular_stocks
-        WHERE date_type = #{dateType} AND base_date = #{baseDate}
-        ORDER BY ranking ASC
+    <!-- (2) 전체 인기 종목 Top5 -->
+    <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+        SELECT
+            ps.stock_code,
+            ps.stock_name,
+            ps.transaction_count,
+            ps.ranking,
+            s.image_url
+        FROM popular_stocks ps
+                 JOIN stocks s ON ps.stock_code = s.code
+        WHERE ps.record_date = #{recordDate}
+        ORDER BY ps.ranking ASC
             LIMIT 5
     </select>
 
     <!-- (3) 전체 상위 수익률 TOP 100 -->
-    <select id="selectTopRanking" resultType="org.scoula.domain.ranking.MyRankingDto">
-        SELECT user_id, profit_rate AS gain_rate, ranking,
+    <select id="selectTopRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="string">
+        SELECT account_id AS user_id, profit_rate AS gain_rate, ranking,
                NULL AS top_percent
         FROM (
-                 SELECT user_id, profit_rate,
+                 SELECT account_id, profit_rate,
                         RANK() OVER (ORDER BY profit_rate DESC) AS ranking
                  FROM asset_history
-                 WHERE date_type = #{dateType} AND base_date = #{baseDate}
+                 WHERE record_date = #{recordDate}
              ) ranked
             LIMIT 100
     </select>
 
     <!-- (4) 성향 그룹별 상위 수익률 TOP 100 -->
-    <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto">
-        SELECT ah.user_id, tt.trait_group, ah.profit_rate AS gain_rate, ranking
+    <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="map">
+        SELECT ah.account_id AS user_id, tt.trait_group, ah.profit_rate AS gain_rate, ranking
         FROM (
-                 SELECT user_id, profit_rate,
+                 SELECT account_id, profit_rate,
                         RANK() OVER (ORDER BY profit_rate DESC) AS ranking
                  FROM asset_history
-                 WHERE date_type = #{dateType} AND base_date = #{baseDate}
+                 WHERE record_date = #{recordDate}
              ) ah
-                 JOIN users u ON ah.user_id = u.id
+                 JOIN users u ON ah.account_id = u.id
                  JOIN trait_types tt ON u.risk_type = tt.code
         WHERE tt.trait_group = #{traitGroup}
             LIMIT 100
     </select>
+
 </mapper>

@@ -1,10 +1,12 @@
 package org.scoula.domain.ranking;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
 @Data
+@AllArgsConstructor
 public class RankingByTraitGroupDto {
     private Long userId;             // 사용자 ID
     private String traitGroup;       // 성향 그룹

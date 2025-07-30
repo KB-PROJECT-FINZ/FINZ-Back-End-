@@ -10,21 +10,21 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/ranking")
 @RequiredArgsConstructor
 public class RankingController {
 
-
     private final RankingService rankingService;
 
     @GetMapping("/my")
-    public MyRankingDto getMyRanking(@RequestParam Long userId) {
-        return rankingService.getMyRanking(userId);
+    public MyRankingDto getMyRanking(@RequestParam Long userId,
+                                     @RequestParam(required = false) String recordDate) {
+        return rankingService.getMyRanking(userId, recordDate);
     }
-
-    @GetMapping("/popular")
+    @GetMapping("/popular-stocks")
     public List<PopularStockDto> getTop5Stocks() {
         return rankingService.getTop5Stocks();
     }
@@ -33,7 +33,6 @@ public class RankingController {
     public List<RankingByTraitGroupDto> getWeeklyRanking() {
         return rankingService.getWeeklyRanking();
     }
-
     @GetMapping("/weekly/grouped")
     public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking() {
         return rankingService.getGroupedWeeklyRanking();
