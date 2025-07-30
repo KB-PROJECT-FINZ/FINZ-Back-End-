@@ -5,12 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/MailConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/MailConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/MailService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/MailService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/root-context.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/root-context.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/root-context.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/root-context.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/VariousChartApi.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -77,7 +75,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "#51 on Merging feature/mypage",
+    "git-widget-placeholder": "feature/mock-trading/main 병합 중",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
     "node.js.detected.package.eslint": "true",
@@ -230,9 +228,6 @@
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Changes" />
