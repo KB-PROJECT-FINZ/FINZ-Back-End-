@@ -5,39 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.corrupted.20250728-091632.reason.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.corrupted.20250728-091632.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24___4_48__________.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24___4_49__________.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_48,_업데이트_전에_커밋되지_않은_변경_내용_[변경]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_49,_체크아웃_전에_커밋되지_않은_변경_내용_[변경]/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/shelf/25__7__24__오후_4_49,_체크아웃_전에_커밋되지_않은_변경_내용_[변경]1/shelved.patch" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/dto/LearningHistoryDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/WEB-INF/config.properties" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/dummyData-qPSAvg1r.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/index-CITlL29K.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/index-DSrB-X5Z.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/webapp/assets/wave-Ba5lIBXQ.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/9eca543b-1f91-4639-805b-9eb6756e0503.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/kb_final.sql" beforeDir="false" afterPath="$PROJECT_DIR$/kb_final.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/config/WebConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/config/WebConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/HomeController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/chatbot/dto/ChatRequestDto.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningMapper.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/custom404.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/error_page.jsp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/webapp/WEB-INF/views/index.jsp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,7 +75,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
     &quot;Tomcat Server.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/mypage&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/mocktrading&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -235,6 +206,7 @@
       <workItem from="1753366429098" duration="893000" />
       <workItem from="1753401933744" duration="14188000" />
       <workItem from="1753421535521" duration="23043000" />
+      <workItem from="1753833718757" duration="2398000" />
     </task>
     <servers />
   </component>

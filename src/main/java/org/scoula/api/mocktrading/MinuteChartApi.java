@@ -41,7 +41,7 @@ public class MinuteChartApi {
                 return null;
             }
 
-            log.info("Successfully fetched raw chart data for stock: {}", stockCode);
+            log.info("Successfully fetched raw chart data for stock: {}", stockCode);   
             return response;
 
         } catch (Exception e) {
