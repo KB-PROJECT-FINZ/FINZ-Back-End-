@@ -8,6 +8,28 @@ import java.util.List;
 @Component
 public class PromptBuilder {
 
+    // 분석용 프롬프트
+    public String buildForStockInsights(List<ChatAnalysisDto> list) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("다음은 사용자의 투자 성향에 맞춰 선정된 종목들의 상세 데이터입니다.\n")
+                .append("아래 종목 데이터를 분석하여 종목별 투자 포인트와 리스크를 평가하고, 간단한 투자 의견을 작성하세요.\n")
+                .append("출력 형식은 반드시 JSON 배열로 하세요. 각 항목은 {\"ticker\":\"티커\", \"reason\":\"추천 사유\", \"riskLevel\":\"낮음/중간/높음\"} 입니다.\n\n");
+
+        for (ChatAnalysisDto s : list) {
+            sb.append("- ").append(s.getName())
+                    .append(" (").append(s.getTicker()).append(")\n")
+                    .append("  • 현재가: ").append(s.getPrice()).append("원\n")
+                    .append("  • PER: ").append(s.getPer()).append(", ROE: ").append(s.getRoe()).append(", EPS: ").append(s.getEps()).append("\n")
+                    .append("  • PBR: ").append(s.getPbr()).append(", 가중평균가: ").append(s.getAvgPrice()).append("\n")
+                    .append("  • 시가/고가/저가: ").append(s.getOpen()).append(" / ").append(s.getHigh()).append(" / ").append(s.getLow()).append("\n")
+                    .append("  • 52주 고가/저가: ").append(s.getHigh52w()).append(" / ").append(s.getLow52w()).append("\n")
+                    .append("  • 거래량: ").append(s.getVolume()).append(", 회전율: ").append(s.getTurnRate()).append("%, 외국인 보유율: ").append(s.getForeignRate()).append("%\n\n");
+        }
+
+        return sb.toString();
+    }
+
+
     // 투자 성향 기반 추천
     public String buildForProfile(Integer userId, String summary, List<ChatAnalysisDto> analysisList) {
         // analysisList 내용을 바탕으로 프롬프트 생성
