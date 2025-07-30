@@ -23,7 +23,13 @@ public class TradingController {
             return ResponseEntity.ok(transactions);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            // 에러가 발생해도 데이터가 있으면 반환
+            try {
+                List<TransactionDTO> transactions = tradingService.getUserTransactions(userId);
+                return ResponseEntity.status(500).body(transactions);
+            } catch (Exception ex) {
+                return ResponseEntity.status(500).body(null);
+            }
         }
     }
-}
+} 
