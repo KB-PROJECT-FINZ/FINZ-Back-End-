@@ -24,22 +24,11 @@
         SELECT * FROM learning_contents WHERE content_id = #{id}
     </select>
 
-    <resultMap id="LearningContentMap" type="org.scoula.domain.learning.vo.LearningContentVO">
-      <id property="contentId" column="content_id"/>
-      <result property="type" column="type"/>
-      <result property="title" column="title"/>
-      <result property="body" column="body"/>
-      <result property="imageUrl" column="image_url"/>
-      <result property="youtubeUrl" column="youtube_url"/>
-      <result property="createdAt" column="created_at"/>
-    </resultMap>
-
     <!--투자 성향별 콘텐츠 필터링-->
-    <select id="getContentsByGroupCode" parameterType="String" resultMap="LearningContentMap">
-        SELECT lc.*
-        FROM learning_contents lc
-                 JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
-        WHERE tag.group_code = #{groupCode}
+    <select id="getContentsByGroupCode" parameterType="String" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT content_id, group_code, type, title, body, image_url, youtube_url, created_at
+        FROM learning_contents
+        WHERE group_code = #{groupCode}
     </select>
 
     <insert id="insertLearningHistory" parameterType="org.scoula.domain.learning.dto.LearningHistoryDto">
@@ -55,6 +44,42 @@
     <select id="getLearningHistoryList" resultType="org.scoula.domain.learning.vo.LearningHistoryVO">
         SELECT * FROM user_learning_history
         WHERE user_id = #{userId}
+    </select>
+
+    <select id="findGroupCodeByUserId" parameterType="Long" resultType="String">
+        SELECT it.group_code
+        FROM user u
+                 JOIN investment_types it ON u.risk_type = it.risk_type
+        WHERE u.id = #{userId}
+    </select>
+
+
+    <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT lc.*
+        FROM learning_contents lc
+        WHERE lc.group_code = #{groupCode}
+          AND lc.content_id NOT IN (
+            SELECT content_id FROM user_learning_history
+            WHERE user_id = #{userId}
+        )
+    </select>
+
+    <select id="findTitlesByGroupCode" resultType="string">
+        SELECT title FROM learning_contents WHERE group_code = #{groupCode}
+    </select>
+
+    <insert id="insertContent" parameterType="org.scoula.domain.learning.vo.LearningContentVO" useGeneratedKeys="true" keyProperty="contentId">
+        INSERT INTO learning_contents
+            (type, title, body, image_url, youtube_url, created_at, group_code)
+        VALUES
+            (#{type}, #{title}, #{body}, #{imageUrl}, #{youtubeUrl}, #{createdAt}, #{groupCode})
+    </insert>
+
+    <select id="findCompletedContentByUserId" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT lc.*
+        FROM user_learning_history ulh
+                 JOIN learning_contents lc ON ulh.content_id = lc.content_id
+        WHERE ulh.user_id = #{userId}
     </select>
 
 

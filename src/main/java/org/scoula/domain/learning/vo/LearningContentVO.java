@@ -11,4 +11,5 @@ public class LearningContentVO {
     private String imageUrl;
     private String youtubeUrl;
     private String createdAt;
+    private String groupCode;
 }
