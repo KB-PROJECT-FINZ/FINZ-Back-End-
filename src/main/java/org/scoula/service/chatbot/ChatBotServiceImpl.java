@@ -30,26 +30,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatBotServiceImpl implements ChatBotService {
 
-    // 기능별 메서드 정의해야함 .
-    //    private ChatResponseDto handleProfileRecommendation(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForProfile(String.valueOf(request.getUserId()));
-    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_PROFILE", request);
-    //    }
-    //
-    //    private ChatResponseDto handleKeywordRecommendation(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForKeyword(request.getMessage());
-    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_KEYWORD", request);
-    //    }
-    //
-    //    private ChatResponseDto handleStockAnalysis(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForAnalysis(request.getMessage());
-    //    return callOpenAiAndBuildResponse(prompt, "ANALYZE_STOCK", request);
-    //    }
-    //
-    //    private ChatResponseDto handleGeneralChat(ChatRequestDto request) throws Exception {
-    //    return callOpenAiAndBuildResponse(request.getMessage(), "GENERAL", request);
-    //    }
-
     private final RestTemplate restTemplate;
 
     private final PromptBuilder promptBuilder;
@@ -83,12 +63,11 @@ public class ChatBotServiceImpl implements ChatBotService {
         try {
             // ====================== 1. 입력 데이터 추출 ======================
             String userMessage = request.getMessage();
-            IntentType intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
+            IntentType intentType = request.getIntentType();
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
             log.info("초기 intentType = {}", intentType);
-
 
 
             if (intentType == null) {
@@ -130,8 +109,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                 }
 
                 request.setIntentType(intentType);
-
-
             }
 
             // ========================2. 전처리======================
@@ -172,10 +149,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .build());
                 }
             }
-            // ====================== 3. 의도 분류 ======================
-
-
-
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
@@ -190,8 +163,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                         .build();
                 chatBotMapper.insertChatError(errorDto);
             }
-
-
 
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
