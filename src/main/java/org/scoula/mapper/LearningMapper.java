@@ -28,5 +28,6 @@ public interface LearningMapper {
     List<String> findTitlesByGroupCode(String groupCode);
     void insertContent(LearningContentVO content);
     List<LearningContentVO> findCompletedContentByUserId(Long userId);
+    void insertQuiz(LearningQuizVO quiz);
 
 }

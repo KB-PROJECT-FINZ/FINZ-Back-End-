@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.GptLearningContentResponseDto;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.vo.LearningContentVO;
+import org.scoula.domain.learning.vo.LearningQuizVO;
 import org.scoula.mapper.LearningMapper;
 import org.springframework.stereotype.Service;
 
@@ -16,33 +17,38 @@ public class LearningGptServiceImpl implements LearningGptService {
 
     private final LearningMapper learningMapper;
     private final GptContentService gptContentService;
+
     @Override
     public List<LearningContentDTO> recommendLearningContents(Long userId, int size) {
-        // 1. 사용자 성향 groupCode 조회
         String groupCode = learningMapper.findGroupCodeByUserId(userId);
-
-        // 2. 안 읽은 콘텐츠 조회
         List<LearningContentVO> unreadContents = learningMapper.findUnreadContent(groupCode, userId);
-
-        // 3. 필요한 개수 계산
         int remainToGenerate = size - unreadContents.size();
 
-        // 4. 부족할 경우 GPT로 콘텐츠 생성
         if (remainToGenerate > 0) {
             // 기존 제목들 가져오기 → 중복 방지
             List<String> existingTitles = learningMapper.findTitlesByGroupCode(groupCode);
 
             for (int i = 0; i < remainToGenerate; i++) {
+                // GPT로 콘텐츠 + 퀴즈 생성
                 GptLearningContentResponseDto gptDto = gptContentService.generateContent(groupCode, existingTitles);
+
+                // 콘텐츠 엔티티 생성
                 LearningContentVO newContent = convertGptResponseToVO(gptDto, groupCode);
 
-                // DB 저장
+                // 1. 콘텐츠 DB 저장
                 learningMapper.insertContent(newContent);
 
-                // 메모리에도 추가
-                unreadContents.add(newContent);
+                // 2. 퀴즈 DB 저장
+                LearningQuizVO quiz = new LearningQuizVO();
+                quiz.setQuizId(newContent.getContentId()); // contentId를 퀴즈 ID로 사용
+                quiz.setQuestion(gptDto.getQuizQuestion());
+                quiz.setAnswer(gptDto.getQuizAnswer());
+                quiz.setComment(gptDto.getQuizComment());
+                quiz.setCreditReward(gptDto.getCreditReward());
+                learningMapper.insertQuiz(quiz);
 
-                // 방금 생성한 제목도 기존 목록에 추가
+                // 3. 메모리에 추가
+                unreadContents.add(newContent);
                 existingTitles.add(newContent.getTitle());
             }
         }

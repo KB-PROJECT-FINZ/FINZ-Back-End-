@@ -81,6 +81,14 @@
                  JOIN learning_contents lc ON ulh.content_id = lc.content_id
         WHERE ulh.user_id = #{userId}
     </select>
+    <insert id="insertQuiz" parameterType="org.scoula.domain.learning.vo.LearningQuizVO">
+        INSERT INTO learning_quiz (
+            quiz_id, question, answer, comment, credit_reward
+        ) VALUES (
+                     #{quizId}, #{question}, #{answer}, #{comment}, #{creditReward}
+                 )
+    </insert>
+
 
 
 </mapper>
