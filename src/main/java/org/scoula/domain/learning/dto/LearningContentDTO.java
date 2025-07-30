@@ -16,6 +16,7 @@ public class LearningContentDTO {
     private String imageUrl;
     private String youtubeUrl;
     private String createdAt;
+    private String groupCode;
 
     public LearningContentDTO(LearningContentVO vo) {
         this.contentId = vo.getContentId();
@@ -25,5 +26,6 @@ public class LearningContentDTO {
         this.imageUrl = vo.getImageUrl();
         this.youtubeUrl = vo.getYoutubeUrl();
         this.createdAt = vo.getCreatedAt();
+        this.groupCode = vo.getGroupCode();
     }
 }

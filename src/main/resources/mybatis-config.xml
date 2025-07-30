@@ -11,6 +11,7 @@
         <mapper resource="org/scoula/mapper/auth/UserMapper.xml"/>
         <mapper resource="org/scoula/mapper/feedback/JournalFeedbackMapper.xml"/>
         <mapper resource="org/scoula/mapper/learning/LearningMapper.xml"/>
+        <mapper resource="org/scoula/mapper/mocktrading/UserAccountMapper.xml"/>
     </mappers>
 
 </configuration>

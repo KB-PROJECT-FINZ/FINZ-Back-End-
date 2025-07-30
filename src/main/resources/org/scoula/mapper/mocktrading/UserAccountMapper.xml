@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.UserAccountMapper">
+
+    <!-- 결과 매핑 -->
+    <resultMap id="userAccountResultMap" type="org.scoula.domain.mocktrading.vo.UserAccount">
+        <id property="accountId" column="account_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="accountNumber" column="account_number"/>
+        <result property="currentBalance" column="current_balance"/>
+        <result property="totalAssetValue" column="total_asset_value"/>
+        <result property="totalProfitLoss" column="total_profit_loss"/>
+        <result property="profitRate" column="profit_rate"/>
+        <result property="resetCount" column="reset_count"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 가상 계좌 생성 -->
+    <insert id="insertUserAccount" parameterType="org.scoula.domain.mocktrading.vo.UserAccount"
+            useGeneratedKeys="true" keyProperty="accountId">
+        INSERT INTO user_accounts (
+            user_id,
+            account_number,
+            current_balance,
+            total_asset_value,
+            total_profit_loss,
+            profit_rate,
+            reset_count
+        ) VALUES (
+                     #{userId},
+                     #{accountNumber},
+                     #{currentBalance},
+                     #{totalAssetValue},
+                     #{totalProfitLoss},
+                     #{profitRate},
+                     #{resetCount}
+                 )
+    </insert>
+
+    <!-- 사용자 ID로 계좌 조회 -->
+    <select id="selectByUserId" parameterType="int" resultMap="userAccountResultMap">
+        SELECT
+            account_id, user_id, account_number, current_balance,
+            total_asset_value, total_profit_loss, profit_rate,
+            reset_count, created_at, updated_at
+        FROM user_accounts
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 계좌번호로 계좌 조회 -->
+    <select id="selectByAccountNumber" parameterType="string" resultMap="userAccountResultMap">
+        SELECT
+            account_id, user_id, account_number, current_balance,
+            total_asset_value, total_profit_loss, profit_rate,
+            reset_count, created_at, updated_at
+        FROM user_accounts
+        WHERE account_number = #{accountNumber}
+    </select>
+
+    <!-- 계좌 정보 업데이트 -->
+    <update id="updateUserAccount" parameterType="org.scoula.domain.mocktrading.vo.UserAccount">
+        UPDATE user_accounts SET
+                                 current_balance = #{currentBalance},
+                                 total_asset_value = #{totalAssetValue},
+                                 total_profit_loss = #{totalProfitLoss},
+                                 profit_rate = #{profitRate},
+                                 reset_count = #{resetCount},
+                                 updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId}
+    </update>
+
+    <!-- 계좌 잔액만 업데이트 -->
+    <update id="updateBalance">
+        UPDATE user_accounts SET
+                                 current_balance = #{currentBalance},
+                                 updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId}
+    </update>
+
+</mapper>
