@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.HoldingMapper">
+
+    <!-- ResultMap 정의 -->
+    <resultMap id="holdingResultMap" type="org.scoula.domain.mocktrading.vo.Holding">
+        <id property="holdingId" column="holding_id"/>
+        <result property="accountId" column="account_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="quantity" column="quantity"/>
+        <result property="averagePrice" column="average_price"/>
+        <result property="totalCost" column="total_cost"/>
+        <result property="currentPrice" column="current_price"/>
+        <result property="currentValue" column="current_value"/>
+        <result property="profitLoss" column="profit_loss"/>
+        <result property="profitRate" column="profit_rate"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="imageUrl" column="image_url"/>
+        <result property="percentage" column="percentage"/>
+    </resultMap>
+
+    <!-- 사용자 ID로 보유 종목 조회 (종목 이미지 URL 포함) -->
+    <select id="selectByUserId" parameterType="Integer" resultMap="holdingResultMap">
+        SELECT
+            h.holding_id,
+            h.account_id,
+            h.stock_code,
+            h.stock_name,
+            h.quantity,
+            h.average_price,
+            h.total_cost,
+            h.current_price,
+            h.current_value,
+            h.profit_loss,
+            h.profit_rate,
+            h.created_at,
+            h.updated_at,
+            s.image_url
+        FROM holdings h
+                 INNER JOIN user_accounts ua ON h.account_id = ua.account_id
+                 LEFT JOIN stocks s ON h.stock_code = s.code
+        WHERE ua.user_id = #{userId}
+          AND h.quantity > 0
+        ORDER BY h.updated_at DESC
+    </select>
+
+    <!-- 계좌 ID로 보유 종목 조회 -->
+    <select id="selectByAccountId" parameterType="Integer" resultMap="holdingResultMap">
+        SELECT
+            h.*,
+            s.image_url
+        FROM holdings h
+                 LEFT JOIN stocks s ON h.stock_code = s.code
+        WHERE h.account_id = #{accountId}
+          AND h.quantity > 0
+        ORDER BY h.updated_at DESC
+    </select>
+
+    <!-- 사용자 ID와 종목코드로 보유 종목 조회 -->
+    <select id="selectByUserAndStock" resultMap="holdingResultMap">
+        SELECT
+            h.*,
+            s.image_url
+        FROM holdings h
+                 INNER JOIN user_accounts ua ON h.account_id = ua.account_id
+                 LEFT JOIN stocks s ON h.stock_code = s.code
+        WHERE ua.user_id = #{userId}
+          AND h.stock_code = #{stockCode}
+          AND h.quantity > 0
+    </select>
+
+    <!-- 계좌 ID와 종목코드로 보유 종목 조회 -->
+    <select id="selectByAccountAndStock" resultMap="holdingResultMap">
+        SELECT
+            h.*,
+            s.image_url
+        FROM holdings h
+                 LEFT JOIN stocks s ON h.stock_code = s.code
+        WHERE h.account_id = #{accountId}
+          AND h.stock_code = #{stockCode}
+          AND h.quantity > 0
+    </select>
+
+    <!-- 보유 종목 ID로 조회 -->
+    <select id="selectByHoldingId" parameterType="Integer" resultMap="holdingResultMap">
+        SELECT
+            h.*,
+            s.image_url
+        FROM holdings h
+                 LEFT JOIN stocks s ON h.stock_code = s.code
+        WHERE h.holding_id = #{holdingId}
+    </select>
+
+    <!-- 보유 종목 추가 -->
+    <insert id="insertHolding" parameterType="org.scoula.domain.mocktrading.vo.Holding"
+            useGeneratedKeys="true" keyProperty="holdingId">
+        INSERT INTO holdings (
+            account_id,
+            stock_code,
+            stock_name,
+            quantity,
+            average_price,
+            total_cost,
+            current_price,
+            current_value,
+            profit_loss,
+            profit_rate,
+            created_at,
+            updated_at
+        ) VALUES (
+                     #{accountId},
+                     #{stockCode},
+                     #{stockName},
+                     #{quantity},
+                     #{averagePrice},
+                     #{totalCost},
+                     #{currentPrice},
+                     #{currentValue},
+                     #{profitLoss},
+                     #{profitRate},
+                     NOW(),
+                     NOW()
+                 )
+    </insert>
+
+    <!-- 보유 종목 업데이트 -->
+    <update id="updateHolding" parameterType="org.scoula.domain.mocktrading.vo.Holding">
+        UPDATE holdings SET
+                            quantity = #{quantity},
+                            average_price = #{averagePrice},
+                            total_cost = #{totalCost},
+                            current_price = #{currentPrice},
+                            current_value = #{currentValue},
+                            profit_loss = #{profitLoss},
+                            profit_rate = #{profitRate},
+                            updated_at = NOW()
+        WHERE holding_id = #{holdingId}
+    </update>
+
+    <!-- 보유 종목 삭제 -->
+    <delete id="deleteHolding" parameterType="Integer">
+        DELETE FROM holdings WHERE holding_id = #{holdingId}
+    </delete>
+
+    <!-- 계좌의 모든 보유 종목 삭제 (계좌 초기화 시) -->
+    <delete id="deleteAllByAccount" parameterType="Integer">
+        DELETE FROM holdings WHERE account_id = #{accountId}
+    </delete>
+
+    <!-- 사용자의 총 보유 종목 수 -->
+    <select id="countByUserId" parameterType="Integer" resultType="int">
+        SELECT COUNT(*)
+        FROM holdings h
+                 INNER JOIN user_accounts ua ON h.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+          AND h.quantity > 0
+    </select>
+
+    <!-- 사용자의 총 주식 평가금액 계산 -->
+    <select id="calculateTotalStockValue" parameterType="Integer" resultType="Long">
+        SELECT COALESCE(SUM(h.current_value), 0)
+        FROM holdings h
+                 INNER JOIN user_accounts ua ON h.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+          AND h.quantity > 0
+    </select>
+
+</mapper>

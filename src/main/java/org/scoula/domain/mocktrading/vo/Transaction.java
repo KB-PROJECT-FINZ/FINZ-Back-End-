@@ -5,29 +5,27 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Holding {
-    private Integer holdingId;          // 보유 종목 ID
+public class Transaction {
+    private Integer transactionId;      // 거래내역 ID
     private Integer accountId;          // 계좌 ID
     private String stockCode;           // 종목코드
     private String stockName;           // 종목명
-    private Integer quantity;           // 보유 수량
-    private BigDecimal averagePrice;    // 평균 매수가
-    private Long totalCost;             // 총 매수금액
-    private Integer currentPrice;       // 현재가
-    private Long currentValue;          // 현재 평가금액
-    private Long profitLoss;            // 평가 손익
-    private BigDecimal profitRate;      // 수익률
-    private Timestamp createdAt;        // 생성 날짜
-    private Timestamp updatedAt;        // 수정 날짜
+    private String transactionType;     // 거래 타입 (BUY, SELL)
+    private String orderType;           // 주문 유형 (MARKET, LIMIT)
+    private Integer quantity;           // 주문 수량
+    private Integer price;              // 체결 가격
+    private Integer orderPrice;         // 주문 가격 (지정가 주문 시)
+    private Long totalAmount;           // 총 거래금액
+    private Timestamp executedAt;       // 실행 날짜
+    private Timestamp orderCreatedAt;   // 주문 생성 날짜
 
     // 추가 필드 (조회 시 사용)
+    private String status;              // 거래 상태 (COMPLETED, CANCELLED, PENDING)
     private String imageUrl;            // 종목 로고 이미지 URL
-    private Integer percentage;         // 포트폴리오 내 비중
 }
