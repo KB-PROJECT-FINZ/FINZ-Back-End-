@@ -60,7 +60,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     @Value("${openai.api.url}")
     private String openaiApiUrl;
 
-    @Value("${openai.model}")
+    @Value("${openai.api.model}")
     private String model;
 
     // 성향에 따른 종목 추천 유틸

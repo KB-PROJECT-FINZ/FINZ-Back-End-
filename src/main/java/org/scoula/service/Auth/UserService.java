@@ -5,31 +5,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UserService {
 
-    @Autowired
-    private UserMapper userMapper;
+public interface UserService {
+    boolean updateRiskType(String username, String riskType);
+    String getRiskTypeNameByUsername(String username);
+    String getGroupCodeByRiskType(String riskType);
+    boolean isNicknameAvailable(String nickname);
 
-    public boolean updateRiskType(String username, String riskType) {
-        return userMapper.updateRiskType(username, riskType) > 0;
-    }
-    public String getRiskTypeNameByUsername(String username) {
-        return userMapper.findRiskTypeNameByUsername(username);
-    }
 
-    public String getGroupCodeByRiskType(String riskType) {
-        return userMapper.findGroupCodeByRiskType(riskType);
-    }
-    public String getUsernameByUserId(Integer userId) {
-        return userMapper.findUsernameByUserId(userId);
-    }
-    public String getRiskTypeByUsername(String username) {
-        return userMapper.findRiskTypeByUsername(username);
-    }
-    public String getRiskTypeByUserId(Integer userId) {
-        return userMapper.findRiskTypeByUserId(userId);
-    }
-
+    String getUsernameByUserId(Integer userId);
+    String getRiskTypeByUsername(String username);
+    String getRiskTypeByUserId(Integer userId);
 
 
 }

@@ -55,11 +55,17 @@ public class LearningServiceImpl implements LearningService {
         return learningMapper.isUserIdAndContentId(userId,contentId)>0;
     }
 
-    @Override
-    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
-        return learningMapper.getLearningHistoryList(userId)
-                .stream()
-                .map(vo -> new LearningHistoryDto(vo))
-                .collect(Collectors.toList());
-    }
+//    @Override
+//    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
+//        return learningMapper.getLearningHistoryList(userId)
+//                .stream()
+//                .map(vo -> new LearningHistoryDto(vo))
+//                .collect(Collectors.toList());
+//    }
+public List<LearningContentDTO> getCompletedContents(Long userId) {
+    return learningMapper.findCompletedContentByUserId(userId)
+            .stream()
+            .map(LearningContentDTO::new)
+            .collect(Collectors.toList());
+}
 }
