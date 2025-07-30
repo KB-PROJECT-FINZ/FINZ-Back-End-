@@ -2,6 +2,8 @@ package org.scoula.controller.Auth;
 import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.service.Auth.AuthService;
 
+import org.scoula.service.mocktrading.UserAccountService;
+import org.scoula.domain.mocktrading.vo.UserAccount;
 import org.scoula.service.Auth.MailService;
 import org.scoula.service.Auth.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,8 @@ public class AuthController {
     private AuthService authService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private UserAccountService userAccountService;
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<?> login(@RequestBody UserVo user, HttpSession session) {
@@ -48,6 +52,32 @@ public class AuthController {
         System.out.println("🔥 POST 요청 들어옴: " + user.getEmail());
         boolean result = authService.register(user);
         if (result) {
+            try {
+                UserVo registeredUser = authService.findByEmail(user.getEmail());
+                if (registeredUser != null && registeredUser.getId() != null) {
+                    System.out.println("등록된 사용자 ID: " + registeredUser.getId());
+
+                    UserAccount userAccount = userAccountService.createAccountForNewUser(registeredUser.getId());
+                    if (userAccount != null) {
+                        System.out.println("계좌 생성 성공 - 사용자 ID: " + registeredUser.getId() + ", 계좌번호: " + userAccount.getAccountNumber());
+
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("message", "회원가입 성공");
+                        response.put("accountCreated", true);
+                        response.put("accountNumber", userAccount.getAccountNumber());
+                        response.put("initialBalance", userAccount.getCurrentBalance());
+                        response.put("userId", registeredUser.getId());
+                        return ResponseEntity.ok(response);
+                    } else {
+                        System.out.println("⚠계좌 생성 실패 - 사용자 ID: " + registeredUser.getId() + " (회원가입은 성공)");
+                    }
+                } else {
+                    System.out.println("등록된 사용자 정보 조회 실패 - 이메일: " + user.getEmail());
+                }
+            } catch (Exception e) {
+                System.out.println("계좌 생성 중 오류: " + e.getMessage() + " (회원가입은 성공)");
+                e.printStackTrace();
+            }
             return ResponseEntity.ok("회원가입 성공");
         } else {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("회원가입 실패");
@@ -66,6 +96,7 @@ public class AuthController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("userId", loginUser.getId());
+        result.put("username", loginUser.getUsername());
         result.put("name", loginUser.getName());
         result.put("riskType", loginUser.getRiskType());
         result.put("groupCode", groupCode);
