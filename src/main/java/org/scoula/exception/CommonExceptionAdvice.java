@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 @Log4j2
 @Order(1)
 public class CommonExceptionAdvice {
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(NoHandlerFoundException.class)
     public String handle404(NoHandlerFoundException ex){
         return "/resources/index.html";
     }

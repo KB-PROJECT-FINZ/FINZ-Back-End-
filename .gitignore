@@ -14,6 +14,7 @@ src/main/webapp/resources/assets/
 src/main/webapp/resources/index.html
 
 ### IntelliJ IDEA ###
+.idea/
 .idea/modules.xml
 .idea/workspace.xml
 .idea/jarRepositories.xml
