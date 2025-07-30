@@ -122,12 +122,12 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+
     // 메일
-    dependencies {
-        implementation 'org.springframework:spring-context-support:5.0.0.RELEASE'
-        implementation 'com.sun.mail:javax.mail:1.6.2'
+    implementation 'org.springframework:spring-context-support:5.3.37'
+    implementation 'com.sun.mail:javax.mail:1.6.2'
     }
-}
+
 
 war {
     webAppDirName = 'src/main/webapp'
