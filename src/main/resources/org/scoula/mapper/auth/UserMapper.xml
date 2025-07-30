@@ -22,5 +22,9 @@
         FROM investment_types
         WHERE risk_type = #{riskType}
     </select>
+    <!-- 닉네임 중복 확인 -->
+    <select id="countByNickname" resultType="int" parameterType="string">
+        SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
+    </select>
 
 </mapper>

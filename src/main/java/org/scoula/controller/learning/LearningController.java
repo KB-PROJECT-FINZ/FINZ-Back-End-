@@ -5,10 +5,12 @@ import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
 import org.scoula.mapper.LearningMapper;
+import org.scoula.service.learning.LearningGptService;
 import org.scoula.service.learning.LearningService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.util.List;
 
 @RestController
@@ -17,6 +19,9 @@ import java.util.List;
 public class LearningController {
 
     private final LearningService learningService;
+
+    private final LearningGptService learningGptService;
+
     //콘텐츠 목록
     @GetMapping("/contents")
     public ResponseEntity<List<LearningContentDTO>> getAllContents() {
@@ -58,9 +63,33 @@ public class LearningController {
     }
 
     //컨텐츠 리스트 중 읽은 글은 회색 처리 하기 위해서
+//    @GetMapping("/history/complete/list")
+//    public ResponseEntity<List<LearningHistoryDto>> getLearningHistoryList(@RequestParam int userId) {
+//        return ResponseEntity.ok(learningService.getLearningHistoryList(userId));
+//    }
+    // LearningController
     @GetMapping("/history/complete/list")
-    public ResponseEntity<List<LearningHistoryDto>> getLearningHistoryList(@RequestParam int userId) {
-        return ResponseEntity.ok(learningService.getLearningHistoryList(userId));
+    public List<LearningContentDTO> getCompletedContents(@RequestParam Long userId) {
+        return learningService.getCompletedContents(userId);
+    }
+
+//    @GetMapping("/recommend/list")
+//    public ResponseEntity<List<LearningContentDTO>> recommendList(
+//            @RequestParam("userId") Long userId,
+//            @RequestParam(name = "size", defaultValue = "5") int size
+//    ) {
+//        List<LearningContentDTO> contents = learningGptService.recommendLearningContents(userId, size);
+//        return ResponseEntity.ok(contents);
+//    }
+
+    @GetMapping("/recommend/list")
+    public ResponseEntity<List<LearningContentDTO>> recommendList(
+            @RequestParam Long userId,
+            HttpSession session
+    ) {
+        System.out.println("현재 세션 ID: " + session.getId());
+        System.out.println("요청된 userId: " + userId);
+        return ResponseEntity.ok(learningGptService.recommendLearningContents(userId, 5));
     }
 
 }
