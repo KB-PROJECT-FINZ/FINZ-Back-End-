@@ -11,4 +11,11 @@ public interface UserService {
     String getRiskTypeNameByUsername(String username);
     String getGroupCodeByRiskType(String riskType);
     boolean isNicknameAvailable(String nickname);
+
+
+    String getUsernameByUserId(Integer userId);
+    String getRiskTypeByUsername(String username);
+    String getRiskTypeByUserId(Integer userId);
+
+
 }
