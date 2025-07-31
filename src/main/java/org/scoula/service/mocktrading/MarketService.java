@@ -68,12 +68,6 @@ public class MarketService {
             throw e;
         }
     }
-    /**
-     * 기존 호환성을 위한 오버로드 메서드
-     */
-    public List<Map<String, Object>> getVolumeRanking(int limit) throws Exception {
-        return getVolumeRanking(limit, "3"); // 기본값: 거래금액순
-    }
 
     /**
      * 시장 전체 현황 조회 (통합) - 탭 기능 지원
@@ -168,13 +162,6 @@ public class MarketService {
     public List<Map<String, Object>> getUnifiedVolumeRanking(int limit, String blngClsCode) throws Exception {
         log.info("🔍 통합 거래량 순위 조회 - limit: {}, type: {}", limit, getTabDescription(blngClsCode));
         return volumeRankingApi.getCombinedVolumeRanking(limit, blngClsCode);
-    }
-
-    /**
-     * 기존 호환성을 위한 오버로드 메서드
-     */
-    public List<Map<String, Object>> getUnifiedVolumeRanking(int limit) throws Exception {
-        return getUnifiedVolumeRanking(limit, "3");
     }
 
     /**

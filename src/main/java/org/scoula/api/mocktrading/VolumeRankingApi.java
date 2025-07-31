@@ -114,12 +114,6 @@ public class VolumeRankingApi {
         }
     }
     /**
-     * 기존 호환성을 위한 오버로드 메서드
-     */
-    public List<Map<String, Object>> getVolumeRanking(String marketType, int limit) throws IOException {
-        return getVolumeRanking(marketType, limit, "3"); // 기본값: 거래금액순
-    }
-    /**
      * 코스피와 코스닥 거래량 순위를 동시에 조회 - 탭 기능 지원
      * @param limit 각 시장별 조회할 종목 수
      * @param blngClsCode 소속 구분 코드
