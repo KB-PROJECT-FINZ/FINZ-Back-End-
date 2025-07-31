@@ -23,6 +23,7 @@ import javax.sql.DataSource;
 @Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
 //@MapperScan(basePackages = "org.scoula.mapper.chatbot")
+@ComponentScan(basePackages = {"org.scoula.service","org.scoula.domain","org.scoula.controller"})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;

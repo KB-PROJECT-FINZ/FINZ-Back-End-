@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.scoula.util.chatbot.OpenAiClient;
 import org.scoula.util.chatbot.ProfileStockFilter;
 import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
@@ -30,18 +31,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ChatBotServiceImpl implements ChatBotService {
 
-    private final RestTemplate restTemplate;
-
     private final PromptBuilder promptBuilder;
 
-    @Value("${openai.api.key}")
-    private String openaiApiKey;
-
-    @Value("${openai.api.url}")
-    private String openaiApiUrl;
-
-    @Value("${openai.api.model}")
-    private String model;
+    @Autowired
+    private OpenAiClient openAiClient;
 
     // 성향에 따른 종목 추천 유틸
     @Autowired
@@ -74,26 +67,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 String prompt = buildIntentClassificationPrompt(userMessage);
 
                 // GPT 호출
-                Map<String, Object> msg = new HashMap<>();
-                msg.put("role", "user");
-                msg.put("content", prompt);
-
-                Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("model", model);
-                requestBody.put("messages", List.of(msg));
-                requestBody.put("temperature", 0);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBearerAuth(openaiApiKey);
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-
-                ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
-
-                JsonNode json = objectMapper.readTree(gptResponse.getBody());
-                String intentText = json.path("choices").get(0).path("message").path("content").asText().trim();
+                String intentText = openAiClient.getChatCompletion(prompt);
 
                 try {
                     intentType = IntentType.valueOf(intentText); // enum 파싱
@@ -199,10 +173,18 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .map(ChatAnalysisMapper::toDto)
                             .toList();
 
-                    // 7. DB 저장 (선택사항)
+                    // 7. DB 저장 (추천된 종목의 데이터를 저장)
                     for (ChatAnalysisDto dto : analysisList) {
                         chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
                     }
+
+                    // 8-1. GPT 분석 요청 프롬프트
+                    String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
+
+
+                    // 5,6 에서 저장된 추천 종목의 값을 gpt로 보내서 상세한 분석 요청
+                    // 분석 후 이유와 상세한 기술적 지표, 설명 등 응답 하게 만듦.
+                    // 추천한 이유를 DB에 저장(ChatRecommendationDto.reason)
 
                     // 8. GPT 프롬프트 구성
                     prompt = promptBuilder.buildForProfile(userId, summary, analysisList);
@@ -240,30 +222,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
                     break;
             }
-            Map<String, Object> message = new HashMap<>();
-            message.put("role", "user");
-            message.put("content", prompt);
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", model);
-            body.put("messages", List.of(message));
-            body.put("temperature", 0.6);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(openaiApiKey);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
-
-            // ====================== 6. 응답 성공 여부 확인 ======================
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                return handleError(new RuntimeException("OpenAI 응답 실패 - 상태코드: " + response.getStatusCodeValue()), userId, intentType);
-            }
-
-            // ====================== 7. 응답 파싱 ======================
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String content = root.path("choices").get(0).path("message").path("content").asText();
+            String content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장

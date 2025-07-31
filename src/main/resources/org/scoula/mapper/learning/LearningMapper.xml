@@ -68,11 +68,10 @@
     <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
         SELECT lc.*
         FROM learning_contents lc
+                 LEFT JOIN user_learning_history ulh
+                           ON lc.content_id = ulh.content_id AND ulh.user_id = #{userId}
         WHERE lc.group_code = #{groupCode}
-          AND lc.content_id NOT IN (
-            SELECT content_id FROM user_learning_history
-            WHERE user_id = #{userId}
-        )
+          AND ulh.content_id IS NULL
     </select>
 
     <select id="findTitlesByGroupCode" resultType="string">
@@ -92,6 +91,14 @@
                  JOIN learning_contents lc ON ulh.content_id = lc.content_id
         WHERE ulh.user_id = #{userId}
     </select>
+    <insert id="insertQuiz" parameterType="org.scoula.domain.learning.vo.LearningQuizVO">
+        INSERT INTO learning_quiz (
+            quiz_id, question, answer, comment, credit_reward
+        ) VALUES (
+                     #{quizId}, #{question}, #{answer}, #{comment}, #{creditReward}
+                 )
+    </insert>
+
     <!-- 사용자 크레딧 업데이트 -->
     <update id="updateUserCredit" parameterType="map">
         UPDATE user
