@@ -1,6 +1,7 @@
 package org.scoula.controller.learning;
 
 import lombok.RequiredArgsConstructor;
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
@@ -138,33 +139,29 @@ public class LearningController {
     public boolean userCompletedContent(@RequestParam int userId, @RequestParam int contentId) {
         return learningService.hasCompleted(userId, contentId);
     }
-
-    /*//컨텐츠 리스트 중 읽은 글은 회색 처리 하기 위해서
-    @GetMapping("/history/complete/list")
-    public ResponseEntity<List<LearningHistoryDto>> getLearningHistoryList(@RequestParam int userId) {
-        return ResponseEntity.ok(learningService.getLearningHistoryList(userId));
-    }*/
-    // LearningController
+    //완료된 학습 컨텐츠 분류
     @GetMapping("/history/complete/list")
     public List<LearningContentDTO> getCompletedContents(@RequestParam Long userId) {
         return learningService.getCompletedContents(userId);
     }
-
-    //    @GetMapping("/recommend/list")
-//    public ResponseEntity<List<LearningContentDTO>> recommendList(
-//            @RequestParam("userId") Long userId,
-//            @RequestParam(name = "size", defaultValue = "5") int size
-//    ) {
-//        List<LearningContentDTO> contents = learningGptService.recommendLearningContents(userId, size);
-//        return ResponseEntity.ok(contents);
-//    }
+//    사용자 별 추천 콘텐츠 분류
     @GetMapping("/recommend/list")
     public ResponseEntity<List<LearningContentDTO>> recommendList(
             @RequestParam Long userId,
             HttpSession session
     ) {
-        System.out.println("현재 세션 ID: " + session.getId());
-        System.out.println("요청된 userId: " + userId);
         return ResponseEntity.ok(learningGptService.recommendLearningContents(userId, 5));
     }
+//    @GetMapping("/recommend/list")
+//    public ResponseEntity<List<LearningContentDTO>> recommendList(HttpSession session) {
+//        UserVo loginUser = (UserVo) session.getAttribute("loginUser");
+//        if (loginUser == null) {
+//            return ResponseEntity.status(401).build();
+//        }
+//
+//        int userId = loginUser.getId();
+//        List<LearningContentDTO> result = learningGptService.recommendLearningContents(userId, 5);
+//        return ResponseEntity.ok(result);
+//    }
+
 }
