@@ -1,5 +1,6 @@
 package org.scoula.service.Auth;
 
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,15 +32,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public String getUsernameByUserId(Integer userId) {
-        return userMapper.findUsernameByUserId(userId);
+    public UserVo findByUsername(String username) {
+        return userMapper.findByUsername(username);
     }
-
-    @Override
-    public String getRiskTypeByUsername(String username) {
-        return userMapper.findRiskTypeByUsername(username);
-    }
-
     @Override
     public String getRiskTypeByUserId(Integer userId) {
         return userMapper.findRiskTypeByUserId(userId);
