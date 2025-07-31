@@ -1,7 +1,8 @@
 package org.scoula.controller.Auth;
+import org.scoula.domain.Auth.dto.KakaoUser;
 import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.service.Auth.AuthService;
-
+import org.scoula.service.Auth.KakaoAuthService;
 import org.scoula.service.mocktrading.UserAccountService;
 import org.scoula.domain.mocktrading.vo.UserAccount;
 import org.scoula.service.Auth.MailService;
@@ -15,6 +16,7 @@ import java.util.UUID;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
+
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @Controller
 @RequestMapping("/api/auth")
@@ -27,6 +29,8 @@ public class AuthController {
     private UserService userService;
     @Autowired
     private UserAccountService userAccountService;
+    @Autowired
+    private KakaoAuthService kakaoAuthService;
     @PostMapping("/login")
     @ResponseBody
     public ResponseEntity<?> login(@RequestBody UserVo user, HttpSession session) {
@@ -48,12 +52,13 @@ public class AuthController {
 
     @PostMapping("/signup")
     @ResponseBody
-    public ResponseEntity<?> signup(@RequestBody UserVo user) {
+    public ResponseEntity<?> signup(@RequestBody UserVo user, HttpSession session) {
         System.out.println("🔥 POST 요청 들어옴: " + user.getEmail());
         boolean result = authService.register(user);
         if (result) {
             try {
                 UserVo registeredUser = authService.findByEmail(user.getEmail());
+                session.setAttribute("loginUser", registeredUser);
                 if (registeredUser != null && registeredUser.getId() != null) {
                     System.out.println("등록된 사용자 ID: " + registeredUser.getId());
 
@@ -62,6 +67,7 @@ public class AuthController {
                         System.out.println("계좌 생성 성공 - 사용자 ID: " + registeredUser.getId() + ", 계좌번호: " + userAccount.getAccountNumber());
 
                         Map<String, Object> response = new HashMap<>();
+
                         response.put("message", "회원가입 성공");
                         response.put("accountCreated", true);
                         response.put("accountNumber", userAccount.getAccountNumber());
@@ -152,6 +158,24 @@ public class AuthController {
         response.put("nickname", nickname);
         response.put("available", available);
         return ResponseEntity.ok(response);
+    }
+
+    @RequestMapping("/auth/kakao/callback")
+    public String kakaoCallback(@RequestParam String code, HttpSession session) {
+        try {
+            String accessToken = kakaoAuthService.getAccessToken(code);
+            KakaoUser kakaoUser = kakaoAuthService.getKakaoUserInfo(accessToken);
+            UserVo user = authService.processKakaoLogin(kakaoUser);
+
+            // 세션에 저장
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("name", user.getNickname());
+
+            return "redirect:/"; // ✅ 여기 중요! -> 홈으로 이동
+        } catch (Exception e) {
+            e.printStackTrace(); // 오류 로그 출력
+            return "redirect:/login-error"; // 또는 오류 처리 페이지
+        }
     }
 }
 

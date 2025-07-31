@@ -27,4 +27,11 @@
         SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
     </select>
 
+    <select id="findByUsername" parameterType="string" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+
+
+
 </mapper>

@@ -5,12 +5,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/VariousChartApi.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/api/mocktrading/MinuteChartApi.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/mocktrading/ChartController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/catalina.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/Auth/dto/KakaoUser.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/KakaoAuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Auth/AuthController.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Type/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/Type/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/UserMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/AuthService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/UserMapper.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/authMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/auth/authMapper.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,6 +62,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "CHOI-074"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git",
+    "accountId": "21b6c44b-3b1d-4aa1-a87b-d0bf5770f06c"
+  }
+}]]></component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -70,30 +90,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Gradle.Build FINZ-Back-End-.executor": "Run",
-    "Gradle.Build FinzBack.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "feature/mock-trading/main 병합 중",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.Build FINZ-Back-End-.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.Build FinzBack.executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.FinzBack 빌드.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Tomcat Server.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
+    &quot;Tomcat 서버.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/LoginForm&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "DatabaseDriversLRU": [
-      "mysql",
-      "mysql_aurora"
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;mysql&quot;,
+      &quot;mysql_aurora&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\KB_Fullstack\FINZ-Back-End-\src\main\java\org\scoula\controller\mocktrading" />
@@ -101,7 +123,7 @@
   </component>
   <component name="RunManager">
     <configuration name="Tomcat 9.0.105" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.105" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
-      <option name="COMMON_VM_ARGUMENTS" value="-Dfile.encoding=UTF-8" />
+      <option name="COMMON_VM_ARGUMENTS" value="-Dfile.encoding=utf-8" />
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment>
         <artifact name="Gradle : org.scoula : FinzBack-1.0-SNAPSHOT.war">
@@ -111,7 +133,7 @@
         </artifact>
       </deployment>
       <server-settings>
-        <option name="BASE_DIRECTORY_NAME" value="9cb9d37a-0a4f-400f-88ab-d7987827a0f7" />
+        <option name="BASE_DIRECTORY_NAME" value="edad4c1e-c0bc-4fc5-8d82-c93ce8e42d92" />
       </server-settings>
       <predefined_log_file enabled="true" id="Tomcat" />
       <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -119,7 +141,7 @@
       <predefined_log_file id="Tomcat Host Manager" />
       <predefined_log_file id="Tomcat Localhost Access" />
       <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="54734" />
+        <option name="DEBUG_PORT" value="6461" />
       </RunnerSettings>
       <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
         <option name="USE_ENV_VARIABLES" value="true" />
@@ -208,6 +230,7 @@
       <workItem from="1753366429098" duration="893000" />
       <workItem from="1753401933744" duration="14188000" />
       <workItem from="1753421535521" duration="23043000" />
+      <workItem from="1753858887618" duration="14501000" />
     </task>
     <task id="LOCAL-00001" summary="Changes">
       <option name="closed" value="true" />
@@ -235,5 +258,16 @@
     <MESSAGE value="Changes" />
     <MESSAGE value="fix: 이메일인증 및 회원가입폼 오류 수정" />
     <option name="LAST_COMMIT_MESSAGE" value="fix: 이메일인증 및 회원가입폼 오류 수정" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java</url>
+          <line>21</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

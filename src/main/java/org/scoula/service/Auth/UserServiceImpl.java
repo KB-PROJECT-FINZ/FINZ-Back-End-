@@ -1,5 +1,6 @@
 package org.scoula.service.Auth;
 
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,5 +29,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isNicknameAvailable(String nickname) {
         return userMapper.countByNickname(nickname) == 0;
+    }
+    @Override
+    public UserVo findByUsername(String username) {
+        return userMapper.findByUsername(username);
     }
 }
