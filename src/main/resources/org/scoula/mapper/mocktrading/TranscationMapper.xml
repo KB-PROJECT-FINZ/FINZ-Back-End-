@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.TransactionMapper">
+
+    <!-- ResultMap 정의 -->
+    <resultMap id="transactionResultMap" type="org.scoula.domain.mocktrading.vo.Transaction">
+        <id property="transactionId" column="transaction_id"/>
+        <result property="accountId" column="account_id"/>
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="transactionType" column="transaction_type"/>
+        <result property="orderType" column="order_type"/>
+        <result property="quantity" column="quantity"/>
+        <result property="price" column="price"/>
+        <result property="orderPrice" column="order_price"/>
+        <result property="totalAmount" column="total_amount"/>
+        <result property="executedAt" column="executed_at"/>
+        <result property="orderCreatedAt" column="order_created_at"/>
+        <result property="status" column="status"/>
+        <result property="imageUrl" column="image_url"/>
+    </resultMap>
+
+    <!-- 사용자 ID로 거래 내역 조회 (페이징) -->
+    <select id="selectByUserId" resultMap="transactionResultMap">
+        SELECT
+            t.transaction_id,
+            t.account_id,
+            t.stock_code,
+            t.stock_name,
+            t.transaction_type,
+            t.order_type,
+            t.quantity,
+            t.price,
+            t.order_price,
+            t.total_amount,
+            t.executed_at,
+            t.order_created_at,
+            'COMPLETED' as status,
+            s.image_url
+        FROM transactions t
+                 INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+                 LEFT JOIN stocks s ON t.stock_code = s.code
+        WHERE ua.user_id = #{userId}
+        ORDER BY t.executed_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 계좌 ID로 거래 내역 조회 (페이징) -->
+    <select id="selectByAccountId" resultMap="transactionResultMap">
+        SELECT
+            t.*,
+            'COMPLETED' as status,
+            s.image_url
+        FROM transactions t
+                 LEFT JOIN stocks s ON t.stock_code = s.code
+        WHERE t.account_id = #{accountId}
+        ORDER BY t.executed_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 사용자 ID와 종목코드로 거래 내역 조회 -->
+    <select id="selectByUserAndStock" resultMap="transactionResultMap">
+        SELECT
+            t.*,
+            'COMPLETED' as status,
+            s.image_url
+        FROM transactions t
+                 INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+                 LEFT JOIN stocks s ON t.stock_code = s.code
+        WHERE ua.user_id = #{userId}
+          AND t.stock_code = #{stockCode}
+        ORDER BY t.executed_at DESC
+            LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <!-- 사용자 ID와 기간으로 거래 내역 조회 (최근 N일) -->
+    <select id="selectByUserIdAndPeriod" resultMap="transactionResultMap">
+        SELECT
+            t.*,
+            'COMPLETED' as status,
+            s.image_url
+        FROM transactions t
+                 INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+                 LEFT JOIN stocks s ON t.stock_code = s.code
+        WHERE ua.user_id = #{userId}
+          AND t.executed_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        ORDER BY t.executed_at DESC
+    </select>
+
+    <!-- 거래 내역 ID로 조회 -->
+    <select id="selectByTransactionId" parameterType="Integer" resultMap="transactionResultMap">
+        SELECT
+            t.*,
+            'COMPLETED' as status,
+            s.image_url
+        FROM transactions t
+                 LEFT JOIN stocks s ON t.stock_code = s.code
+        WHERE t.transaction_id = #{transactionId}
+    </select>
+
+    <!-- 거래 내역 추가 -->
+    <insert id="insertTransaction" parameterType="org.scoula.domain.mocktrading.vo.Transaction"
+            useGeneratedKeys="true" keyProperty="transactionId">
+        INSERT INTO transactions (
+            account_id,
+            stock_code,
+            stock_name,
+            transaction_type,
+            order_type,
+            quantity,
+            price,
+            order_price,
+            total_amount,
+            executed_at,
+            order_created_at
+        ) VALUES (
+                     #{accountId},
+                     #{stockCode},
+                     #{stockName},
+                     #{transactionType},
+                     #{orderType},
+                     #{quantity},
+                     #{price},
+                     #{orderPrice},
+                     #{totalAmount},
+                     NOW(),
+                     NOW()
+                 )
+    </insert>
+
+    <!-- 거래 내역 업데이트 -->
+    <update id="updateTransaction" parameterType="org.scoula.domain.mocktrading.vo.Transaction">
+        UPDATE transactions SET
+                                transaction_type = #{transactionType},
+                                order_type = #{orderType},
+                                quantity = #{quantity},
+                                price = #{price},
+                                order_price = #{orderPrice},
+                                total_amount = #{totalAmount}
+        WHERE transaction_id = #{transactionId}
+    </update>
+
+    <!-- 거래 내역 삭제 -->
+    <delete id="deleteTransaction" parameterType="Integer">
+        DELETE FROM transactions WHERE transaction_id = #{transactionId}
+    </delete>
+
+    <!-- 계좌의 모든 거래 내역 삭제 (계좌 초기화 시) -->
+    <delete id="deleteAllByAccount" parameterType="Integer">
+        DELETE FROM transactions WHERE account_id = #{accountId}
+    </delete>
+
+    <!-- 사용자의 총 거래 횟수 -->
+    <select id="countByUserId" parameterType="Integer" resultType="int">
+        SELECT COUNT(*)
+        FROM transactions t
+                 INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+    </select>
+
+    <!-- 거래 타입별 총 금액 계산 -->
+    <select id="sumByUserIdAndType" resultType="Long">
+        SELECT COALESCE(SUM(t.total_amount), 0)
+        FROM transactions t
+        INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+        AND t.transaction_type = #{transactionType}
+        <if test="days > 0">
+            AND t.executed_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        </if>
+    </select>
+
+    <!-- 거래 타입별 거래 횟수 -->
+    <select id="countByUserIdAndType" resultType="int">
+        SELECT COUNT(*)
+        FROM transactions t
+        INNER JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+        AND t.transaction_type = #{transactionType}
+        <if test="days > 0">
+            AND t.executed_at >= DATE_SUB(NOW(), INTERVAL #{days} DAY)
+        </if>
+    </select>
+
+</mapper>

@@ -4,51 +4,98 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/**
- * 가상 계좌번호 생성 유틸리티 클래스
- */
 public class AccountNumberGenerator {
 
-    private static final String BANK_CODE = "999";  // 가상 은행 코드
     private static final SecureRandom random = new SecureRandom();
+    private static final String PREFIX = "FINZ"; // FINZIE 브랜드 prefix
 
     /**
      * 고유한 가상 계좌번호 생성
-     * 형식: 999-YYMMDD-XXXXXX (총 20자)
-     *
-     * @return 생성된 계좌번호
+     * 형식: FINZ-YYYYMMDD-XXXXXX (총 17자리)
+     * 예시: FINZ-20241130-123456
      */
-    public static String generateAccountNumber() {
-        // 현재 날짜 (YYMMDD 형식)
-        String dateStr = LocalDateTime.now()
-                .format(DateTimeFormatter.ofPattern("yyMMdd"));
+    public static String generate() {
+        // 현재 날짜 (YYYYMMDD)
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
 
         // 6자리 랜덤 숫자
         String randomStr = String.format("%06d", random.nextInt(1000000));
 
-        return BANK_CODE + "-" + dateStr + "-" + randomStr;
+        return String.format("%s-%s-%s", PREFIX, dateStr, randomStr);
     }
 
     /**
-     * 계좌번호 중복 체크를 위한 재생성 메서드
-     *
-     * @param existingNumbers 기존 계좌번호 목록 (중복 체크용)
-     * @return 중복되지 않는 계좌번호
+     * 마스킹된 계좌번호 반환 (보안을 위해 일부 숫자 숨김)
+     * 예시: FINZ-20241130-123456 → FINZ-****1130-***456
      */
-    public static String generateUniqueAccountNumber(java.util.Set<String> existingNumbers) {
-        String accountNumber;
-        int attempts = 0;
-        final int MAX_ATTEMPTS = 100;
+    public static String mask(String accountNumber) {
+        if (accountNumber == null || accountNumber.length() < 17) {
+            return accountNumber;
+        }
 
-        do {
-            accountNumber = generateAccountNumber();
-            attempts++;
-
-            if (attempts > MAX_ATTEMPTS) {
-                throw new RuntimeException("계좌번호 생성 실패: 최대 시도 횟수 초과");
+        try {
+            String[] parts = accountNumber.split("-");
+            if (parts.length != 3) {
+                return accountNumber;
             }
-        } while (existingNumbers != null && existingNumbers.contains(accountNumber));
 
-        return accountNumber;
+            String prefix = parts[0];
+            String datePart = parts[1];
+            String randomPart = parts[2];
+
+            // 날짜 부분 마스킹 (앞 4자리 숨김)
+            String maskedDate = "****" + datePart.substring(4);
+
+            // 랜덤 부분 마스킹 (앞 3자리 숨김)
+            String maskedRandom = "***" + randomPart.substring(3);
+
+            return String.format("%s-%s-%s", prefix, maskedDate, maskedRandom);
+
+        } catch (Exception e) {
+            return accountNumber; // 에러 시 원본 반환
+        }
+    }
+
+    /**
+     * 계좌번호 유효성 검증
+     */
+    public static boolean isValid(String accountNumber) {
+        if (accountNumber == null) {
+            return false;
+        }
+
+        // 기본 형식 확인: FINZ-YYYYMMDD-XXXXXX
+        String pattern = "^FINZ-\\d{8}-\\d{6}$";
+        return accountNumber.matches(pattern);
+    }
+
+    /**
+     * 표시용 계좌번호 포맷 (4자리씩 구분)
+     * 예시: FINZ-20241130-123456 → FINZ-2024-1130-1234-56
+     */
+    public static String formatForDisplay(String accountNumber) {
+        if (!isValid(accountNumber)) {
+            return accountNumber;
+        }
+
+        try {
+            String[] parts = accountNumber.split("-");
+            String prefix = parts[0];
+            String datePart = parts[1];
+            String randomPart = parts[2];
+
+            // 날짜를 4자리씩 분할
+            String year = datePart.substring(0, 4);
+            String monthDay = datePart.substring(4, 8);
+
+            // 랜덤 부분을 4자리, 2자리로 분할
+            String randomFirst = randomPart.substring(0, 4);
+            String randomSecond = randomPart.substring(4, 6);
+
+            return String.format("%s-%s-%s-%s-%s", prefix, year, monthDay, randomFirst, randomSecond);
+
+        } catch (Exception e) {
+            return accountNumber;
+        }
     }
 }
