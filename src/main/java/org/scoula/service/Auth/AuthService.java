@@ -32,4 +32,13 @@ public class AuthService {
     public UserVo login(String username, String password) {
         return authMapper.findByUsernameAndPassword(username, password);
     }
+    public UserVo findByNameAndEmail(String name, String email) {
+        return authMapper.findByNameAndEmail(name, email);
+    }
+    public UserVo findByEmail(String email) {
+        return authMapper.findByEmail(email);
+    }
+    public boolean updatePassword(Long userId, String newPassword) {
+        return authMapper.updatePassword(userId, newPassword) > 0;
+    }
 }

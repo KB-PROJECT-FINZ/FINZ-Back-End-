@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.TradingMapper">
+
+    <select id="getUserTransactions" resultType="org.scoula.domain.trading.dto.TransactionDTO">
+        SELECT 
+            transaction_id,
+            account_id,
+            stock_code,
+            stock_name,
+            transaction_type,
+            order_type,
+            quantity,
+            price,
+            order_price,
+            total_amount,
+            DATE_FORMAT(executed_at, '%Y-%m-%d %H:%i:%s') as executedAt,
+            DATE_FORMAT(order_created_at, '%Y-%m-%d %H:%i:%s') as orderCreatedAt
+        FROM transactions
+        WHERE account_id IN (SELECT account_id FROM user_accounts WHERE user_id = #{userId})
+        ORDER BY executed_at DESC
+    </select>
+
+</mapper>

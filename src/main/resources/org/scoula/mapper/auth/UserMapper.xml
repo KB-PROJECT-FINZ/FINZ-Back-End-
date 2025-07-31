@@ -10,6 +10,7 @@
         SET risk_type = #{riskType}
         WHERE username = #{username}
     </update>
+
     <select id="findRiskTypeNameByUsername" resultType="string">
         SELECT it.name_kr
         FROM user u
@@ -17,10 +18,36 @@
         WHERE u.username = #{username}
     </select>
 
+    <select id="findUsernameByUserId" resultType="String">
+        SELECT username
+        FROM user
+        WHERE id = #{userId}
+    </select>
+
     <select id="findGroupCodeByRiskType" parameterType="String" resultType="String">
         SELECT group_code
         FROM investment_types
         WHERE risk_type = #{riskType}
     </select>
+    <!-- 닉네임 중복 확인 -->
+    <select id="countByNickname" resultType="int" parameterType="string">
+        SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
+    </select>
+
+    <select id="findRiskTypeByUsername" resultType="string">
+        SELECT risk_type
+        FROM user
+        WHERE username = #{username}
+    </select>
+
+    <select id="findRiskTypeByUserId" resultType="string">
+        SELECT risk_type
+        FROM user
+        WHERE id = #{userId}
+    </select>
+
+
+
+
 
 </mapper>
