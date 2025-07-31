@@ -1,4 +1,4 @@
-.gradle
+gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -20,6 +20,7 @@ src/main/webapp/resources/index.html
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/dataSources.local.xml
 *.iws
 *.iml
 *.ipr
@@ -60,3 +61,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+src/main/webapp/resources/assets/
+src/main/webapp/resources/index.html
+kb_final.sql
+.idea/
