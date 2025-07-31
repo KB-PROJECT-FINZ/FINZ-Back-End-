@@ -65,7 +65,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             log.info("초기 intentType = {}", intentType);
 
 
-            if (intentType == null) {
+            if (intentType == null || intentType == IntentType.MESSAGE) {
                 String prompt = buildIntentClassificationPrompt(userMessage);
 
                 // GPT 호출
@@ -93,7 +93,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
             if (sessionId == null) {
                 // 세션이 없으면 새로 생성
-                log.info("세션 생성... sessionId = {}", sessionId);
+                log.info("intend = null 세션 새로 생성... sessionId = {}", sessionId);
                 ChatSessionDto newSession = ChatSessionDto.builder()
                         .userId(userId)
                         .lastIntent(intentType)
@@ -102,13 +102,16 @@ public class ChatBotServiceImpl implements ChatBotService {
                 sessionId = newSession.getId();
             } else {
                 // 기존 세션의 마지막 intent 가져옴
-                log.info("기존 세션의 마지막 intent 가져옴... sessionId = {}", sessionId);
+                log.info("기존 세션 intent 확인: sessionId = {}, userId = {}", sessionId, userId);
                 IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
+                log.info("기존 세션의 lastIntent = {}, 현재 요청 intent = {}", lastIntent, intentType);
 
                 if (!intentType.equals(lastIntent)) {
                     // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
-                    log.info("세션 종료 시도: {}", sessionId);
+                    log.info("🔄 intent가 변경됨 → 세션 종료 + 새 세션 생성");
+
                     chatBotMapper.endChatSession(sessionId);
+                    log.info("☑ 종료된 세션 ID = {}, 종료 결과 = {}", sessionId);
 
                     ChatSessionDto newSession = ChatSessionDto.builder()
                             .userId(userId)
@@ -116,8 +119,9 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .build();
                     chatBotMapper.insertChatSession(newSession);
                     sessionId = newSession.getId();
+                    log.info("🆕 새 세션 생성됨: sessionId = {}, intent = {}", sessionId, intentType);
                 } else {
-                    log.info("lastIntent만 갱신... sessionId = {}", sessionId);
+                    log.info("♻️ intent 동일 → lastIntent만 갱신");
                     // intent 같음 → lastIntent만 갱신
                     chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
                             .id(sessionId)
@@ -145,10 +149,14 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             String prompt;
             switch (intentType) {
+
                 case RECOMMEND_PROFILE:
                     // 1. 유저 성향 요약
                     String summary = userProfileService.buildProfileSummaryByUserId(userId);
                     String riskType = userProfileService.getRiskTypeByUserId(userId);
+                    log.info("summary: {}", summary);
+                    log.info("riskType: {}", riskType);
+
 
 
                     // 2. 종목 리스트 가져오기 (거래량 상위 등)
@@ -194,6 +202,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     // 8. GPT 프롬프트 구성
                     prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults,analysisList);
+
+                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
 
 
                     break;
@@ -254,7 +264,17 @@ public class ChatBotServiceImpl implements ChatBotService {
     private ChatResponseDto handleError(Exception e, Integer userId, IntentType intentType) {
         log.error("OpenAI 호출 중 예외 발생", e);
 
-        // chat_errors 테이블 저장
+        try {
+            if (intentType != null && intentType != IntentType.ERROR) {
+                Integer activeSessionId = chatBotMapper.getActiveSessionIdByUserId(userId);
+                if (activeSessionId != null) {
+                    chatBotMapper.endChatSession(activeSessionId);
+                    log.info("❌ 에러 발생으로 세션 종료: sessionId = {}", activeSessionId);
+                }
+            }
+        } catch (Exception sessionEx) {
+            log.warn("세션 종료 중 예외 발생: {}", sessionEx.getMessage());
+        }
 
         // 에러 타입 분기
         ErrorType errorType;
