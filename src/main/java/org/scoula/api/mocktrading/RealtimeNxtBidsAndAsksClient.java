@@ -32,8 +32,10 @@ public class RealtimeNxtBidsAndAsksClient {
         
         // 새로운 종목으로 바뀔 때 startedStocks 초기화
         startedStocks.clear();
-        
-        String approvalKey = TokenManager.getTokenInfo().getApprovalKey();
+
+        TokenManager.TokenInfo mainToken = TokenManager.getTokenInfo(TokenManager.TokenType.MAIN);
+        String approvalKey = mainToken.getApprovalKey();
+        System.out.println("실시간 호가에서 사용하는 키 " + approvalKey);
         System.out.println("🚀 [NXT] 새로운 WebSocket 연결 시작 - 종목: " + stockCode);
 
         client = new WebSocketClient(new URI(WS_URL)) {
