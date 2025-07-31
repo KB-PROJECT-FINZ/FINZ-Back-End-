@@ -63,26 +63,23 @@ public class ChatBotServiceImpl implements ChatBotService {
             log.info("초기 intentType = {}", intentType);
 
 
+            // intentType이 null이 아닌 경우: 프론트에서 지정해 준 것이므로 GPT 분류 생략
             if (intentType == null) {
                 String prompt = buildIntentClassificationPrompt(userMessage);
-
-                // GPT 호출
                 String intentText = openAiClient.getChatCompletion(prompt);
-
                 try {
-                    intentType = IntentType.valueOf(intentText); // enum 파싱
-                    log.info("GPT 의도 분류 결과: {}", intentText);
-
+                    intentType = IntentType.valueOf(intentText);
+                    log.info("🧠 GPT 의도 분류 결과: {}", intentText);
                 } catch (IllegalArgumentException ex) {
-                    // GPT 응답이 enum에 해당하지 않음 → fallback 처리
                     return handleError(
                             new IllegalArgumentException("의도 분류 실패: GPT 응답 = " + intentText),
                             userId,
                             IntentType.UNKNOWN
                     );
                 }
-
                 request.setIntentType(intentType);
+            } else {
+                log.info("✅ 프론트에서 intentType 명시 → GPT 분류 생략: {}", intentType);
             }
 
             // ========================2. 전처리======================
@@ -204,6 +201,10 @@ public class ChatBotServiceImpl implements ChatBotService {
                     prompt = promptBuilder.buildForPortfolioAnalysis(userId);
                     break;
 
+                case TERM_EXPLAIN:
+                    prompt = promptBuilder.buildForTermExplain(userMessage);
+                    break;
+
                 case SESSION_END:
                     prompt = "대화를 종료합니다. 감사합니다.";
                     break;
@@ -304,6 +305,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
     - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
     - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
+    - TERM_EXPLAIN: Ask for explanation of a financial term (e.g., PER, ROE, EPS).
     - SESSION_END: Wants to end the conversation.
     - ERROR: Clear error or invalid message.
     - UNKNOWN: Cannot determine intent.
@@ -329,6 +331,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                 Example 5:
                 User: "삼성전자 분석해줘"
                 Answer: STOCK_ANALYZE
+                
+                Example 6:
+                User: "ROE"
+                Answer: TERM_EXPLAIN
+                
+                Example 7:
+                User: "EPS가 뭔가요?"
+                Answer: TERM_EXPLAIN
 
     User: %s
     """.formatted(userMessage);
