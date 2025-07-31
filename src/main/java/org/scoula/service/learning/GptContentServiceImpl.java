@@ -43,6 +43,8 @@ public class GptContentServiceImpl implements GptContentService {
                 Map.of("role", "system", "content", "당신은 투자 교육 전문가입니다."),
                 Map.of("role", "user", "content", prompt)
         ));
+        body.put("max_tokens", 1300);
+        body.put("temperature", 0.7);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
@@ -52,14 +54,17 @@ public class GptContentServiceImpl implements GptContentService {
         // 4. 응답 파싱
         String content = response.getBody().get("choices").get(0).get("message").get("content").asText();
 
-        // 예: "title: ETF란?\nbody: ETF는 ... 입니다." 형태
-        String[] lines = content.split("\n", 2);
-        String title = lines[0].replace("title:", "").trim();
-        String bodyText = lines[1].replace("body:", "").trim();
-
+        String[] lines = content.split("\n");
         GptLearningContentResponseDto result = new GptLearningContentResponseDto();
-        result.setTitle(title);
-        result.setBody(bodyText);
+        for (String line : lines) {
+            if (line.startsWith("title:")) result.setTitle(line.replace("title:", "").trim());
+            else if (line.startsWith("body:")) result.setBody(line.replace("body:", "").trim());
+            else if (line.startsWith("quiz_question:")) result.setQuizQuestion(line.replace("quiz_question:", "").trim());
+            else if (line.startsWith("quiz_answer:")) result.setQuizAnswer(line.replace("quiz_answer:", "").trim());
+            else if (line.startsWith("quiz_comment:")) result.setQuizComment(line.replace("quiz_comment:", "").trim());
+            else if (line.startsWith("credit_reward:")) result.setCreditReward(Integer.parseInt(line.replace("credit_reward:", "").trim()));
+        }
+
         return result;
     }
 
@@ -79,7 +84,12 @@ public class GptContentServiceImpl implements GptContentService {
 
             출력 형식:
             title: (콘텐츠 제목)
-            body: (전체 아티클 줄글)
+            body: (전체 아티클 줄글- 800자 이상)
+            quiz_question: (OX 퀴즈 질문)
+            quiz_answer: (O 또는 X)
+            quiz_comment: (정답 해설)
+            credit_reward: (정답 시 보상 포인트 수치, 예: 100)
+            
 
             예시:
             title: ETF란 무엇인가 – 상장지수펀드의 개념과 활용법

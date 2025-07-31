@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.chatbot.InvestmentTypeMapper">
+
+    <select id="findByRiskType" resultType="org.scoula.domain.chatbot.dto.InvestmentTypeDto">
+        SELECT risk_type, name_kr, group_code, description
+        FROM investment_types
+        WHERE risk_type = #{riskType}
+    </select>
+
+</mapper>

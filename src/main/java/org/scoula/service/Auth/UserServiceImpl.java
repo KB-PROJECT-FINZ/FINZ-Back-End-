@@ -30,6 +30,7 @@ public class UserServiceImpl implements UserService {
     public boolean isNicknameAvailable(String nickname) {
         return userMapper.countByNickname(nickname) == 0;
     }
+
     @Override
     public UserVo findByUsername(String username) {
         return userMapper.findByUsername(username);
