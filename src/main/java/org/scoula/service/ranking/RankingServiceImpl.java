@@ -43,11 +43,23 @@ public class RankingServiceImpl implements RankingService {
     @Override
     public List<RankingByTraitGroupDto> getWeeklyRanking() {
         String baseDate = getThisWeekMondayDate();
-        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(baseDate);
-        return top100.stream()
-                .map(dto -> new RankingByTraitGroupDto(dto.getUserId(), "UNKNOWN", dto.getGainRate(), dto.getRanking()))
-                .collect(Collectors.toList());
+        return rankingMapper.selectTopRankingWithTraitGroup(baseDate);
     }
+//    @Override
+//    public List<RankingByTraitGroupDto> getWeeklyRanking() {
+//        String baseDate = getThisWeekMondayDate();
+//        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(baseDate);
+//        return top100.stream()
+//                .map(dto -> {
+//                    RankingByTraitGroupDto newDto = new RankingByTraitGroupDto();
+//                    newDto.setUserId(dto.getUserId());
+//                    newDto.setTraitGroup("UNKNOWN");
+//                    newDto.setGainRate(dto.getGainRate());
+//                    newDto.setRanking(dto.getRanking());
+//                    return newDto;
+//                })
+//                .collect(Collectors.toList());
+//    }
 
     @Override
     public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking() {
@@ -57,6 +69,16 @@ public class RankingServiceImpl implements RankingService {
         Map<String, List<RankingByTraitGroupDto>> result = new HashMap<>();
         for (String group : groups) {
             List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, baseDate);
+            // 한글 성향명 변환 (옵션)
+            String korGroup = switch (group) {
+                case "CONSERVATIVE" -> "보수형";
+                case "BALANCED" -> "균형형";
+                case "AGGRESSIVE" -> "공격형";
+                case "SPECIAL" -> "특수형";
+                default -> "기타";
+            };
+            // DTO 필드 변환
+            list.forEach(dto -> dto.setTraitGroup(korGroup));
             result.put(group, list);
         }
         return result;

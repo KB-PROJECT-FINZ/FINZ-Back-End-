@@ -6,6 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/RankingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/ranking/RankingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/RankingByTraitGroupDto.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/ranking/RankingByTraitGroupDto.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/RankingMapper.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/ranking/RankingMapper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/ranking/RankingServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/RankingMapper.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/ranking/RankingMapper.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,12 +30,7 @@
         </task>
         <projects_view>
           <tree_state>
-            <expand>
-              <path>
-                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
-                <item name="FinzBack" type="f1a62948:ProjectNode" />
-              </path>
-            </expand>
+            <expand />
             <select />
           </tree_state>
         </projects_view>
@@ -58,12 +58,12 @@
     &quot;assignee&quot;: &quot;hannie1126&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git&quot;,
-    &quot;accountId&quot;: &quot;5f6679e2-57fe-466d-a052-8abd86698b79&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git",
+    "accountId": "bdcbd646-9958-458a-9c4e-dd709fde7b25"
   }
-}</component>
+}]]></component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -87,7 +87,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "#58 on feature/mypage",
+    "git-widget-placeholder": "feature/ranking",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
     "node.js.detected.package.eslint": "true",
@@ -95,13 +95,14 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
+    "settings.editor.selected.configurable": "File.Encoding",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
     "DatabaseDriversLRU": [
       "mysql_aurora",
-      "mysql"
+      "mysql",
+      "mysql_aurora_aws"
     ]
   }
 }]]></component>
@@ -117,7 +118,8 @@
     </key>
   </component>
   <component name="RunManager">
-    <configuration name="Tomcat 9.0.105" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.105" ALTERNATIVE_JRE_ENABLED="false">
+    <configuration name="Tomcat 9.0.105" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.105" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
+      <option name="COMMON_VM_ARGUMENTS" value="-Dfile.encoding=UTF-8" />
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment>
         <artifact name="Gradle : org.scoula : FinzBack-1.0-SNAPSHOT.war">
@@ -127,7 +129,7 @@
         </artifact>
       </deployment>
       <server-settings>
-        <option name="BASE_DIRECTORY_NAME" value="83d6c79d-f5ea-474a-ac6f-0bcd6bebf503" />
+        <option name="BASE_DIRECTORY_NAME" value="e0129e70-32d7-46ea-9f34-39e1d913214f" />
       </server-settings>
       <predefined_log_file enabled="true" id="Tomcat" />
       <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -135,7 +137,7 @@
       <predefined_log_file id="Tomcat Host Manager" />
       <predefined_log_file id="Tomcat Localhost Access" />
       <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="65177" />
+        <option name="DEBUG_PORT" value="61286" />
       </RunnerSettings>
       <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
         <option name="USE_ENV_VARIABLES" value="true" />
@@ -208,17 +210,18 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26927.53" />
-        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.26927.53" />
+        <option value="bundled-jdk-9f38398b9061-39b83d9b5494-intellij.indexing.shared.core-IU-241.18034.62" />
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-IU-241.18034.62" />
       </set>
     </attachedChunks>
   </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="StructureViewState">
     <option name="selectedTab" value="Logical" />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="04d1986b-b378-496e-b2af-fa1ae683affd" name="Changes" comment="" />
+      <changelist id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정" />
       <created>1752801910244</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
@@ -230,6 +233,7 @@
       <workItem from="1753163312866" duration="13393000" />
       <workItem from="1753337077689" duration="6506000" />
       <workItem from="1753354776070" duration="24533000" />
+      <workItem from="1753946879904" duration="3607000" />
     </task>
     <task id="LOCAL-00001" summary="learning 콘텐츠 추가 및 퀴즈 기능 구현">
       <option name="closed" value="true" />
