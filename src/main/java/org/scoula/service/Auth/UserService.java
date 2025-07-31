@@ -1,5 +1,6 @@
 package org.scoula.service.Auth;
 
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,6 @@ public interface UserService {
     String getRiskTypeNameByUsername(String username);
     String getGroupCodeByRiskType(String riskType);
     boolean isNicknameAvailable(String nickname);
-
-
-    String getUsernameByUserId(Integer userId);
-    String getRiskTypeByUsername(String username);
+    UserVo findByUsername(String username);
     String getRiskTypeByUserId(Integer userId);
-
-
 }
