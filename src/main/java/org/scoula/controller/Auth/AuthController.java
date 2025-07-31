@@ -171,7 +171,7 @@ public class AuthController {
             session.setAttribute("username", user.getUsername());
             session.setAttribute("name", user.getNickname());
 
-            return "redirect:/"; // ✅ 여기 중요! -> 홈으로 이동
+            return "redirect:/";
         } catch (Exception e) {
             e.printStackTrace(); // 오류 로그 출력
             return "redirect:/login-error"; // 또는 오류 처리 페이지
