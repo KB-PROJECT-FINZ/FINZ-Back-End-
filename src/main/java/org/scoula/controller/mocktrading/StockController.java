@@ -7,11 +7,16 @@ import org.scoula.api.mocktrading.PriceApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.RealtimeExecutionClient;
 import org.scoula.domain.mocktrading.BuyRequestDto;
+import org.scoula.util.mocktrading.ConfigManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 @Slf4j
 @RestController
@@ -20,14 +25,14 @@ import java.io.IOException;
 @Api(tags = "주식 모의투자 API", description = "주식 가격 조회 및 모의 매매 기능을 제공합니다")
 public class StockController {
 
-    @GetMapping("/price/{code}")
+    @GetMapping("/price/{stockCode}")
     @ApiOperation(value = "주식 가격 조회", notes = "주식 종목코드를 이용하여 실시간 가격 정보를 조회합니다")
     @ApiParam(name = "code", value = "주식 종목코드 (예: 005930)", required = true, example = "005930")
     @ApiResponses({
             @ApiResponse(code = 200, message = "성공적으로 가격 정보를 조회했습니다"),
             @ApiResponse(code = 500, message = "서버 내부 오류가 발생했습니다")
     })
-    public ResponseEntity<JsonNode> getStockPrice(@PathVariable("code") String code) {
+    public ResponseEntity<JsonNode> getStockPrice(@PathVariable("stockCode") String code) {
         try {
             JsonNode price = PriceApi.getPriceData(code);
             return ResponseEntity.ok(price);
