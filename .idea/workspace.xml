@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="Gradle : org.scoula : FinzBack-1.0-SNAPSHOT.war" />
+    </artifacts-to-build>
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="fix: 이메일인증 및 회원가입폼 오류 수정">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/Auth/UserServiceImpl.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExternalProjectsData">
-    <projectState path="$PROJECT_DIR$">
-      <ProjectState />
-    </projectState>
-  </component>
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
-        <task path="$PROJECT_DIR$">
-          <activation />
-        </task>
         <projects_view>
           <tree_state>
             <expand>
@@ -37,45 +37,6 @@
       </state>
     </system>
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Class" />
-      </list>
-    </option>
-  </component>
-  <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="main" />
-      </map>
-    </option>
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;CHOI-074&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git&quot;,
-    &quot;accountId&quot;: &quot;21b6c44b-3b1d-4aa1-a87b-d0bf5770f06c&quot;
-  }
-}</component>
-  <component name="GitHubPullRequestSearchHistory">{
-  &quot;lastFilter&quot;: {
-    &quot;state&quot;: &quot;OPEN&quot;,
-    &quot;assignee&quot;: &quot;hannie1126&quot;
-  }
-}</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/KB-PROJECT-FINZ/FINZ-Back-End-.git&quot;,
-    &quot;accountId&quot;: &quot;5f6679e2-57fe-466d-a052-8abd86698b79&quot;
-  }
-}</component>
   <component name="LogFilters">
     <option name="FILTER_ERRORS" value="false" />
     <option name="FILTER_WARNINGS" value="false" />
@@ -83,77 +44,22 @@
     <option name="FILTER_DEBUG" value="true" />
     <option name="CUSTOM_FILTER" />
   </component>
-  <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
-  </component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 2
-}</component>
-  <component name="ProjectId" id="301jKHZACsLnK7f8peIJ31FAgY4" />
-  <component name="ProjectViewState">
-    <option name="showLibraryContents" value="true" />
-  </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Gradle.Build FINZ-Back-End-.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.Build FinzBack.executor&quot;: &quot;Run&quot;,
-    &quot;Gradle.FinzBack 빌드.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Tomcat Server.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
-    &quot;Tomcat 서버.Tomcat 9.0.105.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/LoginForm&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Gradle.Build FINZ-Back-End-.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Tomcat Server.Tomcat 9.0.105.executor": "Run",
-    "git-widget-placeholder": "#58 on feature/mypage",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/KB_Fullstack/FINZ-Back-End-/src/main/java/org/scoula/controller/mocktrading",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.settingsdialog.project.gradle",
-    "vue.rearranger.settings.migration": "true"
+    "Tomcat 서버.Tomcat 9.0.105.executor": "Run",
+    "git-widget-placeholder": "feature/LoginForm",
+    "node.js.selected.package.tslint": "(autodetect)"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;mysql&quot;,
-      &quot;mysql_aurora&quot;
   "keyToStringList": {
     "DatabaseDriversLRU": [
-      "mysql_aurora",
-      "mysql"
+      "mysql_aurora"
     ]
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/src/main/resources" />
-    </key>
-    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
-      <recent name="org.scoula.mapper" />
-    </key>
-  </component>
   <component name="RunManager">
     <configuration name="Tomcat 9.0.105" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.105" ALTERNATIVE_JRE_ENABLED="false" nameIsGenerated="true">
       <option name="COMMON_VM_ARGUMENTS" value="-Dfile.encoding=utf-8" />
-    <configuration name="Tomcat 9.0.105" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 9.0.105" ALTERNATIVE_JRE_ENABLED="false">
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment>
         <artifact name="Gradle : org.scoula : FinzBack-1.0-SNAPSHOT.war">
@@ -163,8 +69,7 @@
         </artifact>
       </deployment>
       <server-settings>
-        <option name="BASE_DIRECTORY_NAME" value="83d6c79d-f5ea-474a-ac6f-0bcd6bebf503" />
-        <option name="BASE_DIRECTORY_NAME" value="edad4c1e-c0bc-4fc5-8d82-c93ce8e42d92" />
+        <option name="BASE_DIRECTORY_NAME" value="79cf39eb-23aa-473f-9cd5-2ee59549e845" />
       </server-settings>
       <predefined_log_file enabled="true" id="Tomcat" />
       <predefined_log_file enabled="true" id="Tomcat Catalina" />
@@ -172,8 +77,7 @@
       <predefined_log_file id="Tomcat Host Manager" />
       <predefined_log_file id="Tomcat Localhost Access" />
       <RunnerSettings RunnerId="Debug">
-        <option name="DEBUG_PORT" value="65177" />
-        <option name="DEBUG_PORT" value="6461" />
+        <option name="DEBUG_PORT" value="11918" />
       </RunnerSettings>
       <ConfigurationWrapper VM_VAR="JAVA_OPTS" RunnerId="Cover">
         <option name="USE_ENV_VARIABLES" value="true" />
@@ -243,82 +147,7 @@
       </method>
     </configuration>
   </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26927.53" />
-        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.26927.53" />
-      </set>
-    </attachedChunks>
-  </component>
-  <component name="StructureViewState">
-    <option name="selectedTab" value="Logical" />
-  </component>
   <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="4bde8ecb-e7d0-42cc-beae-324b984942fe" name="Changes" comment="" />
-      <created>1753366426947</created>
-      <option name="number" value="Default" />
-      <option name="presentableId" value="Default" />
-      <updated>1752801910244</updated>
-      <workItem from="1752801912810" duration="373000" />
-      <workItem from="1752802669670" duration="12820000" />
-      <workItem from="1752824952815" duration="2131000" />
-      <workItem from="1753150558302" duration="8232000" />
-      <workItem from="1753163312866" duration="13393000" />
-      <workItem from="1753337077689" duration="6506000" />
-      <workItem from="1753354776070" duration="24533000" />
-      <updated>1753366426947</updated>
-      <workItem from="1753366429098" duration="893000" />
-      <workItem from="1753401933744" duration="14188000" />
-      <workItem from="1753421535521" duration="23043000" />
-      <workItem from="1753858887618" duration="15302000" />
-      <workItem from="1753938966715" duration="17000" />
-    </task>
-    <task id="LOCAL-00001" summary="learning 콘텐츠 추가 및 퀴즈 기능 구현">
-      <option name="closed" value="true" />
-      <created>1753151320149</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1753151320149</updated>
-    </task>
-    <task id="LOCAL-00002" summary="learning 콘텐츠 추가 및 퀴즈 기능 구현 수정">
-      <option name="closed" value="true" />
-      <created>1753151549075</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1753151549075</updated>
-    </task>
-    <task id="LOCAL-00003" summary="fix: 개념 콘텐츠 오류 수정">
-      <option name="closed" value="true" />
-      <created>1753418081397</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1753418081397</updated>
-    </task>
-    <option name="localTasksCounter" value="4" />
     <servers />
-  </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="3" />
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="Changes" />
-    <MESSAGE value="fix: 이메일인증 및 회원가입폼 오류 수정" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix: 이메일인증 및 회원가입폼 오류 수정" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/scoula/mapper/AuthMapper.java</url>
-          <line>21</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

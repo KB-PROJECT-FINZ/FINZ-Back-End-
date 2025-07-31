@@ -35,4 +35,8 @@ public class UserServiceImpl implements UserService {
     public UserVo findByUsername(String username) {
         return userMapper.findByUsername(username);
     }
+    @Override
+    public String getRiskTypeByUserId(Integer userId) {
+        return userMapper.findRiskTypeByUserId(userId);
+    }
 }

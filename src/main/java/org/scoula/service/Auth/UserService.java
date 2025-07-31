@@ -13,4 +13,5 @@ public interface UserService {
     String getGroupCodeByRiskType(String riskType);
     boolean isNicknameAvailable(String nickname);
     UserVo findByUsername(String username);
+    String getRiskTypeByUserId(Integer userId);
 }
