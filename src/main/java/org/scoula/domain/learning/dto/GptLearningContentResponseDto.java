@@ -6,4 +6,9 @@ import lombok.Data;
 public class GptLearningContentResponseDto {
     private String title;
     private String body;
+
+    private String quizQuestion;
+    private String quizAnswer;
+    private String quizComment;
+    private int creditReward;
 }

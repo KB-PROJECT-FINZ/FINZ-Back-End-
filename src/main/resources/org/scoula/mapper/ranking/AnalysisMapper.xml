@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.scoula.mapper.ranking.AnalysisMapper">
+
+    <!-- (1) 성향별 보유 비중 -->
+    <select id="findTraitStocks" parameterType="long" resultType="org.scoula.domain.ranking.TraitStockDto">
+        SELECT
+            s.name AS stock_name,
+            tsd.gain_rate,
+            s.logo,
+            tsd.conservative_ratio,
+            tsd.balanced_ratio,
+            tsd.aggressive_ratio,
+            (tsd.analytical_ratio + tsd.emotional_ratio) AS special_ratio
+        FROM stock_trait_distribution tsd
+                 JOIN stocks s ON tsd.stock_code = s.code
+        WHERE tsd.user_id = #{userId}
+        ORDER BY s.name
+            LIMIT 5
+    </select>
+
+    <!-- (2) 내 수익률 분포 위치 -->
+    <select id="findMyDistribution" resultMap="MyDistributionResultMap" parameterType="long">
+        SELECT
+            s.name AS stock_name,
+            hd.gain_rate,
+            hd.position_index,
+            hd.position_label,
+            hd.distribution_bin1,
+            hd.distribution_bin2,
+            hd.distribution_bin3,
+            hd.distribution_bin4,
+            hd.distribution_bin5,
+            hd.distribution_bin6
+        FROM holdings_distribution hd
+                 JOIN stocks s ON hd.stock_code = s.code
+        WHERE hd.user_id = #{userId}
+    </select>
+
+    <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
+        <result property="stockName" column="stock_name" />
+        <result property="gainRate" column="gain_rate" />
+        <result property="positionIndex" column="position_index" />
+        <result property="positionLabel" column="position_label" />
+        <collection property="distributionBins" ofType="int">
+            <result column="distribution_bin1" />
+            <result column="distribution_bin2" />
+            <result column="distribution_bin3" />
+            <result column="distribution_bin4" />
+            <result column="distribution_bin5" />
+            <result column="distribution_bin6" />
+        </collection>
+    </resultMap>
+
+    <!-- (3) 유사 성향 투자자 인기 종목 -->
+    <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+        SELECT stock_code, stock_name, transaction_count, ranking
+        FROM popular_stocks_by_trait_group
+        WHERE trait_group = #{traitGroup}
+        ORDER BY ranking ASC
+            LIMIT 50
+    </select>
+</mapper>
