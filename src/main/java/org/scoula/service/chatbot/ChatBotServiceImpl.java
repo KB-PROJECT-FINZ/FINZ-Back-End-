@@ -62,7 +62,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
-            log.info("초기 intentType = {}", intentType);
+            log.info("[INTENT] 초기 intentType: {}", intentType);
 
 
             if (intentType == null || intentType == IntentType.MESSAGE) {
@@ -70,10 +70,11 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                 // GPT 호출
                 String intentText = openAiClient.getChatCompletion(prompt);
+                log.info("[INTENT] GPT 의도 분류 요청 프롬프트 생성 완료");
 
                 try {
                     intentType = IntentType.valueOf(intentText); // enum 파싱
-                    log.info("GPT 의도 분류 결과: {}", intentText);
+                    log.info("[INTENT] GPT 의도 분류 결과 → intentType: {}", intentType);
 
                 } catch (IllegalArgumentException ex) {
                     // GPT 응답이 enum에 해당하지 않음 → fallback 처리
@@ -93,25 +94,25 @@ public class ChatBotServiceImpl implements ChatBotService {
             // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
             if (sessionId == null) {
                 // 세션이 없으면 새로 생성
-                log.info("intend = null 세션 새로 생성... sessionId = {}", sessionId);
+                log.info("[SESSION] 기존 sessionId 없음 → 새 세션 생성 시도");
                 ChatSessionDto newSession = ChatSessionDto.builder()
                         .userId(userId)
                         .lastIntent(intentType)
                         .build();
                 chatBotMapper.insertChatSession(newSession);
                 sessionId = newSession.getId();
+                log.info("[SESSION] 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
             } else {
                 // 기존 세션의 마지막 intent 가져옴
-                log.info("기존 세션 intent 확인: sessionId = {}, userId = {}", sessionId, userId);
+                log.info("[SESSION] 기존 세션 유지 확인 → sessionId: {}, userId: {}", sessionId, userId);
                 IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
-                log.info("기존 세션의 lastIntent = {}, 현재 요청 intent = {}", lastIntent, intentType);
-
+                log.info("[SESSION] 세션 intent 비교 → lastIntent: {}, currentIntent: {}", lastIntent, intentType);
                 if (!intentType.equals(lastIntent)) {
                     // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
-                    log.info("🔄 intent가 변경됨 → 세션 종료 + 새 세션 생성");
+                    log.info("[SESSION] 🔄 intent 변경 감지 → 기존 세션 종료 + 새 세션 생성");
 
                     chatBotMapper.endChatSession(sessionId);
-                    log.info("☑ 종료된 세션 ID = {}, 종료 결과 = {}", sessionId);
+                    log.info("[SESSION] ☑ 기존 세션 종료 완료 → sessionId: {}", sessionId);
 
                     ChatSessionDto newSession = ChatSessionDto.builder()
                             .userId(userId)
@@ -119,9 +120,9 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .build();
                     chatBotMapper.insertChatSession(newSession);
                     sessionId = newSession.getId();
-                    log.info("🆕 새 세션 생성됨: sessionId = {}, intent = {}", sessionId, intentType);
+                    log.info("[SESSION] 🆕 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
                 } else {
-                    log.info("♻️ intent 동일 → lastIntent만 갱신");
+                    log.info("[SESSION] ♻️ intent 동일 → lastIntent 갱신만 수행");
                     // intent 같음 → lastIntent만 갱신
                     chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
                             .id(sessionId)
@@ -132,6 +133,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
+            log.info("[MESSAGE] 사용자 메시지 저장 완료");
             
             // 에러 발생시 저장
             if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
@@ -154,14 +156,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 1. 유저 성향 요약
                     String summary = userProfileService.buildProfileSummaryByUserId(userId);
                     String riskType = userProfileService.getRiskTypeByUserId(userId);
-                    log.info("summary: {}", summary);
-                    log.info("riskType: {}", riskType);
+                    log.info("[GPT] 사용자 성향 summary: {}", summary);
+                    log.info("[GPT] 사용자 riskType: {}", riskType);
 
 
 
                     // 2. 종목 리스트 가져오기 (거래량 상위 등)
                     List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(3, "0");
-
+                    log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
 
                     // 3. 성향 기반 필터링
                     List<RecommendationStock> recStocks = rawStocks.stream()
@@ -169,6 +171,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .toList();
 
                     List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, recStocks);
+                    log.info("[GPT] 성향 기반 필터링 완료 → {}개", filteredStocks.size());
 
                     // 4. 종목 코드/이름 추출
                     List<String> tickers = filteredStocks.stream().map(RecommendationStock::getCode).toList();
@@ -177,6 +180,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     // 5. 상세 정보 조회 (PriceApi 이용)
                     List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+
+                    log.info("[GPT] 추천 종목 상세 정보 조회 완료 → {}개", detailed.size());
 
                     // 6. DTO로 매핑 (ChatAnalysisDto)
                     List<ChatAnalysisDto> analysisList = detailed.stream()
@@ -191,6 +196,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 8-1. GPT 분석 요청 프롬프트에 요청 ( 응답 json)
                     String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
                     String analysisResponse = openAiClient.getChatCompletion(analysisPrompt);
+                    log.info("[GPT] GPT 분석 요청 프롬프트 구성 완료");
 
                     // 8-3. 추천 사유 파싱 → DB 저장
 
@@ -198,12 +204,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                     for (ChatRecommendationDto dto : recResults) {
                         chatBotMapper.insertRecommendation(dto);
                     }
+                    log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recResults.size());
 
 
                     // 8. GPT 프롬프트 구성
                     prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults,analysisList);
+                    log.info("[GPT] 최종 GPT 요청 시작");
 
-                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
+
 
 
                     break;
@@ -211,18 +219,22 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                 case RECOMMEND_KEYWORD:
                     prompt = promptBuilder.buildForKeyword(userMessage);
+                    log.info("[GPT] 키워드 기반 추천 프롬프트 생성 완료");
                     break;
 
                 case STOCK_ANALYZE:
                     prompt = promptBuilder.buildForAnalysis(userMessage);
+                    log.info("[GPT] 종목 분석 프롬프트 생성 완료");
                     break;
 
                 case PORTFOLIO_ANALYZE:
                     prompt = promptBuilder.buildForPortfolioAnalysis(userId);
+                    log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
                     break;
 
                 case SESSION_END:
                     prompt = "대화를 종료합니다. 감사합니다.";
+                    log.info("[GPT] 사용자 의도가 세션 종료");
                     break;
 
                 case ERROR:
@@ -236,7 +248,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 case MESSAGE:
                 default:
                     prompt = userMessage;
-                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
+                    log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
                     break;
             }
             String content = openAiClient.getChatCompletion(prompt);
@@ -244,7 +256,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
-            // TODO: 종목코드 추출 API 연동 필요 -> 추천 데이터 저장
+            log.info("[MESSAGE] GPT 응답 저장 완료 (messageId: {})", gptMessage.getId());
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
@@ -262,7 +274,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     // ====================== 예외 처리 함수 ======================
     private ChatResponseDto handleError(Exception e, Integer userId, IntentType intentType) {
-        log.error("OpenAI 호출 중 예외 발생", e);
+        log.error("[ERROR] OpenAI 호출 중 예외 발생", e);
 
         try {
             if (intentType != null && intentType != IntentType.ERROR) {
@@ -273,7 +285,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 }
             }
         } catch (Exception sessionEx) {
-            log.warn("세션 종료 중 예외 발생: {}", sessionEx.getMessage());
+            log.warn("[SESSION] 에러 발생 시 세션 종료 실패: {}", sessionEx.getMessage());
         }
 
         // 에러 타입 분기
@@ -394,7 +406,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             }
 
         } catch (Exception e) {
-            log.warn("❗ GPT 응답 파싱 실패: {}", e.getMessage());
+            log.warn("[GPT] 추천 응답 파싱 실패: {}", e.getMessage());
         }
 
         return result;
