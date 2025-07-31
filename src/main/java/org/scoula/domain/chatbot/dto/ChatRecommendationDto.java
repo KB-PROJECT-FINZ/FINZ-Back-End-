@@ -20,6 +20,7 @@ public class ChatRecommendationDto {
     private String recommendType; // "PROFILE" or "KEYWORD"
     private String reason;
     private String expectedReturn;
+    private String riskType;
     private String riskLevel;
     private LocalDateTime createdAt;
 }

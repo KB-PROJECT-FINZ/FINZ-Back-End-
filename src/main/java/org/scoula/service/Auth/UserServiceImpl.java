@@ -29,4 +29,19 @@ public class UserServiceImpl implements UserService {
     public boolean isNicknameAvailable(String nickname) {
         return userMapper.countByNickname(nickname) == 0;
     }
+
+    @Override
+    public String getUsernameByUserId(Integer userId) {
+        return userMapper.findUsernameByUserId(userId);
+    }
+
+    @Override
+    public String getRiskTypeByUsername(String username) {
+        return userMapper.findRiskTypeByUsername(username);
+    }
+
+    @Override
+    public String getRiskTypeByUserId(Integer userId) {
+        return userMapper.findRiskTypeByUserId(userId);
+    }
 }

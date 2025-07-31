@@ -4,99 +4,75 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
+import org.scoula.util.chatbot.OpenAiClient;
+import org.scoula.util.chatbot.ProfileStockFilter;
+import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
 
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
+import org.scoula.util.chatbot.ChatAnalysisMapper;
+import org.scoula.util.chatbot.ProfileStockMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Log4j2
 @Service
 @RequiredArgsConstructor
 public class ChatBotServiceImpl implements ChatBotService {
 
-    // 기능별 메서드 정의해야함 .
-    //    private ChatResponseDto handleProfileRecommendation(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForProfile(String.valueOf(request.getUserId()));
-    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_PROFILE", request);
-    //    }
-    //
-    //    private ChatResponseDto handleKeywordRecommendation(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForKeyword(request.getMessage());
-    //    return callOpenAiAndBuildResponse(prompt, "RECOMMEND_KEYWORD", request);
-    //    }
-    //
-    //    private ChatResponseDto handleStockAnalysis(ChatRequestDto request) throws Exception {
-    //    String prompt = promptBuilder.buildForAnalysis(request.getMessage());
-    //    return callOpenAiAndBuildResponse(prompt, "ANALYZE_STOCK", request);
-    //    }
-    //
-    //    private ChatResponseDto handleGeneralChat(ChatRequestDto request) throws Exception {
-    //    return callOpenAiAndBuildResponse(request.getMessage(), "GENERAL", request);
-    //    }
+    private final PromptBuilder promptBuilder;
 
-    private final RestTemplate restTemplate;
+    @Autowired
+    private OpenAiClient openAiClient;
 
-    @Value("${openai.api.key}")
-    private String openaiApiKey;
+    // 성향에 따른 종목 추천 유틸
+    @Autowired
+    private ProfileStockRecommender profileStockRecommender;
 
-    @Value("${openai.api.url}")
-    private String openaiApiUrl;
+    // 모의투자팀이 열심히 만든~ 볼륨랭킹
+    @Autowired
+    private VolumeRankingApi volumeRankingApi;
 
-    @Value("${openai.api.model}")
-    private String model;
+    @Autowired
+    private UserProfileService userProfileService;
 
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
         try {
             // ====================== 1. 입력 데이터 추출 ======================
             String userMessage = request.getMessage();
-            IntentType intentType = request.getIntentType();  // ex. "RECOMMEND_PROFILE"
+            IntentType intentType = request.getIntentType();
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
+            log.info("초기 intentType = {}", intentType);
 
 
             if (intentType == null) {
                 String prompt = buildIntentClassificationPrompt(userMessage);
 
                 // GPT 호출
-                Map<String, Object> msg = new HashMap<>();
-                msg.put("role", "user");
-                msg.put("content", prompt);
-
-                Map<String, Object> requestBody = new HashMap<>();
-                requestBody.put("model", model);
-                requestBody.put("messages", List.of(msg));
-                requestBody.put("temperature", 0);
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-                headers.setBearerAuth(openaiApiKey);
-
-                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
-
-                ResponseEntity<String> gptResponse = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
-
-                JsonNode json = objectMapper.readTree(gptResponse.getBody());
-                String intentText = json.path("choices").get(0).path("message").path("content").asText().trim();
+                String intentText = openAiClient.getChatCompletion(prompt);
 
                 try {
                     intentType = IntentType.valueOf(intentText); // enum 파싱
+                    log.info("GPT 의도 분류 결과: {}", intentText);
+
                 } catch (IllegalArgumentException ex) {
                     // GPT 응답이 enum에 해당하지 않음 → fallback 처리
                     return handleError(
@@ -147,14 +123,10 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .build());
                 }
             }
-            // ====================== 3. 의도 분류 ======================
-
-
-
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
-
+            
             // 에러 발생시 저장
             if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
                 ErrorType errorType;
@@ -166,38 +138,96 @@ public class ChatBotServiceImpl implements ChatBotService {
                 chatBotMapper.insertChatError(errorDto);
             }
 
-
-
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
-            Map<String, Object> message = new HashMap<>();
-            message.put("role", "user");
-            message.put("content", userMessage);
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", model);
-            body.put("messages", List.of(message));
-            body.put("temperature", 0.6);
+            String prompt;
+            switch (intentType) {
+                case RECOMMEND_PROFILE:
+                    // 1. 유저 성향 요약
+                    String summary = userProfileService.buildProfileSummaryByUserId(userId);
+                    String riskType = userProfileService.getRiskTypeByUserId(userId);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(openaiApiKey);
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(openaiApiUrl, entity, String.class);
+                    // 2. 종목 리스트 가져오기 (거래량 상위 등)
+                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(3, "0");
 
-            // ====================== 6. 응답 성공 여부 확인 ======================
-            if (!response.getStatusCode().is2xxSuccessful()) {
-                return handleError(new RuntimeException("OpenAI 응답 실패 - 상태코드: " + response.getStatusCodeValue()), userId, intentType);
+
+                    // 3. 성향 기반 필터링
+                    List<RecommendationStock> recStocks = rawStocks.stream()
+                            .map(ProfileStockMapper::fromMap)
+                            .toList();
+
+                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, recStocks);
+
+                    // 4. 종목 코드/이름 추출
+                    List<String> tickers = filteredStocks.stream().map(RecommendationStock::getCode).toList();
+                    List<String> names = filteredStocks.stream().map(RecommendationStock::getName).toList();
+
+
+                    // 5. 상세 정보 조회 (PriceApi 이용)
+                    List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+
+                    // 6. DTO로 매핑 (ChatAnalysisDto)
+                    List<ChatAnalysisDto> analysisList = detailed.stream()
+                            .map(ChatAnalysisMapper::toDto)
+                            .toList();
+
+                    // 7. DB 저장 (추천된 종목의 데이터를 저장)
+                    for (ChatAnalysisDto dto : analysisList) {
+                        chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
+                    }
+
+                    // 8-1. GPT 분석 요청 프롬프트
+                    String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
+
+
+                    // 5,6 에서 저장된 추천 종목의 값을 gpt로 보내서 상세한 분석 요청
+                    // 분석 후 이유와 상세한 기술적 지표, 설명 등 응답 하게 만듦.
+                    // 추천한 이유를 DB에 저장(ChatRecommendationDto.reason)
+
+                    // 8. GPT 프롬프트 구성
+                    prompt = promptBuilder.buildForProfile(userId, summary, analysisList);
+
+                    break;
+
+
+                case RECOMMEND_KEYWORD:
+                    prompt = promptBuilder.buildForKeyword(userMessage);
+                    break;
+
+                case STOCK_ANALYZE:
+                    prompt = promptBuilder.buildForAnalysis(userMessage);
+                    break;
+
+                case PORTFOLIO_ANALYZE:
+                    prompt = promptBuilder.buildForPortfolioAnalysis(userId);
+                    break;
+
+                case SESSION_END:
+                    prompt = "대화를 종료합니다. 감사합니다.";
+                    break;
+
+                case ERROR:
+                    prompt = "사용자 입력에 오류가 있습니다. 다시 확인해주세요.";
+                    break;
+
+                case UNKNOWN:
+                    prompt = "요청 내용을 이해하지 못했습니다. 다시 질문해주세요.";
+                    break;
+
+                case MESSAGE:
+                default:
+                    prompt = userMessage;
+                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
+                    break;
             }
-
-            // ====================== 7. 응답 파싱 ======================
-            JsonNode root = objectMapper.readTree(response.getBody());
-            String content = root.path("choices").get(0).path("message").path("content").asText();
+            String content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
+            // TODO: 종목코드 추출 API 연동 필요 -> 추천 데이터 저장
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
@@ -280,22 +310,28 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     Just return the intent type only, no explanation.
 
-    Example 1:
-    User: "AI 관련된 주식 추천해줘"
-    Answer: RECOMMEND_KEYWORD
-
-    Example 2:
-    User: "삼성전자 분석해줘"
-    Answer: STOCK_ANALYZE
-    
-    Example 3:
-    User: "가치주 추천"
-    Answer: RECOMMEND_KEYWORD
+                Example 1:
+                User: "AI 관련된 주식 추천해줘"
+                Answer: RECOMMEND_KEYWORD
+                
+                Example 2:
+                User: "내 투자 성향으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 3:
+                User: "내 성향에 맞는 주식 뭐야?"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 4:
+                User: "성향 기반으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
+                
+                Example 5:
+                User: "삼성전자 분석해줘"
+                Answer: STOCK_ANALYZE
 
     User: %s
     """.formatted(userMessage);
     }
-
-
 
 }

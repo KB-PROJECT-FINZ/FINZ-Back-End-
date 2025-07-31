@@ -24,4 +24,14 @@ public class ChatAnalysisDto {
     private Float eps;
     private Float price;
     private LocalDateTime updatedAt;
+    private Float pbr;
+    private Float open; // 시가
+    private Float high; // 고가
+    private Float low;  // 저가
+    private Long volume; // 누적 거래량
+    private Float avgPrice; // 가중 평균 주가
+    private Float foreignRate; // 외국인 보유율
+    private Float turnRate;    // 거래 회전율
+    private Float high52w;     // 52주 고가
+    private Float low52w;      // 52주 저가
 }
