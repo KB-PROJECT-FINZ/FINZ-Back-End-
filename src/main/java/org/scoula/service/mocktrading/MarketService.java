@@ -24,17 +24,12 @@ public class MarketService {
      * 시장 지수 조회 (코스피/코스닥) - 기존 메서드 유지
      */
     public Map<String, Object> getMarketIndices() throws Exception {
-        log.info("🔍 MarketService.getMarketIndices() 시작");
 
         try {
             if (marketIndexApi == null) {
                 throw new Exception("MarketIndexApi가 주입되지 않았습니다");
             }
-
-            log.info("📞 MarketIndexApi.getAllMarketIndices() 호출");
             Map<String, Object> result = marketIndexApi.getAllMarketIndices();
-            log.info("✅ 시장 지수 조회 성공: {}", result);
-
             return result;
         } catch (Exception e) {
             log.error("❌ MarketService.getMarketIndices() 실패: {}", e.getMessage(), e);
@@ -45,10 +40,9 @@ public class MarketService {
     /**
      * 거래량 순위 조회 - 탭 기능 지원
      * @param limit 조회할 종목 수
-     * @param blngClsCode 소속 구분 코드 (0:평균거래량, 1:거래증가율, 2:평균거래회전율, 3:거래금액순, 4:평균거래금액회전율)
+     * @param blngClsCode 소속 구분 코드 (0:평균거래량 3:거래금액순)
      */
     public List<Map<String, Object>> getVolumeRanking(int limit, String blngClsCode) throws Exception {
-        log.info("🔍 MarketService.getVolumeRanking() 시작 - limit: {}, blngClsCode: {}", limit, blngClsCode);
 
         try {
             if (volumeRankingApi == null) {
@@ -57,7 +51,6 @@ public class MarketService {
 
             // 탭별 설명 로깅
             String tabDescription = getTabDescription(blngClsCode);
-            log.info("📞 VolumeRankingApi.getVolumeRanking('J', {}, '{}') 호출 - {}", limit, blngClsCode, tabDescription);
 
             List<Map<String, Object>> result = volumeRankingApi.getVolumeRanking("J", limit, blngClsCode);
             log.info("✅ {} 순위 조회 성공: {} 건", tabDescription, result != null ? result.size() : 0);
