@@ -57,7 +57,7 @@
         WHERE user_id = #{userId}
     </select>
 
-    <select id="findGroupCodeByUserId" parameterType="Long" resultType="String">
+    <select id="findGroupCodeByUserId" parameterType="int" resultType="String">
         SELECT it.group_code
         FROM user u
                  JOIN investment_types it ON u.risk_type = it.risk_type
