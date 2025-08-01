@@ -2,12 +2,14 @@ package org.scoula.controller.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.*;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.scoula.api.mocktrading.PriceApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.RealtimeExecutionClient;
 import org.scoula.domain.mocktrading.OrderRequestDto;
 import org.scoula.util.mocktrading.ConfigManager;
+import org.scoula.service.mocktrading.StockIndustryUpdaterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,25 @@ import java.sql.ResultSet;
 
 @Slf4j
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/stock")
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"})
 @Api(tags = "주식 모의투자 API", description = "주식 가격 조회 및 모의 매매 기능을 제공합니다")
 public class StockController {
+
+
+    // 주식 기본정보api -> stocks 업종 업데이트
+    private final StockIndustryUpdaterService stockIndustryUpdaterService;
+
+    @PostMapping("/update-industries")
+    @ApiOperation(
+            value = "모든 종목의 업종 정보 업데이트",
+            notes = "stocks 테이블의 모든 종목 코드에 대해 업종 정보를 API로부터 조회하고 DB에 반영합니다"
+    )
+    public ResponseEntity<String> updateIndustries() {
+        stockIndustryUpdaterService.updateAllStockIndustries();
+        return ResponseEntity.ok("✅ 업종 정보 일괄 업데이트 완료");
+    }
 
     @GetMapping("/price/{stockCode}")
     @ApiOperation(value = "주식 가격 조회", notes = "주식 종목코드를 이용하여 실시간 가격 정보를 조회합니다")

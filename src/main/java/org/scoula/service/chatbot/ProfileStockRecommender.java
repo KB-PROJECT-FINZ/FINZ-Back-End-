@@ -20,9 +20,9 @@ public class ProfileStockRecommender {
 
     public List<RecommendationStock> getRecommendedStocksByProfile(List<String> tickers, List<String> names) {
 
-        log.info("✅ tickers.size = {}, names.size = {}", tickers.size(), names.size());
-        log.info("✅ tickers: {}", tickers);
-        log.info("✅ names: {}", names);
+
+        log.info("✅ 종목 조회 시작 - 총 {}개", tickers.size());
+
         List<RecommendationStock> stocks = new ArrayList<>();
 
 
@@ -35,16 +35,19 @@ public class ProfileStockRecommender {
                 log.info("🔎 종목 상세 조회 요청 → {} ({})", name, ticker);
 
                 var raw = PriceApi.getPriceData(ticker);
-                log.info("🧾 -----------price raw response for {}: {}", ticker, raw.toPrettyString());
+//                log.info("🧾 -----------price raw response for {}: {}", ticker, raw.toPrettyString());
+                log.info("🧾 price API 응답 수신 완료 → {} ({})", name, ticker);
 
 
-                ChatPriceResponse response = objectMapper.treeToValue(
-                        PriceApi.getPriceData(ticker), ChatPriceResponse.class
-                );
+
+                ChatPriceResponse response = objectMapper.treeToValue(raw, ChatPriceResponse.class);
 
                 RecommendationStock stock = toRecommendationStock(name, ticker,response.getOutput());
+
                 stocks.add(stock);
                 log.info("✅ 상세 데이터 변환 완료 → {} ({})", name, ticker);
+
+
 
 
             } catch (Exception e) {
@@ -58,6 +61,13 @@ public class ProfileStockRecommender {
     }
 
     private RecommendationStock toRecommendationStock(String name, String code, ChatPriceResponse.Output o) {
+
+        Double eps = parseDouble(o.getEps());
+        Double bps = parseDouble(o.getBps());
+
+        Double roe = (eps != null && bps != null && bps != 0.0) ? (eps / bps * 100.0) : null;
+        log.info("🧪 {} EPS: {}, BPS: {}, ROE: {}", code, eps, bps, roe);
+
         return RecommendationStock.builder()
                 .name(name)
                 .code(code)
@@ -65,6 +75,7 @@ public class ProfileStockRecommender {
                 .per(parseDouble(o.getPer()))
                 .eps(parseDouble(o.getEps()))
                 .pbr(parseDouble(o.getPbr()))
+                .roe(roe)
                 .open(parseDouble(o.getStck_oprc()))
                 .high(parseDouble(o.getStck_hgpr()))
                 .low(parseDouble(o.getStck_lwpr()))
