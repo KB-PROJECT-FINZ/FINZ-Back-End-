@@ -1,5 +1,6 @@
 package org.scoula.service.chatbot;
 
+import org.scoula.domain.chatbot.dto.BehaviorStatsDto;
 import org.scoula.domain.chatbot.dto.ChatAnalysisDto;
 import org.springframework.stereotype.Component;
 
@@ -82,19 +83,29 @@ public class PromptBuilder {
     }
 
     // 모의투자 성과 분석
-    public String buildForPortfolioAnalysis(Integer userId) {
+    public String buildForPortfolioAnalysis(BehaviorStatsDto stats) {
         return """
-        사용자 ID %d의 모의투자 내역을 기반으로 투자 성과를 분석해주세요.
+        아래는 사용자 ID %d의 최근 모의투자 내역 통계입니다.
 
-        포함 항목:
-        - 전체 수익률
-        - 보유 종목 수
-        - 매수/매도 빈도
-        - 투자 전략의 일관성
-        - 리스크 노출도
-        - 개선점 및 피드백 요약
+        - 분석 대상 거래 수: %d건
+        - 분석 기간: %s ~ %s (%d일)
+        - 총 수익률: %.2f%%
 
-        """.formatted(userId);
+        위 통계를 바탕으로 사용자의 투자 성향 및 전략에 대해 분석하고,
+        개선점과 피드백을 요약해 주세요.
+
+        출력 항목:
+        1. 투자 전략의 특징 요약
+        2. 리스크 요인 및 개선점
+        3. 초보 투자자에게 맞는 조언
+
+        """.formatted(
+                stats.getTransactionCount(),
+                stats.getStartDate(),
+                stats.getEndDate(),
+                stats.getAnalysisPeriod(),
+                stats.getTotalReturn()
+        );
     }
 
     // 용어 설명
