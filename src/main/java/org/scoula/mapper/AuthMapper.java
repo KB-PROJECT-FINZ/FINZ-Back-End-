@@ -16,5 +16,8 @@ public interface AuthMapper {
     UserVo findByEmail(@Param("email") String email);
     UserVo findByNameAndEmail(@Param("name") String name, @Param("email") String email);
     int countByNickname(@Param("nickname") String nickname);
+    UserVo findByUsername(@Param("username") String username);
+    int insertUserFromKakao(UserVo user);
+
 }
 
