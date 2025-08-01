@@ -63,10 +63,12 @@ public class ChatBotServiceImpl implements ChatBotService {
             log.info("초기 intentType = {}", intentType);
 
 
-            // intentType이 null이 아닌 경우: 프론트에서 지정해 준 것이므로 GPT 분류 생략
-            if (intentType == null) {
+            // 프론트에서 명시한 intentType이 MESSAGE거나 null인 경우만 GPT 분류
+            if (intentType == null || intentType == IntentType.MESSAGE) {
+                log.info("🧠 GPT 분류 수행 시작...");
                 String prompt = buildIntentClassificationPrompt(userMessage);
                 String intentText = openAiClient.getChatCompletion(prompt);
+
                 try {
                     intentType = IntentType.valueOf(intentText);
                     log.info("🧠 GPT 의도 분류 결과: {}", intentText);
@@ -77,7 +79,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                             IntentType.UNKNOWN
                     );
                 }
-                request.setIntentType(intentType);
+                request.setIntentType(intentType); // 이후 로직을 위해 저장
             } else {
                 log.info("✅ 프론트에서 intentType 명시 → GPT 분류 생략: {}", intentType);
             }
