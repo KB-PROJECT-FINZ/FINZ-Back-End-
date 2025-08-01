@@ -33,4 +33,5 @@ public class LearningGptServiceImpl implements LearningGptService {
                 .map(LearningContentDTO::new)
                 .toList();
     }
+
 }

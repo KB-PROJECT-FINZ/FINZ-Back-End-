@@ -68,13 +68,10 @@
     <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
         SELECT lc.*
         FROM learning_contents lc
-                 INNER JOIN learning_quiz q ON lc.content_id = q.quiz_id
                  LEFT JOIN user_learning_history ulh
                            ON lc.content_id = ulh.content_id AND ulh.user_id = #{userId}
         WHERE lc.group_code = #{groupCode}
           AND ulh.content_id IS NULL
-          AND lc.body IS NOT NULL
-          AND LENGTH(TRIM(lc.body)) > 0
     </select>
 
 
@@ -150,5 +147,11 @@
         WHERE user_id = #{userId}
     </select>
 
-
+    <select id="existsQuizByContentId" parameterType="int" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM learning_quiz
+            WHERE quiz_id = #{contentId}
+        )
+    </select>
 </mapper>
