@@ -1,6 +1,8 @@
 package org.scoula.controller.learning;
 
 import lombok.RequiredArgsConstructor;
+import org.scoula.config.auth.LoginUser;
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
@@ -48,8 +50,9 @@ public class LearningController {
     }
 
     @PostMapping("/history")
-    public ResponseEntity<String> insertLearningHistory(@RequestBody LearningHistoryDto dto) {
+    public ResponseEntity<String> insertLearningHistory(@LoginUser UserVo user, @RequestBody LearningHistoryDto dto) {
         try {
+            dto.setUserId(user.getId());
             learningService.saveLearningHistory(dto);
             return ResponseEntity.ok("학습 기록 저장 완료");
         } catch (Exception e) {
@@ -58,10 +61,10 @@ public class LearningController {
         }
     }
     // 사용자 크레딧 조회
-    @GetMapping("/user/credit/{userId}")
-    public ResponseEntity<Integer> getUserCredit(@PathVariable int userId) {
+    @GetMapping("/user/credit")
+    public ResponseEntity<Integer> getUserCredit(@LoginUser UserVo user) {
         try {
-            int totalCredit = learningService.getUserCredit(userId);
+            int totalCredit = learningService.getUserCredit(user.getId());
             return ResponseEntity.ok(totalCredit);
         } catch (Exception e) {
             e.printStackTrace();
@@ -71,11 +74,11 @@ public class LearningController {
 
     // 퀴즈 정답 시 크레딧 지급
     @PostMapping("/quiz/credit")
-    public ResponseEntity<String> giveCredit(@RequestParam int userId, @RequestParam int quizId,
+    public ResponseEntity<String> giveCredit(@LoginUser UserVo user, @RequestParam int quizId,
                                              @RequestParam String selectedAnswer) {
         try {
             // 이미 퀴즈를 풀었는지 확인
-            if (learningService.checkQuiz(userId, quizId)) {
+            if (learningService.checkQuiz(user.getId(), quizId)) {
                 return ResponseEntity.badRequest().body("이미 퀴즈를 푸신 콘텐츠입니다.");
             }
 
@@ -85,10 +88,10 @@ public class LearningController {
 
             int creditAmount = 0;
             if (isCorrect) {
-                creditAmount = learningService.giveCredit(userId, quizId);
+                creditAmount = learningService.giveCredit(user.getId(), quizId);
             } else {
                 // 오답인 경우에도 결과 저장 (크레딧은 0)
-                learningService.saveResult(userId, quizId, false, selectedAnswer, 0);
+                learningService.saveResult(user.getId(), quizId, false, selectedAnswer, 0);
             }
 
             return ResponseEntity.ok("퀴즈 결과가 저장되었습니다." + (isCorrect ? " 크레딧 " + creditAmount + "개 지급 완료" : ""));
@@ -100,9 +103,9 @@ public class LearningController {
 
     // 퀴즈 결과 확인
     @GetMapping("/quiz/result")
-    public ResponseEntity<Boolean> checkQuiz(@RequestParam int userId, @RequestParam int quizId) {
+    public ResponseEntity<Boolean> checkQuiz(@LoginUser UserVo user, @RequestParam int quizId) {
         try {
-            boolean hasResult = learningService.checkQuiz(userId, quizId);
+            boolean hasResult = learningService.checkQuiz(user.getId(), quizId);
             return ResponseEntity.ok(hasResult);
         } catch (Exception e) {
             e.printStackTrace();
@@ -112,9 +115,9 @@ public class LearningController {
 
     // 퀴즈 결과 상세 조회
     @GetMapping("/quiz/result/detail")
-    public ResponseEntity<QuizResultDTO> getQuizResult(@RequestParam int userId, @RequestParam int quizId) {
+    public ResponseEntity<QuizResultDTO> getQuizResult(@LoginUser UserVo user, @RequestParam int quizId) {
         try {
-            QuizResultDTO result = learningService.getQuizResult(userId, quizId);
+            QuizResultDTO result = learningService.getQuizResult(user.getId(), quizId);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,9 +127,9 @@ public class LearningController {
 
     // 퀴즈 결과 저장 (오답용)
     @PostMapping("/quiz/result/save")
-    public ResponseEntity<String> saveQuizResult(@RequestBody QuizResultDTO dto) {
+    public ResponseEntity<String> saveQuizResult(@LoginUser UserVo user,@RequestBody QuizResultDTO dto) {
         try {
-            learningService.saveResult(dto.getUserId(), dto.getQuizId(), dto.isCorrect(), dto.getSelectedAnswer(), 0);
+            learningService.saveResult(user.getId(), dto.getQuizId(), dto.isCorrect(), dto.getSelectedAnswer(), 0);
             return ResponseEntity.ok("퀴즈 결과가 저장되었습니다.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,36 +138,18 @@ public class LearningController {
     }
     //컨텐츠 상세페이지에서 읽었는지 유무 판단하기 위해
     @GetMapping("/history/complete")
-    public boolean userCompletedContent(@RequestParam int userId, @RequestParam int contentId) {
-        return learningService.hasCompleted(userId, contentId);
+    public boolean userCompletedContent(@LoginUser UserVo user, @RequestParam int contentId) {
+        return learningService.hasCompleted(user.getId(), contentId);
     }
-
-    /*//컨텐츠 리스트 중 읽은 글은 회색 처리 하기 위해서
+    //완료된 학습 컨텐츠 분류
     @GetMapping("/history/complete/list")
-    public ResponseEntity<List<LearningHistoryDto>> getLearningHistoryList(@RequestParam int userId) {
-        return ResponseEntity.ok(learningService.getLearningHistoryList(userId));
-    }*/
-    // LearningController
-    @GetMapping("/history/complete/list")
-    public List<LearningContentDTO> getCompletedContents(@RequestParam Long userId) {
-        return learningService.getCompletedContents(userId);
+    public List<LearningContentDTO> getCompletedContents(@LoginUser UserVo user) {
+        return learningService.getCompletedContents(user.getId());
     }
-
-    //    @GetMapping("/recommend/list")
-//    public ResponseEntity<List<LearningContentDTO>> recommendList(
-//            @RequestParam("userId") Long userId,
-//            @RequestParam(name = "size", defaultValue = "5") int size
-//    ) {
-//        List<LearningContentDTO> contents = learningGptService.recommendLearningContents(userId, size);
-//        return ResponseEntity.ok(contents);
-//    }
+//    사용자 별 추천 콘텐츠 분류
     @GetMapping("/recommend/list")
-    public ResponseEntity<List<LearningContentDTO>> recommendList(
-            @RequestParam Long userId,
-            HttpSession session
-    ) {
-        System.out.println("현재 세션 ID: " + session.getId());
-        System.out.println("요청된 userId: " + userId);
-        return ResponseEntity.ok(learningGptService.recommendLearningContents(userId, 5));
+    public ResponseEntity<List<LearningContentDTO>> recommendList(@LoginUser UserVo user) {
+        return ResponseEntity.ok(learningGptService.recommendLearningContents(user.getId(), 5));
     }
+
 }

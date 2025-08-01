@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.journal.vo.InvestmentJournalVO;
 import org.scoula.domain.feedback.vo.JournalFeedback;
+import org.springframework.security.core.parameters.P;
+
 import java.util.Date;
 import java.util.List;
 
@@ -18,5 +20,6 @@ public interface JournalFeedbackMapper {
     JournalFeedback findFeedbackByUserAndWeek(@Param("userId") int userId,
                                               @Param("start") Date start,
                                               @Param("end") Date end);
-    List<JournalFeedback> findAllFeedbacks();
+    List<JournalFeedback> findAllFeedbacks(@Param("userId") int userId);
+
 }
