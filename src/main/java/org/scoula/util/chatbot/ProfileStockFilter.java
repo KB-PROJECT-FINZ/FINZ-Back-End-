@@ -22,8 +22,7 @@
             Float volume = toFloat(stock.getVolume());
             Float turnRate = toFloat(stock.getTurnRate());
 
-            log.info("🧪 [{}] per={}, pbr={}, volume={}, turnRate={}", riskType, per, pbr, volume, turnRate);
-            log.info("🧪 [{}] 종목={}, 원본 per={}, 원본 pbr={}, 원본 volume={}, 원본 turnRate={}",
+            log.info("🧪 [리스크 타입 : {}] 종목={}, 원본 per={}, 원본 pbr={}, 원본 volume={}, 원본 turnRate={}",
                     riskType, stock.getName(), stock.getPer(), stock.getPbr(), stock.getVolume(), stock.getTurnRate());
 
             switch (riskType) {
