@@ -50,9 +50,6 @@ public class PriceApi {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode json = mapper.readTree(responseBody);
 
-            System.out.println("\uD83D\uDCE6 전체 응답 데이터:");
-            System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json));
-
             return json;
         }
     }
