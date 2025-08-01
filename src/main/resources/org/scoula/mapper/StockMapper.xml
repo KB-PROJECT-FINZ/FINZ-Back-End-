@@ -17,4 +17,16 @@
         ORDER BY name
     </select>
 
+
+
+    <update id="updateStockIndustry">
+        UPDATE stocks
+        SET
+            industry_mcls = #{industry_mcls},
+            industry_scls = #{industry_scls},
+            industry_std_name = #{industry_std_name},
+            stock_type_code = #{stock_type_code}
+        WHERE code = #{code}
+    </update>
+
 </mapper>

@@ -17,4 +17,8 @@ public interface StockMapper {
      * 모든 종목의 기본 정보 조회
      */
     java.util.List<Map<String, Object>> getAllStocks();
+
+    // 업종 업데이트 메서드
+    void updateStockIndustry(Map<String, Object> param);
+
 }
