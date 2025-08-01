@@ -151,5 +151,9 @@ public class LearningController {
     public ResponseEntity<List<LearningContentDTO>> recommendList(@LoginUser UserVo user) {
         return ResponseEntity.ok(learningGptService.recommendLearningContents(user.getId(), 5));
     }
-
+    //사용자 별 완료된 컨텐츠 개수 조회
+    @GetMapping("/history/count")
+    public int getUserReadCount(@LoginUser UserVo user) {
+        return learningService.getUserReadCount(user.getId());
+    }
 }
