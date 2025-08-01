@@ -100,4 +100,8 @@ public interface UserAccountMapper {
      * 특정 사용자의 수익률 순위 조회
      */
     int getUserProfitRateRank(@Param("userId") Integer userId);
+
+    Integer getUserCredit(Integer userId);
+
+    Long calculateTotalInvestedAmount(@Param("accountId") Integer accountId);
 }

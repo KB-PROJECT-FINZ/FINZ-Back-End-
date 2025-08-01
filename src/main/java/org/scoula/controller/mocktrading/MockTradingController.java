@@ -27,7 +27,25 @@ public class MockTradingController {
     private final UserAccountService userAccountService;
     private final HoldingService holdingService;
     private final TransactionService transactionService;
+    @GetMapping("/user/credit")
+    public ResponseEntity<?> getUserCredit(HttpSession session) {
+        try {
+            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
+            if (loginUser == null) {
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "로그인이 필요합니다."));
+            }
 
+            Integer userId = loginUser.getId();
+            Integer totalCredit = userAccountService.getUserCredit(userId);
+
+            return ResponseEntity.ok(Map.of("totalCredit", totalCredit));
+        } catch (Exception e) {
+            log.error("크레딧 조회 실패", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "크레딧 정보 조회 중 오류가 발생했습니다."));
+        }
+    }
     /**
      * 로그인한 사용자의 자산 현황 대시보드 조회
      * GET /api/mocktrading/dashboard
