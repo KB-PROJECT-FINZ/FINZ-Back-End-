@@ -27,7 +27,7 @@ public class JournalFeedbackServiceImpl implements JournalFeedbackService {
         journalFeedbackMapper.insertFeedback(feedBack);
     }
     @Override
-    public List<JournalFeedback> getAllFeedbacks() {
-        return journalFeedbackMapper.findAllFeedbacks();
+    public List<JournalFeedback> getAllFeedbacks(int userId) {
+        return journalFeedbackMapper.findAllFeedbacks(userId);
     }
 }
