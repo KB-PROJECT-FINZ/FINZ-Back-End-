@@ -140,4 +140,11 @@
         WHERE user_id = #{userId} AND quiz_id = #{quizId}
     </select>
 
+    <select id="getUserReadCount" parameterType="int" resultType="int">
+        SELECT COUNT(DISTINCT content_id)
+        FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
+
 </mapper>
