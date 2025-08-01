@@ -1,0 +1,6 @@
+# 모든 XML 파일을 UTF-8로 저장하고 LF 줄바꿈 강제
+*.xml text eol=lf working-tree-encoding=UTF-8
+
+# (선택) JSON, YAML 등도 인코딩 강제하고 싶으면 아래 추가
+*.json text eol=lf working-tree-encoding=UTF-8
+*.yml  text eol=lf working-tree-encoding=UTF-8

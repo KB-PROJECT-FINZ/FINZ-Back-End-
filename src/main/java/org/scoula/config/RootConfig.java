@@ -1,5 +1,6 @@
 package org.scoula.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -8,16 +9,21 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.sql.DataSource;
 
 @Configuration
 @PropertySource({"classpath:/application.properties"})
+@MapperScan(basePackages = {"org.scoula.mapper"})
+@ComponentScan(basePackages = {"org.scoula"})
+@Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
+//@MapperScan(basePackages = "org.scoula.mapper.chatbot")
+@ComponentScan(basePackages = {"org.scoula.service","org.scoula.domain","org.scoula.controller"})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
@@ -35,6 +41,16 @@ public class RootConfig {
     ApplicationContext applicationContext;
 
     @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
+
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
+    @Bean
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
 
@@ -42,6 +58,13 @@ public class RootConfig {
         config.setJdbcUrl(url);
         config.setUsername(username);
         config.setPassword(password);
+
+        // 👉 커넥션 풀 제한 설정 추가!
+        config.setMaximumPoolSize(3);
+        config.setMinimumIdle(1);
+        config.setIdleTimeout(300000);
+        config.setMaxLifetime(600000);
+
 
         HikariDataSource dataSource = new HikariDataSource(config);
         return dataSource;
