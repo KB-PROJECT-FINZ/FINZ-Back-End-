@@ -1,6 +1,8 @@
 package org.scoula.controller.feedback;
 
 import lombok.RequiredArgsConstructor;
+import org.scoula.config.auth.LoginUser;
+import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.domain.feedback.dto.FeedbackResponseDto;
 import org.scoula.domain.feedback.dto.GptRequestDto;
 import org.scoula.domain.feedback.vo.JournalFeedback;
@@ -9,8 +11,10 @@ import org.scoula.mapper.JournalFeedbackMapper;
 import org.scoula.service.feedback.GptService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
 import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -24,9 +28,10 @@ public class GptTestController {
     private final GptService gptService;
     private final JournalFeedbackMapper journalFeedbackMapper;
     @GetMapping("/gpt")
-    public FeedbackResponseDto callGpt() {
-        int userId = 1;
+    public FeedbackResponseDto callGpt(HttpSession session, @LoginUser UserVo user) {
 
+        int userId = user.getId();
+        System.out.println(userId);
         // 이번 주 월요일 ~ 금요일 계산
         LocalDate today = LocalDate.now();
         LocalDate monday = today.with(DayOfWeek.MONDAY);

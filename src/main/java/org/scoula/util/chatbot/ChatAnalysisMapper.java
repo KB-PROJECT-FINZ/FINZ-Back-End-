@@ -11,23 +11,23 @@ public class ChatAnalysisMapper {
 
         System.out.println("🧪 stock code: " + stock.getCode());
         return ChatAnalysisDto.builder()
-                .ticker(stock.getCode())// 추출하거나 매핑 로직 있어야 함
+                .ticker(stock.getCode())
                 .name(stock.getName())
-                .region("KR") // 기본값, 조건에 따라 US 넣을 수 있음
-                .per(parseFloat(stock.getPer()))
-                .roe(null) // 따로 데이터 없으면 일단 null
-                .eps(parseFloat(stock.getEps()))
-                .price(parseFloat(stock.getPrice()))
-                .pbr(parseFloat(stock.getPbr()))
-                .open(parseFloat(stock.getOpen()))
-                .high(parseFloat(stock.getHigh()))
-                .low(parseFloat(stock.getLow()))
-                .volume(parseLong(stock.getVolume()))
-                .avgPrice(parseFloat(stock.getAvgPrice()))
-                .foreignRate(parseFloat(stock.getForeignRate()))
-                .turnRate(parseFloat(stock.getTurnRate()))
-                .high52w(parseFloat(stock.getHigh52w()))
-                .low52w(parseFloat(stock.getLow52w()))
+                .region("KR")
+                .per(toFloat(stock.getPer()))
+                .roe(null)
+                .eps(toFloat(stock.getEps()))
+                .price(toFloat(stock.getPrice()))
+                .pbr(toFloat(stock.getPbr()))
+                .open(toFloat(stock.getOpen()))
+                .high(toFloat(stock.getHigh()))
+                .low(toFloat(stock.getLow()))
+                .volume(toLong(stock.getVolume()))
+                .avgPrice(toFloat(stock.getAvgPrice()))
+                .foreignRate(toFloat(stock.getForeignRate()))
+                .turnRate(toFloat(stock.getTurnRate()))
+                .high52w(toFloat(stock.getHigh52w()))
+                .low52w(toFloat(stock.getLow52w()))
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
@@ -46,5 +46,13 @@ public class ChatAnalysisMapper {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static Float toFloat(Double value) {
+        return value == null ? null : value.floatValue();
+    }
+
+    private static Long toLong(Double value) {
+        return value == null ? null : value.longValue();
     }
 }

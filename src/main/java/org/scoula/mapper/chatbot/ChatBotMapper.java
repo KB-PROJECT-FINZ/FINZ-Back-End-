@@ -33,5 +33,7 @@ public interface ChatBotMapper {
     // 종목 추천 내용 저장
     void insertRecommendation(ChatRecommendationDto dto);
 
+    // 세션 남아있나 확인
+    Integer getActiveSessionIdByUserId(@Param("userId") Integer userId);
 
 }

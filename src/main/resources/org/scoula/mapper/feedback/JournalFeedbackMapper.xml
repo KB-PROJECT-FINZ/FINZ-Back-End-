@@ -44,12 +44,9 @@
           AND week_end = #{end}
     </select>
 
-
     <select id="findAllFeedbacks" resultMap="feedbackResultMap">
-        SELECT * FROM journal_feedback
+        SELECT * FROM journal_feedback WHERE user_id = #{userId} ORDER BY week_start DESC
     </select>
-
-
 
 
 
