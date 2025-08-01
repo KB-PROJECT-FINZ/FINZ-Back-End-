@@ -17,10 +17,9 @@ import java.util.List;
 public class LearningGptServiceImpl implements LearningGptService {
 
     private final LearningMapper learningMapper;
-    private final GptContentService gptContentService;
     private final LearningGptAsyncHelper learningGptAsyncHelper;
     @Override
-    public List<LearningContentDTO> recommendLearningContents(Long userId, int size) {
+    public List<LearningContentDTO> recommendLearningContents(int userId, int size) {
         String groupCode = learningMapper.findGroupCodeByUserId(userId);
         List<LearningContentVO> unreadContents = learningMapper.findUnreadContent(groupCode, userId);
         int remainToGenerate = size - unreadContents.size();
