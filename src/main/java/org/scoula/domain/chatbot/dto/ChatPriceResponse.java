@@ -30,5 +30,9 @@ public class ChatPriceResponse {
         private String vol_tnrt;               // 거래 회전율
         private String d250_hgpr;              // 52주 고가
         private String d250_lwpr;              // 52주 저가
+        private String bps;
+
+        // 직접 계산해서 넣는 필드 (getter/setter만 필요)
+        private Double roe;
     }
 }

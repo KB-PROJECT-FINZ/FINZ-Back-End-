@@ -50,6 +50,16 @@
         WHERE user_id = #{userId}
     </select>
 
+    <!-- 계좌 ID로 계좌 조회 -->
+    <select id="selectByAccountId" parameterType="Integer" resultMap="userAccountResultMap">
+        SELECT
+            account_id, user_id, account_number, current_balance,
+            total_asset_value, total_profit_loss, profit_rate,
+            reset_count, created_at, updated_at
+        FROM user_accounts
+        WHERE account_id = #{accountId}
+    </select>
+
     <!-- 계좌번호로 계좌 조회 -->
     <select id="selectByAccountNumber" parameterType="string" resultMap="userAccountResultMap">
         SELECT
@@ -58,6 +68,11 @@
             reset_count, created_at, updated_at
         FROM user_accounts
         WHERE account_number = #{accountNumber}
+    </select>
+
+    <!-- 계좌번호 중복 확인 -->
+    <select id="existsByAccountNumber" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM user_accounts WHERE account_number = #{accountNumber}
     </select>
 
     <!-- 계좌 정보 업데이트 -->
@@ -72,12 +87,157 @@
         WHERE user_id = #{userId}
     </update>
 
-    <!-- 계좌 잔액만 업데이트 -->
+    <!-- 사용자 크레딧 차감 -->
+    <update id="deductUserCredit">
+        UPDATE user
+        SET total_credit = total_credit - #{creditAmount},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{userId}
+          AND total_credit >= #{creditAmount}
+    </update>
+
+    <!-- 계좌 잔고 업데이트 (금액 증감) -->
     <update id="updateBalance">
+        UPDATE user_accounts
+        SET current_balance = current_balance + #{amount},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE account_id = #{accountId}
+          AND current_balance + #{amount} >= 0
+    </update>
+
+    <!-- 계좌 잔액만 업데이트 (기존 메서드 - 호환성 유지) -->
+    <update id="updateBalanceOnly">
         UPDATE user_accounts SET
                                  current_balance = #{currentBalance},
                                  updated_at = CURRENT_TIMESTAMP
         WHERE user_id = #{userId}
     </update>
 
+    <!-- 계좌의 주식 평가금액 계산 -->
+    <select id="calculateStockValue" parameterType="Integer" resultType="Long">
+        SELECT COALESCE(SUM(current_value), 0)
+        FROM holdings
+        WHERE account_id = #{accountId}
+          AND quantity > 0
+    </select>
+
+    <!-- 자산 정보 업데이트 (총자산, 손익, 수익률) -->
+    <update id="updateAssetInfo">
+        UPDATE user_accounts SET
+                                 total_asset_value = #{totalAssetValue},
+                                 total_profit_loss = #{totalProfitLoss},
+                                 profit_rate = #{profitRate},
+                                 updated_at = CURRENT_TIMESTAMP
+        WHERE account_id = #{accountId}
+    </update>
+
+    <!-- 계좌 초기화 -->
+    <update id="resetAccount" parameterType="org.scoula.domain.mocktrading.vo.UserAccount">
+        UPDATE user_accounts SET
+                                 current_balance = #{currentBalance},
+                                 total_asset_value = #{totalAssetValue},
+                                 total_profit_loss = #{totalProfitLoss},
+                                 profit_rate = #{profitRate},
+                                 reset_count = #{resetCount},
+                                 updated_at = CURRENT_TIMESTAMP
+        WHERE account_id = #{accountId}
+    </update>
+
+    <!-- 사용자별 계좌 수 조회 -->
+    <select id="countByUserId" parameterType="Integer" resultType="int">
+        SELECT COUNT(*) FROM user_accounts WHERE user_id = #{userId}
+    </select>
+
+    <!-- 전체 사용자 수 조회 (통계용) -->
+    <select id="getTotalUserCount" resultType="int">
+        SELECT COUNT(DISTINCT user_id) FROM user_accounts
+    </select>
+
+    <!-- 총 자산 순위 조회 (TOP N) -->
+    <select id="getAssetRanking" parameterType="int" resultMap="userAccountResultMap">
+        SELECT
+            ua.account_id, ua.user_id, ua.account_number, ua.current_balance,
+            ua.total_asset_value, ua.total_profit_loss, ua.profit_rate,
+            ua.reset_count, ua.created_at, ua.updated_at
+        FROM user_accounts ua
+        ORDER BY ua.total_asset_value DESC, ua.profit_rate DESC
+            LIMIT #{limit}
+    </select>
+
+    <!-- 수익률 순위 조회 (TOP N) -->
+    <select id="getProfitRateRanking" parameterType="int" resultMap="userAccountResultMap">
+        SELECT
+            ua.account_id, ua.user_id, ua.account_number, ua.current_balance,
+            ua.total_asset_value, ua.total_profit_loss, ua.profit_rate,
+            ua.reset_count, ua.created_at, ua.updated_at
+        FROM user_accounts ua
+        WHERE ua.total_asset_value > 0
+        ORDER BY ua.profit_rate DESC, ua.total_asset_value DESC
+            LIMIT #{limit}
+    </select>
+
+    <!-- 특정 사용자의 자산 순위 조회 -->
+    <select id="getUserAssetRank" parameterType="Integer" resultType="int">
+        SELECT
+            COUNT(*) + 1 as rank
+        FROM user_accounts ua1
+        WHERE ua1.total_asset_value > (
+            SELECT ua2.total_asset_value
+            FROM user_accounts ua2
+            WHERE ua2.user_id = #{userId}
+        )
+           OR (
+            ua1.total_asset_value = (
+                SELECT ua2.total_asset_value
+                FROM user_accounts ua2
+                WHERE ua2.user_id = #{userId}
+            )
+                AND ua1.profit_rate > (
+                SELECT ua2.profit_rate
+                FROM user_accounts ua2
+                WHERE ua2.user_id = #{userId}
+            )
+            )
+    </select>
+
+    <!-- 특정 사용자의 수익률 순위 조회 -->
+    <select id="getUserProfitRateRank" parameterType="Integer" resultType="int">
+        SELECT
+            COUNT(*) + 1 as rank
+        FROM user_accounts ua1
+        WHERE (
+            ua1.profit_rate > (
+                SELECT ua2.profit_rate
+                FROM user_accounts ua2
+                WHERE ua2.user_id = #{userId}
+            )
+                OR (
+                ua1.profit_rate = (
+                    SELECT ua2.profit_rate
+                    FROM user_accounts ua2
+                    WHERE ua2.user_id = #{userId}
+                )
+                    AND ua1.total_asset_value > (
+                    SELECT ua2.total_asset_value
+                    FROM user_accounts ua2
+                    WHERE ua2.user_id = #{userId}
+                )
+                )
+            )
+          AND ua1.total_asset_value > 0
+    </select>
+
+    <select id="getUserCredit" parameterType="int" resultType="int">
+        SELECT total_credit
+        FROM user
+        WHERE id = #{userId}
+    </select>
+
+    <!-- 계좌의 실제 투자금액 계산 (total_cost 합계) -->
+    <select id="calculateTotalInvestedAmount" parameterType="Integer" resultType="Long">
+        SELECT COALESCE(SUM(total_cost), 0)
+        FROM holdings
+        WHERE account_id = #{accountId}
+          AND quantity > 0
+    </select>
 </mapper>

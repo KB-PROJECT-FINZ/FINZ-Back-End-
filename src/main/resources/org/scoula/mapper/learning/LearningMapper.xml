@@ -57,7 +57,7 @@
         WHERE user_id = #{userId}
     </select>
 
-    <select id="findGroupCodeByUserId" parameterType="Long" resultType="String">
+    <select id="findGroupCodeByUserId" parameterType="int" resultType="String">
         SELECT it.group_code
         FROM user u
                  JOIN investment_types it ON u.risk_type = it.risk_type
@@ -68,11 +68,15 @@
     <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
         SELECT lc.*
         FROM learning_contents lc
+                 INNER JOIN learning_quiz q ON lc.content_id = q.quiz_id
                  LEFT JOIN user_learning_history ulh
                            ON lc.content_id = ulh.content_id AND ulh.user_id = #{userId}
         WHERE lc.group_code = #{groupCode}
           AND ulh.content_id IS NULL
+          AND lc.body IS NOT NULL
+          AND LENGTH(TRIM(lc.body)) > 0
     </select>
+
 
     <select id="findTitlesByGroupCode" resultType="string">
         SELECT title FROM learning_contents WHERE group_code = #{groupCode}
@@ -138,6 +142,24 @@
             attempted_at as attemptedAt
         FROM user_quiz_results
         WHERE user_id = #{userId} AND quiz_id = #{quizId}
+    </select>
+
+    <!-- 누적 획득 크레딧 업데이트 -->
+    <update id="updateTotalEarnedCredit" parameterType="map">
+        UPDATE user
+        SET total_earned_credit = total_earned_credit + #{creditAmount}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 누적 획득 크레딧 조회 -->
+    <select id="getTotalEarnedCredit" parameterType="int" resultType="int">
+        SELECT total_earned_credit FROM user WHERE id = #{userId}
+    </select>
+
+    <select id="getUserReadCount" parameterType="int" resultType="int">
+        SELECT COUNT(DISTINCT content_id)
+        FROM user_learning_history
+        WHERE user_id = #{userId}
     </select>
 
 </mapper>

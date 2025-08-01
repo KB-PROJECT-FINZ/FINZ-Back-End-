@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface LearningGptService {
 
-    List<LearningContentDTO> recommendLearningContents(Long userId, int size);
+    List<LearningContentDTO> recommendLearningContents(int userId, int size);
 }

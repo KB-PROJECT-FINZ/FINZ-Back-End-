@@ -34,6 +34,13 @@
         SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
     </select>
 
+    <select id="findByUsername" parameterType="string" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+
+
+
     <select id="findRiskTypeByUsername" resultType="string">
         SELECT risk_type
         FROM user
@@ -46,8 +53,11 @@
         WHERE id = #{userId}
     </select>
 
-
-
+<select id="findRiskTypeByRiskType" parameterType="String" resultType="org.scoula.domain.type.dto.RiskTypeDto">
+    SELECT risk_type, name_kr, group_code, description
+    FROM investment_types
+    WHERE risk_type=#{riskType}
+</select>
 
 
 </mapper>

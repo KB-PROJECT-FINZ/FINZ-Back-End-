@@ -5,22 +5,17 @@
 <mapper namespace="org.scoula.mapper.TradingMapper">
 
     <select id="getUserTransactions" resultType="org.scoula.domain.trading.dto.TransactionDTO">
-        SELECT 
-            transaction_id,
-            account_id,
-            stock_code,
-            stock_name,
-            transaction_type,
-            order_type,
-            quantity,
-            price,
-            order_price,
-            total_amount,
-            DATE_FORMAT(executed_at, '%Y-%m-%d %H:%i:%s') as executedAt,
-            DATE_FORMAT(order_created_at, '%Y-%m-%d %H:%i:%s') as orderCreatedAt
-        FROM transactions
-        WHERE account_id IN (SELECT account_id FROM user_accounts WHERE user_id = #{userId})
-        ORDER BY executed_at DESC
+        SELECT
+            t.stock_code as stockCode,
+            t.stock_name as stockName,
+            t.quantity,
+            t.total_amount as totalAmount,
+            t.transaction_type as transactionType
+        FROM transactions t
+                 JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+        ORDER BY t.executed_at DESC
+            LIMIT 10
     </select>
 
 </mapper>

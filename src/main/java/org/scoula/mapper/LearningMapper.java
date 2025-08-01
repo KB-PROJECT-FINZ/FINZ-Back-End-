@@ -28,14 +28,18 @@ public interface LearningMapper {
                         @Param("creditEarned") int creditEarned);
     int isUserIdAndContentId(@Param("userId") int userId, @Param("contentId") int contentId);
     List<LearningHistoryVO> getLearningHistoryList(@Param("userId") int userId);
-    String findGroupCodeByUserId(Long userId);
+    String findGroupCodeByUserId(@Param("userId") int userId);
     List<LearningContentVO> findUnreadContent(
             @Param("groupCode") String groupCode,
-            @Param("userId") Long userId
+            @Param("userId") int userId
     );
     List<String> findTitlesByGroupCode(String groupCode);
     void insertContent(LearningContentVO content);
-    List<LearningContentVO> findCompletedContentByUserId(Long userId);
+    List<LearningContentVO> findCompletedContentByUserId(@Param("userId") int userId);
     void insertQuiz(LearningQuizVO quiz);
     QuizResultDTO getQuizResult(@Param("userId") int userId, @Param("quizId") int quizId);
-   }
+    int updateTotalEarnedCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
+    int getTotalEarnedCredit(int userId);
+    int getUserReadCount(@Param("userId") int userId);
+}
+

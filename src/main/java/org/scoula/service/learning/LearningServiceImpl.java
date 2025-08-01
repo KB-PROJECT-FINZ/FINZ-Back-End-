@@ -69,6 +69,8 @@ public class LearningServiceImpl implements LearningService {
 
             // 퀴즈 결과 저장 (정답으로 처리)
             learningMapper.saveQuizResult(userId, quizId, true, "O", creditAmount);
+            // 누적 획득 크레딧 업데이트
+            learningMapper.updateTotalEarnedCredit(userId, creditAmount);
 
             return creditAmount;
         } catch (Exception e) {
@@ -81,15 +83,7 @@ public class LearningServiceImpl implements LearningService {
         return learningMapper.isUserIdAndContentId(userId,contentId)>0;
     }
 
-    /*@Override
-    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
-        return learningMapper.getLearningHistoryList(userId)
-                .stream()
-                .map(vo -> new LearningHistoryDto(vo))
-                .collect(Collectors.toList());
-    }*/
-
-    public List<LearningContentDTO> getCompletedContents(Long userId) {
+    public List<LearningContentDTO> getCompletedContents(int userId) {
         return learningMapper.findCompletedContentByUserId(userId)
                 .stream()
                 .map(LearningContentDTO::new)
@@ -113,5 +107,16 @@ public class LearningServiceImpl implements LearningService {
     @Override
     public QuizResultDTO getQuizResult(int userId, int quizId) {
         return learningMapper.getQuizResult(userId, quizId);
+    }
+
+    @Override
+    public int getTotalEarnedCredit(int userId) {
+        return learningMapper.getTotalEarnedCredit(userId);
+    }
+  
+    @Override
+    public int getUserReadCount(int userId) {
+        return learningMapper.getUserReadCount(userId);
+
     }
 }

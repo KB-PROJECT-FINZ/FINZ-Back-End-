@@ -95,6 +95,16 @@
                  )
     </insert>
 
+    <select id="getActiveSessionIdByUserId" resultType="int">
+        SELECT id
+        FROM chat_sessions
+        WHERE user_id = #{userId}
+          AND ended_at IS NULL
+        ORDER BY started_at DESC
+            LIMIT 1
+    </select>
+
+
 
 
 
