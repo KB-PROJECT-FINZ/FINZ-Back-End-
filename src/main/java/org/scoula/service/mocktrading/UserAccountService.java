@@ -95,13 +95,83 @@ public class UserAccountService {
         }
     }
     /**
-     * 사용자 ID로 계좌 조회
+     * 사용자 ID로 계좌 조회 (실시간 자산 정보 포함)
      */
     public UserAccount getUserAccount(Integer userId) {
-        log.debug("사용자 계좌 조회 - 사용자 ID: {}", userId);
-        return userAccountMapper.selectByUserId(userId);
-    }
+        try {
+            log.debug("사용자 계좌 조회 (실시간 계산) - 사용자 ID: {}", userId);
 
+            // 1. 기본 계좌 정보 조회
+            UserAccount account = userAccountMapper.selectByUserId(userId);
+            if (account == null) {
+                log.warn("계좌 정보를 찾을 수 없습니다 - 사용자 ID: {}", userId);
+                return null;
+            }
+
+            // 2. 실시간 자산 정보 계산 및 업데이트
+            updateAccountWithRealtimeData(account);
+
+            return account;
+
+        } catch (Exception e) {
+            log.error("사용자 계좌 조회 실패 - 사용자 ID: {}", userId, e);
+            return null;
+        }
+    }
+    /**
+     * 계좌 정보에 실시간 자산 데이터 반영
+     */
+    private void updateAccountWithRealtimeData(UserAccount account) {
+        try {
+            Integer accountId = account.getAccountId();
+
+            // 1. 현재 주식 평가금액 계산 (실시간 가격 반영)
+            Long stockValue = userAccountMapper.calculateStockValue(accountId);
+            if (stockValue == null) {
+                stockValue = 0L;
+            }
+
+            // 2. 총 자산 = 현금 잔고 + 주식 평가금액
+            Long totalAssetValue = account.getCurrentBalance() + stockValue;
+
+            // 3. 실제 투자한 원금 계산 (holdings의 total_cost 합계)
+            Long totalInvestedAmount = userAccountMapper.calculateTotalInvestedAmount(accountId);
+            if (totalInvestedAmount == null) {
+                totalInvestedAmount = 0L;
+            }
+
+            // 4. 손익 및 수익률 계산
+            Long totalProfitLoss;
+            BigDecimal profitRate = BigDecimal.ZERO;
+
+            if (totalInvestedAmount > 0) {
+                // 투자한 주식이 있는 경우만 손익 계산
+                totalProfitLoss = stockValue - totalInvestedAmount;
+
+                // 수익률 = (주식 평가손익 / 실제 투자금액) * 100
+                profitRate = BigDecimal.valueOf(totalProfitLoss)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(totalInvestedAmount), 2, BigDecimal.ROUND_HALF_UP);
+            } else {
+                // 투자하지 않은 경우: 손익 0, 수익률 0
+                totalProfitLoss = 0L;
+                profitRate = BigDecimal.ZERO;
+            }
+
+            // 5. 계좌 객체에 실시간 계산된 값 설정
+            account.setTotalAssetValue(totalAssetValue);
+            account.setTotalProfitLoss(totalProfitLoss);
+            account.setProfitRate(profitRate);
+
+            log.debug("실시간 자산 정보 계산 완료 - 계좌 ID: {}", accountId);
+            log.debug("- 총자산: {} (현금: {} + 주식: {})", totalAssetValue, account.getCurrentBalance(), stockValue);
+            log.debug("- 실제투자금: {}, 투자손익: {}, 수익률: {}%", totalInvestedAmount, totalProfitLoss, profitRate);
+
+        } catch (Exception e) {
+            log.error("실시간 자산 정보 계산 실패 - 계좌 ID: {}", account.getAccountId(), e);
+            // 실패 시 기존 DB 값 유지
+        }
+    }
     /**
      * 계좌 ID로 계좌 정보 조회
      */
