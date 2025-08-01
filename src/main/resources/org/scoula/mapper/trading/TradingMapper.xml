@@ -15,7 +15,7 @@
                  JOIN user_accounts ua ON t.account_id = ua.account_id
         WHERE ua.user_id = #{userId}
         ORDER BY t.executed_at DESC
-        LIMIT 10
+            LIMIT 10
     </select>
 
 </mapper>

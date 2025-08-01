@@ -41,13 +41,7 @@ public class VolumeRankingApi {
      * @throws IOException
      */
     public List<Map<String, Object>> getVolumeRanking(String marketType, int limit, String blngClsCode) throws IOException {
-        log.info("🚨 marketType={}, blngClsCode={}", marketType, blngClsCode);
         String token = tokenManager.getAccessToken();
-
-        // ✅ 여기 넣기
-        log.info("📡 baseUrl: {}", baseUrl);
-        log.info("🔑 appKey: {}", APP_KEY);
-        log.info("🔐 token: {}", token);
 
         if (baseUrl == null) {
             log.error("❌ baseUrl이 주입되지 않았습니다. @Value 또는 @PropertySource 설정을 확인하세요.");
@@ -55,9 +49,6 @@ public class VolumeRankingApi {
         if (APP_KEY == null || APP_SECRET == null) {
             log.error("❌ app key 또는 secret이 null입니다. ConfigManager 설정 확인 필요.");
         }
-
-        log.info("✅ getVolumeRanking() 호출됨 | marketType: {}, blngClsCode: {}", marketType, blngClsCode);
-        log.info("✅ getVolumeRanking() 호출됨 | marketType: {}, blngClsCode: {}", marketType, blngClsCode);
         HttpUrl url = HttpUrl.parse(baseUrl + "/uapi/domestic-stock/v1/quotations/volume-rank")
                 .newBuilder()
                 .addQueryParameter("FID_COND_MRKT_DIV_CODE", marketType) // "J"(코스피), "Q"(코스닥)
@@ -72,7 +63,6 @@ public class VolumeRankingApi {
                 .addQueryParameter("FID_VOL_CNT", "")
                 .addQueryParameter("FID_INPUT_DATE_1", "")
                 .build();
-        log.info("📡 최종 요청 URL: {}", url);
 
         Request request = new Request.Builder()
                 .url(url)
@@ -84,15 +74,12 @@ public class VolumeRankingApi {
                 .addHeader("tr_id", "FHPST01710000") // 거래량순위 조회용 TR ID
                 .addHeader("custtype", "P")
                 .build();
-        log.info("📬 Header 확인 => appkey: {}, appsecret: {}, tr_id: {}, custtype: {}",
-                APP_KEY, APP_SECRET, "FHPST01710000", "P");
 
         OkHttpClient client = new OkHttpClient();
         Response response = client.newCall(request).execute();
 
         if (response.isSuccessful()) {
             String responseBody = response.body().string();
-            log.info("📥 응답 바디 원문: {}", responseBody);
             ObjectMapper mapper = new ObjectMapper();
             JsonNode json = mapper.readTree(responseBody);
 
@@ -112,12 +99,6 @@ public class VolumeRankingApi {
         } else {
             throw new IOException("거래량순위 조회 HTTP 오류: " + response.code());
         }
-    }
-    /**
-     * 기존 호환성을 위한 오버로드 메서드
-     */
-    public List<Map<String, Object>> getVolumeRanking(String marketType, int limit) throws IOException {
-        return getVolumeRanking(marketType, limit, "3"); // 기본값: 거래금액순
     }
     /**
      * 코스피와 코스닥 거래량 순위를 동시에 조회 - 탭 기능 지원
