@@ -9,30 +9,54 @@
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
        <![CDATA[
         SELECT
-            ah.account_id AS user_id,
-            ah.profit_rate AS gain_rate,
-            u.risk_type AS risk_type,
-            (
-                SELECT COUNT(*) + 1
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate > ah.profit_rate
-            ) AS ranking,
-            (
-                SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{baseDate}), 2)
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate <= ah.profit_rate
-            ) AS top_percent
-        FROM asset_history ah
-                 JOIN user u ON ah.account_id = u.id
-        WHERE ah.account_id = #{userId}
-          AND ah.record_date = #{baseDate}
+            u.id AS user_id,
+            COALESCE(ROUND(AVG(h.profit_rate), 2), NULL) AS gain_rate,
+            it.name_kr AS risk_type,
+            CASE
+                WHEN COUNT(h.profit_rate) = 0 THEN NULL
+                ELSE (
+                    SELECT COUNT(*) + 1
+                    FROM (
+                             SELECT account_id, ROUND(AVG(profit_rate), 2) AS avg_rate
+                             FROM holdings
+                             GROUP BY account_id
+                         ) sub
+                    WHERE sub.avg_rate > ROUND(AVG(h.profit_rate), 2)
+                )
+                END AS ranking,
+            CASE
+                WHEN COUNT(h.profit_rate) = 0 THEN NULL
+                ELSE (
+                    SELECT ROUND(
+                                   100.0 * COUNT(*) / (SELECT COUNT(DISTINCT account_id) FROM holdings),
+                                   2
+                           )
+                    FROM (
+                             SELECT account_id, ROUND(AVG(profit_rate), 2) AS avg_rate
+                             FROM holdings
+                             GROUP BY account_id
+                         ) sub
+                    WHERE sub.avg_rate <= ROUND(AVG(h.profit_rate), 2)
+                )
+                END AS top_percent
+        FROM user u
+                 LEFT JOIN holdings h ON u.id = h.account_id
+                 LEFT JOIN investment_types it ON u.risk_type = it.risk_type
+        WHERE u.id = #{userId}
+        GROUP BY u.id, it.name_kr
         ]]>
     </select>
+    <resultMap id="myRankingMap" type="org.scoula.domain.ranking.MyRankingDto">
+        <result column="user_id" property="userId"/>
+        <result column="gain_rate" property="gainRate"/>
+        <result column="risk_type" property="riskType"/>
+        <result column="ranking" property="ranking"/>
+        <result column="top_percent" property="topPercent"/>
+    </resultMap>
 
     <!-- (2) 전체 인기 종목 Top5 -->
     <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+        <![CDATA[
         SELECT
             t.stock_code AS stock_code,
             s.name AS stock_name,
@@ -41,39 +65,62 @@
                 s.image_url AS image_url
         FROM transactions t
                  JOIN stocks s ON t.stock_code = s.code
-        WHERE DATE(t.executed_at) = #{baseDate}
+        WHERE t.executed_at >= #{baseDate}
+          AND t.executed_at < DATE_ADD(#{baseDate}, INTERVAL 7 DAY)
         GROUP BY t.stock_code, s.name, s.image_url
         ORDER BY transaction_count DESC
             LIMIT 5
+        ]]>
     </select>
 
     <!-- (3) 전체 상위 수익률 TOP 100 -->
-    <select id="selectTopRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="string">
-        SELECT account_id AS user_id, profit_rate AS gain_rate, ranking,
-               NULL AS top_percent,
-               NULL AS risk_type
+    <select id="selectTopRankingWithTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="string">
+        SELECT
+            ranked.user_id,
+            ranked.nickname,
+            ranked.trait_group,
+            ranked.gain_rate,
+            ranked.ranking
         FROM (
-                 SELECT account_id, profit_rate,
-                        RANK() OVER (ORDER BY profit_rate DESC) AS ranking
-                 FROM asset_history
-                 WHERE record_date = #{baseDate}
+                 SELECT
+                     h.account_id AS user_id,
+                     u.nickname AS nickname,
+                     rt.name_kr AS trait_group,
+                     ROUND(AVG(h.profit_rate), 2) AS gain_rate,
+                     RANK() OVER (ORDER BY ROUND(AVG(h.profit_rate), 2) DESC) AS ranking
+                 FROM holdings h
+                          JOIN user u ON h.account_id = u.id
+                          JOIN investment_types rt ON u.risk_type = rt.risk_type
+                 GROUP BY h.account_id, u.nickname, rt.name_kr
              ) ranked
             LIMIT 100
     </select>
 
+
     <!-- (4) 성향 그룹별 상위 수익률 TOP 100 -->
     <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="map">
-        SELECT ah.account_id AS user_id, tt.group_code AS trait_group, ah.profit_rate AS gain_rate, ranking
+        SELECT
+        ranked.user_id,
+        ranked.nickname,
+        ranked.trait_group,
+        ranked.original_trait,
+        ranked.gain_rate,
+        ranked.ranking
         FROM (
-                 SELECT account_id, profit_rate,
-                        RANK() OVER (ORDER BY profit_rate DESC) AS ranking
-                 FROM asset_history
-                 WHERE record_date = #{baseDate}
-             ) ah
-                 JOIN user u ON ah.account_id = u.id
-                 JOIN risk_types tt ON u.risk_type = tt.code
-        WHERE tt.group_code = #{traitGroup}
-            LIMIT 100
+        SELECT
+        h.account_id AS user_id,
+        u.nickname AS nickname,
+        rt.group_code AS trait_group,
+        u.risk_type AS original_trait,
+        ROUND(AVG(h.profit_rate), 2) AS gain_rate,
+        RANK() OVER (ORDER BY ROUND(AVG(h.profit_rate), 2) DESC) AS ranking
+        FROM holdings h
+        JOIN user u ON h.account_id = u.id
+        JOIN investment_types rt ON u.risk_type = rt.risk_type
+        WHERE rt.group_code = #{traitGroup}
+        GROUP BY h.account_id, u.nickname, u.risk_type
+        ) ranked
+        LIMIT 100
     </select>
 
 </mapper>

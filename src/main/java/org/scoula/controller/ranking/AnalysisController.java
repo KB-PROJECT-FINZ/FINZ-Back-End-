@@ -23,12 +23,14 @@ public class AnalysisController {
     // (1) 성향별 보유 비중 조회
     @GetMapping("/trait-stock")
     public List<TraitStockDto> getTraitStocks(@RequestParam Long userId) {
+        System.out.println("DEBUG trait-stock userId: " + userId);
         return analysisService.getTraitStocks(userId);
     }
 
     // (2) 내 수익률 분포 위치 조회
     @GetMapping("/my-distribution")
     public List<MyDistributionDto> getMyDistribution(@RequestParam Long userId) {
+        System.out.println("getMyDistribution 호출, userId = " + userId);
         return analysisService.getMyDistribution(userId);
     }
 

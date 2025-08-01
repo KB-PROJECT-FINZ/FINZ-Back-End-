@@ -17,6 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnalysisServiceImpl implements AnalysisService {
 
+
     private final AnalysisMapper analysisMapper;
 
     @Override
@@ -31,7 +32,6 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     public List<PopularStockDto> getPopularStocksByTrait(String traitGroup) {
-        // traitGroup이 ANALYTICAL 또는 EMOTIONAL인 경우 특수형(SPECIAL)으로 통합
         String normalizedGroup = traitGroup;
         if ("ANALYTICAL".equalsIgnoreCase(traitGroup) || "EMOTIONAL".equalsIgnoreCase(traitGroup)) {
             normalizedGroup = "SPECIAL";
