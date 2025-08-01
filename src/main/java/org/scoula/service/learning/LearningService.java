@@ -19,4 +19,5 @@ public interface LearningService {
     void saveResult(int userId, int quizId, boolean isCorrect, String selectedAnswer, int creditEarned);
     QuizResultDTO getQuizResult(int userId, int quizId);
     List<LearningContentDTO> getCompletedContents(int userId);
+    int getTotalEarnedCredit(int userId);
 }

@@ -152,4 +152,15 @@ public class LearningController {
         return ResponseEntity.ok(learningGptService.recommendLearningContents(user.getId(), 5));
     }
 
+    // 누적 획득 크레딧 조회
+    @GetMapping("/user/total-earned-credit")
+    public ResponseEntity<Integer> getTotalEarnedCredit(@LoginUser UserVo user) {
+        try {
+            int totalEarnedCredit = learningService.getTotalEarnedCredit(user.getId());
+            return ResponseEntity.ok(totalEarnedCredit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(0);
+        }
+    }
 }
