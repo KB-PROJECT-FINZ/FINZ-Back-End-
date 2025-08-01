@@ -106,4 +106,9 @@ public class LearningServiceImpl implements LearningService {
     public QuizResultDTO getQuizResult(int userId, int quizId) {
         return learningMapper.getQuizResult(userId, quizId);
     }
+
+    @Override
+    public int getUserReadCount(int userId) {
+        return learningMapper.getUserReadCount(userId);
+    }
 }

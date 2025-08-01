@@ -1,6 +1,8 @@
 package org.scoula.service.Auth;
 
+import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.Auth.vo.UserVo;
+import org.scoula.domain.type.dto.RiskTypeDto;
 import org.scoula.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,4 +41,9 @@ public class UserServiceImpl implements UserService {
     public String getRiskTypeByUserId(Integer userId) {
         return userMapper.findRiskTypeByUserId(userId);
     }
+
+    @Override
+    public RiskTypeDto findRiskTypeByRiskType(String riskType){
+        return userMapper.findRiskTypeByRiskType(riskType);
+    };
 }
