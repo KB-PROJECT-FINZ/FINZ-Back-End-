@@ -161,32 +161,45 @@ public class ChatBotServiceImpl implements ChatBotService {
 
 
 
-                    // 2. 종목 리스트 가져오기 (거래량 상위 등)
-                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(3, "0");
+                    // 2. 종목 리스트 가져오기 (bingCisCode 참고! : -0은 거래량)
+                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(10,"0");
                     log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
 
-                    // 3. 성향 기반 필터링
+                    // 3. 코드/이름 리스트로 분리
                     List<RecommendationStock> recStocks = rawStocks.stream()
                             .map(ProfileStockMapper::fromMap)
-                            .toList();
+                            .collect(Collectors.collectingAndThen(
+                                    Collectors.toMap(
+                                            RecommendationStock::getCode,
+                                            s -> s,
+                                            (s1, s2) -> s1 // 중복되는 문제 해결
+                                    ),
+                                    map -> new ArrayList<>(map.values())
+                            ));
+                    
+                    List<String> tickers = recStocks.stream().map(RecommendationStock::getCode).toList();
+                    List<String> names = recStocks.stream().map(RecommendationStock::getName).toList();
 
-                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, recStocks);
+                    // 4. 상세 정보 조회 (PriceApi 이용)
+                    List<RecommendationStock> enrichedStocks = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+                    log.info("[GPT] 상세 정보 조회 완료 → {}개", enrichedStocks.size());
+
+                    // 3. 성향 기반 필터링
+                    List<RecommendationStock> filteredStocks  = ProfileStockFilter.filterByRiskType(riskType, enrichedStocks);
+
+                    boolean usedFallback = false;
+                    if (filteredStocks.isEmpty()) {
+                        log.warn("⚠️ [{}] 조건 통과 종목 없음 → fallback 사용", riskType);
+                        filteredStocks = enrichedStocks.subList(0, Math.min(3, enrichedStocks.size()));
+                        usedFallback = true;
+                    }
                     log.info("[GPT] 성향 기반 필터링 완료 → {}개", filteredStocks.size());
 
-                    // 4. 종목 코드/이름 추출
-                    List<String> tickers = filteredStocks.stream().map(RecommendationStock::getCode).toList();
-                    List<String> names = filteredStocks.stream().map(RecommendationStock::getName).toList();
-
-
-                    // 5. 상세 정보 조회 (PriceApi 이용)
-                    List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
-
-                    log.info("[GPT] 추천 종목 상세 정보 조회 완료 → {}개", detailed.size());
-
-                    // 6. DTO로 매핑 (ChatAnalysisDto)
-                    List<ChatAnalysisDto> analysisList = detailed.stream()
+                    // 6. DTO 매핑
+                    List<ChatAnalysisDto> analysisList = filteredStocks.stream()
                             .map(ChatAnalysisMapper::toDto)
                             .toList();
+
 
                     // 7. DB 저장 (추천된 종목의 데이터를 저장)
                     for (ChatAnalysisDto dto : analysisList) {
@@ -196,7 +209,11 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 8-1. GPT 분석 요청 프롬프트에 요청 ( 응답 json)
                     String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
                     String analysisResponse = openAiClient.getChatCompletion(analysisPrompt);
+
+
                     log.info("[GPT] GPT 분석 요청 프롬프트 구성 완료");
+                    log.info("📝 [GPT] 분석용 프롬프트 내용 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓\n{}\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑", analysisPrompt);
+
 
                     // 8-3. 추천 사유 파싱 → DB 저장
 

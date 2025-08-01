@@ -155,6 +155,18 @@ public class VolumeRankingApi {
         combined.addAll(allMarkets.get("kospi"));
         combined.addAll(allMarkets.get("kosdaq"));
 
+        // 통합 랭킹 가져올 때 중복되게 가져오는 문제 해결
+        Map<String, Map<String, Object>> deduplicated = new LinkedHashMap<>();
+        for (Map<String, Object> stock : combined) {
+            String code = (String) stock.get("code");
+            if (!deduplicated.containsKey(code)) {
+                deduplicated.put(code, stock);
+            }
+        }
+
+        List<Map<String, Object>> uniqueStocks = new ArrayList<>(deduplicated.values());
+
+
         // 탭별 정렬 기준 적용
         combined.sort((a, b) -> {
             switch (blngClsCode) {
