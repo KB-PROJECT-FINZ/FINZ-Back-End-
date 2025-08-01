@@ -1,6 +1,9 @@
 package org.scoula.controller.Type;
 
+import org.scoula.config.auth.LoginUser;
 import org.scoula.domain.Auth.vo.UserVo;
+import org.scoula.domain.learning.dto.LearningQuizDTO;
+import org.scoula.domain.type.dto.RiskTypeDto;
 import org.scoula.domain.type.dto.RiskTypeUpdateDto;
 import org.scoula.service.Auth.UserService;
 import org.springframework.http.HttpStatus;
@@ -46,4 +49,10 @@ public class UserController {
                 ? ResponseEntity.ok(nameKr)
                 : ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 사용자");
     }
+
+    @GetMapping("/risk-type-detail/{code}")
+    public ResponseEntity<RiskTypeDto> getRiskTypeDetail(@PathVariable("code") String riskType) {
+        return ResponseEntity.ok(userService.findRiskTypeByRiskType(riskType));
+    }
+
 }
