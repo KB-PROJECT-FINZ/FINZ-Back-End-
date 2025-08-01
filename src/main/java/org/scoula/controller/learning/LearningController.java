@@ -162,5 +162,9 @@ public class LearningController {
             e.printStackTrace();
             return ResponseEntity.status(500).body(0);
         }
+    //사용자 별 완료된 컨텐츠 개수 조회
+    @GetMapping("/history/count")
+    public int getUserReadCount(@LoginUser UserVo user) {
+        return learningService.getUserReadCount(user.getId());
     }
 }

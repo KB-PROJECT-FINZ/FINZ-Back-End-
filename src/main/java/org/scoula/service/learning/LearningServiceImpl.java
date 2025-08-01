@@ -113,4 +113,10 @@ public class LearningServiceImpl implements LearningService {
     public int getTotalEarnedCredit(int userId) {
         return learningMapper.getTotalEarnedCredit(userId);
     }
+  
+    @Override
+    public int getUserReadCount(int userId) {
+        return learningMapper.getUserReadCount(userId);
+
+    }
 }

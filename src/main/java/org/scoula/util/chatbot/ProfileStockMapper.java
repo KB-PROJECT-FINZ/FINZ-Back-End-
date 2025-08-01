@@ -8,6 +8,14 @@ import java.util.Map;
 public class ProfileStockMapper {
 
     public static RecommendationStock fromMap(Map<String, Object> map) {
+
+        Double eps = toNullableDouble(map.get("eps"));
+        Double bps = toNullableDouble(map.get("bps"));
+
+
+        Double roe = (eps != null && bps != null && bps != 0.0)
+                ? (eps / bps) * 100.0
+                : null;
         return RecommendationStock.builder()
                 .name((String) map.get("name"))
                 .code((String) map.get("code"))
@@ -16,6 +24,7 @@ public class ProfileStockMapper {
                 .per(toNullableDouble(map.get("per")))
                 .pbr(toNullableDouble(map.get("pbr")))
                 .eps(toNullableDouble(map.get("eps")))
+                .roe(roe)
                 .volume(toNullableDouble(map.get("volume")))
                 .avgPrice(toNullableDouble(map.get("avgPrice")))
                 .foreignRate(toNullableDouble(map.get("foreignRate")))
@@ -25,6 +34,7 @@ public class ProfileStockMapper {
                 .high52w(toNullableDouble(map.get("high52w")))
                 .low52w(toNullableDouble(map.get("low52w")))
                 .build();
+
     }
 
     private static String toNullableString(Object value) {

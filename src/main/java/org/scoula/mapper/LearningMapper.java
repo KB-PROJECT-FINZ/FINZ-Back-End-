@@ -40,4 +40,6 @@ public interface LearningMapper {
     QuizResultDTO getQuizResult(@Param("userId") int userId, @Param("quizId") int quizId);
     int updateTotalEarnedCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
     int getTotalEarnedCredit(int userId);
-   }
+    int getUserReadCount(@Param("userId") int userId);
+}
+

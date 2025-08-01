@@ -2,6 +2,7 @@ package org.scoula.mapper;
 
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.Auth.vo.UserVo;
+import org.scoula.domain.type.dto.RiskTypeDto;
 
 public interface UserMapper {
     String findRiskTypeNameByUsername(String username);
@@ -14,5 +15,5 @@ public interface UserMapper {
     String findRiskTypeByUsername(@Param("username") String username);
     String findRiskTypeByUserId(@Param("userId") Integer userId);
 
-
+    RiskTypeDto findRiskTypeByRiskType(@Param("riskType") String riskType);
 }

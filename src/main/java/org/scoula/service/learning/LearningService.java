@@ -20,4 +20,5 @@ public interface LearningService {
     QuizResultDTO getQuizResult(int userId, int quizId);
     List<LearningContentDTO> getCompletedContents(int userId);
     int getTotalEarnedCredit(int userId);
+    int getUserReadCount(int userId);
 }

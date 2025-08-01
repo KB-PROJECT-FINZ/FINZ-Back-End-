@@ -36,7 +36,6 @@ public class MarketIndexApi {
      * @return 시장지수 데이터
      */
     public Map<String, Object> getMarketIndex(String indexCode) throws IOException {
-        log.info("🔍 시장지수 조회 시작 - 코드: {}", indexCode);
 
         // ✅ API 키 검증
         validateApiCredentials();
@@ -103,23 +102,16 @@ public class MarketIndexApi {
      * 코스피/코스닥 둘 다 조회 - 개선된 버전
      */
     public Map<String, Object> getAllMarketIndices() throws IOException {
-        log.info("🔍 전체 시장지수 조회 시작");
 
         Map<String, Object> result = new HashMap<>();
 
         try {
-            // 코스피 조회
-            log.info("📊 코스피 지수 조회");
             result.put("kospi", getMarketIndex("0001"));
 
-            // API 호출 간격 준수
             waitForApiInterval();
 
-            // 코스닥 조회
-            log.info("📊 코스닥 지수 조회");
             result.put("kosdaq", getMarketIndex("1001"));
 
-            log.info("✅ 전체 시장지수 조회 완료");
             return result;
 
         } catch (InterruptedException e) {
