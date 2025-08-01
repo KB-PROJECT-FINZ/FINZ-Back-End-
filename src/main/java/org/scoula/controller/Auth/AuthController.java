@@ -8,10 +8,13 @@ import org.scoula.domain.mocktrading.vo.UserAccount;
 import org.scoula.service.Auth.MailService;
 import org.scoula.service.Auth.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+
 import java.util.UUID;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
@@ -165,17 +168,62 @@ public class AuthController {
         try {
             String accessToken = kakaoAuthService.getAccessToken(code);
             KakaoUser kakaoUser = kakaoAuthService.getKakaoUserInfo(accessToken);
-            UserVo user = authService.processKakaoLogin(kakaoUser);
 
-            // 세션에 저장
-            session.setAttribute("username", user.getUsername());
-            session.setAttribute("name", user.getNickname());
-
-            return "redirect:/";
+            UserVo user = authService.findByUsername(kakaoUser.getEmail());
+            if (user != null) {
+                // 기존 회원 → 세션 저장 후 바로 홈으로
+                session.setAttribute("loginUser", user);
+                return "redirect:http://localhost:5173/";
+            } else {
+                // 신규 회원 → 회원가입 페이지로 email + nickname 전달
+                session.setAttribute("kakaoEmail", kakaoUser.getEmail());
+                session.setAttribute("kakaoNickname", kakaoUser.getNickname());
+                return "redirect:http://localhost:5173/kakao-signup";
+            }
         } catch (Exception e) {
-            e.printStackTrace(); // 오류 로그 출력
-            return "redirect:/login-error"; // 또는 오류 처리 페이지
+            e.printStackTrace();
+            return "redirect:http://localhost:5173/kakao/callback?code=" + code;
         }
+    }
+    @PostMapping("/kakao-signup")
+    @ResponseBody
+    public ResponseEntity<?> kakaoSignup(@RequestBody UserVo user, HttpSession session) {
+        String kakaoEmail = (String) session.getAttribute("kakaoEmail");
+        if (kakaoEmail == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("카카오 인증이 없습니다.");
+        }
+
+        user.setUsername(kakaoEmail);
+        user.setProvider("kakao");
+        user.setTotalCredit(0L);
+        user.setRiskType("CSD");
+
+        boolean success = authService.register(user);
+        if (success) {
+            session.setAttribute("loginUser", user);
+            return ResponseEntity.ok("카카오 회원가입 완료");
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("회원가입 실패");
+        }
+    }
+    @PostMapping("/auth/kakao/token")
+    public ResponseEntity<?> kakaoToken(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", "카카오 REST API 키");
+        params.add("redirect_uri", "http://localhost:5173/kakaologin");
+        params.add("code", code);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        ResponseEntity<String> response = restTemplate.postForEntity("https://kauth.kakao.com/oauth/token", request, String.class);
+        return ResponseEntity.ok(response.getBody());
     }
 }
 

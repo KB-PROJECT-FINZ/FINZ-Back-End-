@@ -46,4 +46,5 @@ public class UserServiceImpl implements UserService {
     public RiskTypeDto findRiskTypeByRiskType(String riskType){
         return userMapper.findRiskTypeByRiskType(riskType);
     };
+
 }
