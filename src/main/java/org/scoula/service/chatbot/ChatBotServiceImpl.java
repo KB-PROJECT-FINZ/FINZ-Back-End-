@@ -134,7 +134,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
             log.info("[MESSAGE] 사용자 메시지 저장 완료");
-            
+
             // 에러 발생시 저장
             if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
                 ErrorType errorType;
@@ -160,9 +160,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 사용자 riskType: {}", riskType);
 
 
-
                     // 2. 종목 리스트 가져오기 (bingCisCode 참고! : -0은 거래량)
-                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(10,"0");
+                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(10, "0");
                     log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
 
                     // 3. 코드/이름 리스트로 분리
@@ -176,7 +175,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                                     ),
                                     map -> new ArrayList<>(map.values())
                             ));
-                    
+
                     List<String> tickers = recStocks.stream().map(RecommendationStock::getCode).toList();
                     List<String> names = recStocks.stream().map(RecommendationStock::getName).toList();
 
@@ -185,7 +184,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 상세 정보 조회 완료 → {}개", enrichedStocks.size());
 
                     // 3. 성향 기반 필터링
-                    List<RecommendationStock> filteredStocks  = ProfileStockFilter.filterByRiskType(riskType, enrichedStocks);
+                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, enrichedStocks);
 
                     boolean usedFallback = false;
                     if (filteredStocks.isEmpty()) {
@@ -225,10 +224,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
 
                     // 8. GPT 프롬프트 구성
-                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults,analysisList);
+                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
                     log.info("[GPT] 최종 GPT 요청 시작");
-
-
 
 
                     break;
@@ -351,43 +348,43 @@ public class ChatBotServiceImpl implements ChatBotService {
     // 의도 분류 프롬프트
     private String buildIntentClassificationPrompt(String userMessage) {
         return """
-    You are an intent classifier for a financial chatbot.
-
-    Classify the user's message into one of the following intent types **based on the meaning**:
-
-    - MESSAGE: General conversation or small talk.
-    - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
-    - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
-    - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
-    - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
-    - SESSION_END: Wants to end the conversation.
-    - ERROR: Clear error or invalid message.
-    - UNKNOWN: Cannot determine intent.
-
-    Just return the intent type only, no explanation.
-
-                Example 1:
-                User: "AI 관련된 주식 추천해줘"
-                Answer: RECOMMEND_KEYWORD
+                You are an intent classifier for a financial chatbot.
                 
-                Example 2:
-                User: "내 투자 성향으로 추천해줘"
-                Answer: RECOMMEND_PROFILE
+                Classify the user's message into one of the following intent types **based on the meaning**:
                 
-                Example 3:
-                User: "내 성향에 맞는 주식 뭐야?"
-                Answer: RECOMMEND_PROFILE
+                - MESSAGE: General conversation or small talk.
+                - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
+                - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
+                - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
+                - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
+                - SESSION_END: Wants to end the conversation.
+                - ERROR: Clear error or invalid message.
+                - UNKNOWN: Cannot determine intent.
                 
-                Example 4:
-                User: "성향 기반으로 추천해줘"
-                Answer: RECOMMEND_PROFILE
+                Just return the intent type only, no explanation.
                 
-                Example 5:
-                User: "삼성전자 분석해줘"
-                Answer: STOCK_ANALYZE
-
-    User: %s
-    """.formatted(userMessage);
+                            Example 1:
+                            User: "AI 관련된 주식 추천해줘"
+                            Answer: RECOMMEND_KEYWORD
+                
+                            Example 2:
+                            User: "내 투자 성향으로 추천해줘"
+                            Answer: RECOMMEND_PROFILE
+                
+                            Example 3:
+                            User: "내 성향에 맞는 주식 뭐야?"
+                            Answer: RECOMMEND_PROFILE
+                
+                            Example 4:
+                            User: "성향 기반으로 추천해줘"
+                            Answer: RECOMMEND_PROFILE
+                
+                            Example 5:
+                            User: "삼성전자 분석해줘"
+                            Answer: STOCK_ANALYZE
+                
+                User: %s
+                """.formatted(userMessage);
     }
 
     // 파싱 메서드
@@ -398,6 +395,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         try {
             JsonNode root = objectMapper.readTree(gptResponse);
+
 
             for (JsonNode node : root) {
                 String ticker = node.get("ticker").asText();
@@ -423,11 +421,11 @@ public class ChatBotServiceImpl implements ChatBotService {
             }
 
         } catch (Exception e) {
-            log.warn("[GPT] 추천 응답 파싱 실패: {}", e.getMessage());
+            log.warn("⚠️ [GPT] 추천 응답 파싱 실패: {}", e.getMessage());
+            log.warn("⚠️ [GPT] 원시 응답 내용 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓");
+            log.warn(gptResponse);
         }
 
         return result;
     }
-
-
 }

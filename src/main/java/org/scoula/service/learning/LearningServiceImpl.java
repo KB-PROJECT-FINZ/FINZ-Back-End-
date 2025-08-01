@@ -69,6 +69,8 @@ public class LearningServiceImpl implements LearningService {
 
             // 퀴즈 결과 저장 (정답으로 처리)
             learningMapper.saveQuizResult(userId, quizId, true, "O", creditAmount);
+            // 누적 획득 크레딧 업데이트
+            learningMapper.updateTotalEarnedCredit(userId, creditAmount);
 
             return creditAmount;
         } catch (Exception e) {
@@ -108,7 +110,13 @@ public class LearningServiceImpl implements LearningService {
     }
 
     @Override
+    public int getTotalEarnedCredit(int userId) {
+        return learningMapper.getTotalEarnedCredit(userId);
+    }
+  
+    @Override
     public int getUserReadCount(int userId) {
         return learningMapper.getUserReadCount(userId);
+
     }
 }

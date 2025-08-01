@@ -15,7 +15,7 @@ public class ChatAnalysisMapper {
                 .name(stock.getName())
                 .region("KR")
                 .per(toFloat(stock.getPer()))
-                .roe(null)
+                .roe(toFloat(stock.getRoe()))
                 .eps(toFloat(stock.getEps()))
                 .price(toFloat(stock.getPrice()))
                 .pbr(toFloat(stock.getPbr()))
