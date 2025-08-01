@@ -151,6 +151,17 @@ public class LearningController {
     public ResponseEntity<List<LearningContentDTO>> recommendList(@LoginUser UserVo user) {
         return ResponseEntity.ok(learningGptService.recommendLearningContents(user.getId(), 5));
     }
+
+    // 누적 획득 크레딧 조회
+    @GetMapping("/user/total-earned-credit")
+    public ResponseEntity<Integer> getTotalEarnedCredit(@LoginUser UserVo user) {
+        try {
+            int totalEarnedCredit = learningService.getTotalEarnedCredit(user.getId());
+            return ResponseEntity.ok(totalEarnedCredit);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(0);
+        }
     //사용자 별 완료된 컨텐츠 개수 조회
     @GetMapping("/history/count")
     public int getUserReadCount(@LoginUser UserVo user) {
