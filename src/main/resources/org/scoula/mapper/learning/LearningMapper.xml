@@ -41,4 +41,125 @@
                  JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
         WHERE tag.group_code = #{groupCode}
     </select>
+
+    <insert id="insertLearningHistory" parameterType="org.scoula.domain.learning.dto.LearningHistoryDto">
+        INSERT INTO user_learning_history(user_id, content_id, viewed_at)
+        VALUES  (#{userId}, #{contentId}, NOW())
+    </insert>
+
+    <select id="isUserIdAndContentId" resultType="int">
+        SELECT COUNT(*) FROM user_learning_history
+        WHERE user_id=#{userId} AND content_id=#{contentId}
+    </select>
+
+    <select id="getLearningHistoryList" resultType="org.scoula.domain.learning.vo.LearningHistoryVO">
+        SELECT * FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="findGroupCodeByUserId" parameterType="int" resultType="String">
+        SELECT it.group_code
+        FROM user u
+                 JOIN investment_types it ON u.risk_type = it.risk_type
+        WHERE u.id = #{userId}
+    </select>
+
+
+    <select id="findUnreadContent" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT lc.*
+        FROM learning_contents lc
+                 INNER JOIN learning_quiz q ON lc.content_id = q.quiz_id
+                 LEFT JOIN user_learning_history ulh
+                           ON lc.content_id = ulh.content_id AND ulh.user_id = #{userId}
+        WHERE lc.group_code = #{groupCode}
+          AND ulh.content_id IS NULL
+          AND lc.body IS NOT NULL
+          AND LENGTH(TRIM(lc.body)) > 0
+    </select>
+
+
+    <select id="findTitlesByGroupCode" resultType="string">
+        SELECT title FROM learning_contents WHERE group_code = #{groupCode}
+    </select>
+
+    <insert id="insertContent" parameterType="org.scoula.domain.learning.vo.LearningContentVO" useGeneratedKeys="true" keyProperty="contentId">
+        INSERT INTO learning_contents
+            (type, title, body, image_url, youtube_url, created_at, group_code)
+        VALUES
+            (#{type}, #{title}, #{body}, #{imageUrl}, #{youtubeUrl}, #{createdAt}, #{groupCode})
+    </insert>
+
+    <select id="findCompletedContentByUserId" resultType="org.scoula.domain.learning.vo.LearningContentVO">
+        SELECT lc.*
+        FROM user_learning_history ulh
+                 JOIN learning_contents lc ON ulh.content_id = lc.content_id
+        WHERE ulh.user_id = #{userId}
+    </select>
+    <insert id="insertQuiz" parameterType="org.scoula.domain.learning.vo.LearningQuizVO">
+        INSERT INTO learning_quiz (
+            quiz_id, question, answer, comment, credit_reward
+        ) VALUES (
+                     #{quizId}, #{question}, #{answer}, #{comment}, #{creditReward}
+                 )
+    </insert>
+
+    <!-- 사용자 크레딧 업데이트 -->
+    <update id="updateUserCredit" parameterType="map">
+        UPDATE user
+        SET total_credit = total_credit + #{creditAmount}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 사용자 크레딧 조회 -->
+    <select id="getUserCredit" parameterType="int" resultType="int">
+        SELECT total_credit FROM user WHERE id = #{userId}
+    </select>
+    <!-- 퀴즈 결과 확인 -->
+    <select id="hasQuizResult" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM user_quiz_results
+        WHERE user_id = #{userId} AND quiz_id = #{quizId}
+    </select>
+
+    <!-- 퀴즈 결과 저장 -->
+    <insert id="saveQuizResult">
+        INSERT INTO user_quiz_results (user_id, quiz_id, is_correct, selected_answer, credit_earned, attempted_at)
+        VALUES (#{userId}, #{quizId}, #{isCorrect}, #{selectedAnswer}, #{creditEarned}, NOW())
+        ON DUPLICATE KEY UPDATE
+                             is_correct = #{isCorrect},
+                             selected_answer = #{selectedAnswer},
+                             credit_earned = #{creditEarned},
+                             attempted_at = NOW()
+    </insert>
+
+    <!-- 퀴즈 결과 상세 조회 -->
+    <select id="getQuizResult" resultType="org.scoula.domain.learning.dto.QuizResultDTO">
+        SELECT
+            user_id as userId,
+            quiz_id as quizId,
+            is_correct as isCorrect,
+            selected_answer as selectedAnswer,
+            credit_earned as creditEarned,
+            attempted_at as attemptedAt
+        FROM user_quiz_results
+        WHERE user_id = #{userId} AND quiz_id = #{quizId}
+    </select>
+
+    <!-- 누적 획득 크레딧 업데이트 -->
+    <update id="updateTotalEarnedCredit" parameterType="map">
+        UPDATE user
+        SET total_earned_credit = total_earned_credit + #{creditAmount}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 누적 획득 크레딧 조회 -->
+    <select id="getTotalEarnedCredit" parameterType="int" resultType="int">
+        SELECT total_earned_credit FROM user WHERE id = #{userId}
+    </select>
+
+    <select id="getUserReadCount" parameterType="int" resultType="int">
+        SELECT COUNT(DISTINCT content_id)
+        FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
 </mapper>

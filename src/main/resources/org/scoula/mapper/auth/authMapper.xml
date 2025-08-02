@@ -15,6 +15,14 @@
                  )
     </insert>
 
+    <insert id="insertUserFromKakao" parameterType="org.scoula.domain.Auth.vo.UserVo">
+        INSERT INTO user (
+            username, nickname, provider, risk_type, total_credit, created_at, updated_at
+        ) VALUES (
+                     #{username}, #{nickname}, #{provider}, #{riskType}, #{totalCredit}, NOW(), NOW()
+                 )
+    </insert>
+
     <select id="existsByUsername" parameterType="string" resultType="int">
         SELECT COUNT(*) FROM user WHERE username = #{username}
     </select>
@@ -26,6 +34,26 @@
     <select id="findByUsernameAndPassword" resultType="org.scoula.domain.Auth.vo.UserVo">
         SELECT * FROM user
         WHERE username = #{username} AND password = #{password}
+    </select>
+
+    <select id="findByUsername" parameterType="String" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+    <select id="findByEmail" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user WHERE email = #{email}
+    </select>
+
+    <select id="findByNameAndEmail" resultType="org.scoula.domain.Auth.vo.UserVo">
+        SELECT * FROM user WHERE name = #{name} AND email = #{email}
+    </select>
+
+    <update id="updatePassword">
+        UPDATE user SET password = #{newPassword} WHERE id = #{userId}
+    </update>
+
+    <select id="countByNickname" resultType="int">
+        SELECT COUNT(*) FROM user WHERE nickname = #{nickname}
     </select>
 
 </mapper>

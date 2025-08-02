@@ -12,14 +12,14 @@ public class ConfigManager {
         try (InputStream input = ConfigManager.class.getClassLoader()
                 .getResourceAsStream("application.properties")) {
             if (input == null) {
-                throw new RuntimeException("config.properties not found");
+                throw new RuntimeException("application.properties not found");
             }
 
             // ✅ UTF-8로 강제 인코딩 지정
             InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8);
             properties.load(reader);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load config.properties", e);
+            throw new RuntimeException("Failed to load application.properties", e);
         }
     }
 

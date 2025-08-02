@@ -1,5 +1,6 @@
 package org.scoula.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -18,9 +19,11 @@ import javax.sql.DataSource;
 @Configuration
 @PropertySource({"classpath:/application.properties"})
 @MapperScan(basePackages = {"org.scoula.mapper"})
+@ComponentScan(basePackages = {"org.scoula"})
 @Import(SwaggerConfig.class)  // SwaggerConfig 추가
 //@MapperScan(basePackages = {})
 //@MapperScan(basePackages = "org.scoula.mapper.chatbot")
+@ComponentScan(basePackages = {"org.scoula.service","org.scoula.domain","org.scoula.controller"})
 public class RootConfig {
     @Value("${jdbc.driver}")
     String driver;
@@ -36,6 +39,11 @@ public class RootConfig {
 
     @Autowired
     ApplicationContext applicationContext;
+
+    @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper();
+    }
 
     @Bean
     public RestTemplate restTemplate() {

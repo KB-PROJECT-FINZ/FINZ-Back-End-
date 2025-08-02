@@ -1,9 +1,11 @@
 package org.scoula.config;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 
 import javax.servlet.*;
@@ -41,7 +43,34 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
 
         characterEncodingFilter.setEncoding("UTF-8");
         characterEncodingFilter.setForceEncoding(true);
-        return new Filter[] {characterEncodingFilter};
+        
+        // CSP 필터 추가 (YouTube iframe 허용)
+        Filter cspFilter = new Filter() {
+            @Override
+            public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws java.io.IOException, javax.servlet.ServletException {
+                if (response instanceof javax.servlet.http.HttpServletResponse) {
+                    javax.servlet.http.HttpServletResponse httpResponse = (javax.servlet.http.HttpServletResponse) response;
+                    httpResponse.setHeader("Content-Security-Policy", 
+                        "default-src 'self'; " +
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                        "style-src 'self' 'unsafe-inline'; " +
+                        "img-src 'self' data: https:; " +
+                        "frame-src 'self' https://www.youtube.com https://youtube.com; " +
+                        "child-src 'self' https://www.youtube.com https://youtube.com; " +
+                        "connect-src 'self' http://localhost:* https://localhost:*;"
+                    );
+                }
+                chain.doFilter(request, response);
+            }
+            
+            @Override
+            public void init(javax.servlet.FilterConfig filterConfig) throws javax.servlet.ServletException {}
+            
+            @Override
+            public void destroy() {}
+        };
+        
+        return new Filter[] {characterEncodingFilter, cspFilter};
     }
 
     // 멀티 파트 관련 + 404에러 처리 관련 설정
@@ -64,5 +93,16 @@ public class WebConfig extends AbstractAnnotationConfigDispatcherServletInitiali
         System.out.println("Root Config Classes: " + java.util.Arrays.toString(getRootConfigClasses()));
         System.out.println("Servlet Config Classes: " + java.util.Arrays.toString(getServletConfigClasses()));
         System.out.println("========================");
+    }
+    @Configuration
+    public class CorsConfig implements WebMvcConfigurer {
+
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+            registry.addMapping("/**")
+                    .allowedOrigins("http://localhost:5173") // Vue 개발 서버 주소
+                    .allowedMethods("*")
+                    .allowCredentials(true); // 세션 쿠키 전송 허용
+        }
     }
 }

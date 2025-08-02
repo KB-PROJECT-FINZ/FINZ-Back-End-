@@ -11,13 +11,32 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 // NXT 대체거래소 실시간 호가 API 클라이언트 (15:30 이후)
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class RealtimeNxtBidsAndAsksClient {
 
     private static WebSocketClient client;
-    private static final String WS_URL = "ws://ops.koreainvestment.com:31000/tryitout/H0NXASP0"; // NXT 전용 포트
+    private static final String WS_URL = "ws://ops.koreainvestment.com:21000/tryitout/H0NXASP0"; // NXT 전용 포트
+    // 종목코드별 최초 1회만 메시지 출력
+    private static final Set<String> startedStocks = new HashSet<>();
 
-    public static void startWebSocket() throws Exception {
-        String approvalKey = TokenManager.getTokenInfo().getApprovalKey();
+    public static void startWebSocket(String stockCode) throws Exception {
+        // 기존 연결이 있으면 먼저 종료
+        if (client != null && !client.isClosed()) {
+            System.out.println("🔄 [NXT] 기존 WebSocket 연결 종료 후 새 연결 시작");
+            client.close();
+            Thread.sleep(500); // 연결 종료 대기
+        }
+        
+        // 새로운 종목으로 바뀔 때 startedStocks 초기화
+        startedStocks.clear();
+
+        TokenManager.TokenInfo mainToken = TokenManager.getTokenInfo(TokenManager.TokenType.MAIN);
+        String approvalKey = mainToken.getApprovalKey();
+        System.out.println("실시간 호가에서 사용하는 키 " + approvalKey);
+        System.out.println("🚀 [NXT] 새로운 WebSocket 연결 시작 - 종목: " + stockCode);
 
         client = new WebSocketClient(new URI(WS_URL)) {
             @Override
@@ -32,9 +51,12 @@ public class RealtimeNxtBidsAndAsksClient {
                     header.put("tr_type", "1");
                     header.put("content-type", "utf-8");
 
+
                     ObjectNode input = mapper.createObjectNode();
                     input.put("tr_id", "H0NXASP0"); // NXT 전용 TR_ID
-                    input.put("tr_key", "005930"); // 삼성전자
+                    input.put("tr_key", stockCode); // 파라미터로 받은 종목코드
+                    
+                    System.out.println("📝 [NXT] 구독 요청 종목코드: " + stockCode);
 
                     ObjectNode body = mapper.createObjectNode();
                     body.set("input", input);
@@ -156,11 +178,18 @@ public class RealtimeNxtBidsAndAsksClient {
                         String nxtMidQty = getFieldSafely(fields, 63);      // NMID_TOTAL_RSQN
                         String nxtMidCode = getFieldSafely(fields, 64);     // NMID_CLS_CODE
 
-                        // 📊 NXT 호가 정보 간단 출력 (매도1/매수1만)
+
+                        // 📊 NXT 호가 정상 시작 메시지 (종목별 1회만)
                         String currentTime = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-                        System.out.println("📊 [NXT " + currentTime + "] " + dto.getStockCode() +
-                                " | 매도1: " + dto.getAskPrice1() + "(" + dto.getAskQty1() + ")" +
-                                " | 매수1: " + dto.getBidPrice1() + "(" + dto.getBidQty1() + ")");
+                        String stockCodeForMsg = dto.getStockCode();
+                        if (!startedStocks.contains(stockCodeForMsg)) {
+                            System.out.println("📊 [NXT " + currentTime + "] " + stockCodeForMsg + " 호가 정상 시작됨");
+                            startedStocks.add(stockCodeForMsg);
+                        }
+                        // // 간단 정보 출력 (매도1/매수1)
+                        // System.out.println("📊 [NXT " + currentTime + "] " + dto.getStockCode() +
+                        //         " | 매도1: " + dto.getAskPrice1() + "(" + dto.getAskQty1() + ")" +
+                        //         " | 매수1: " + dto.getBidPrice1() + "(" + dto.getBidQty1() + ")");
 
                         // 호가 데이터 브로드캐스트 (기존과 동일한 DTO 사용)
                         StockRelaySocket.broadcastBidsAndAsks(dto);

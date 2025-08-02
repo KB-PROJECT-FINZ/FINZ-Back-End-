@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface JournalFeedbackService {
     void saveFeedback(FeedbackSaveDto dto);
-    List<JournalFeedback> getAllFeedbacks();
+    List<JournalFeedback> getAllFeedbacks(int userId);
+
 }

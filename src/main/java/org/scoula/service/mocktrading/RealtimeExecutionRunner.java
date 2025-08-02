@@ -17,17 +17,8 @@ public class RealtimeExecutionRunner implements ApplicationListener<ContextRefre
             alreadyStarted = true;
             System.out.println("🚀 Spring Context 초기화 완료 - WebSocket 클라이언트들 시작");
 
-            try {
-                // 시간대별 호가 서비스 시작 (KRX/NXT 자동 전환)
-                BidsAndAsksManager.startBidsAndAsksService();
-
-                // 체결 데이터는 필요시 주석 해제
-                // RealtimeExecutionClient.startWebSocket();
-
-            } catch (Exception e) {
-                System.err.println("❌ WebSocket 실행 실패: " + e.getMessage());
-                e.printStackTrace();
-            }
+            // WebSocket 자동 시작 로직 제거됨 - 이제 /api/chart/trading 엔드포인트를 통해 수동으로 시작
+            System.out.println("💡 실시간 데이터는 /api/chart/trading?stockCode=종목코드 호출로 시작됩니다.");
         }
     }
 }

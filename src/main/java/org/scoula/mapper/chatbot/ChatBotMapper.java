@@ -2,9 +2,7 @@ package org.scoula.mapper.chatbot;
 
 import org.apache.ibatis.annotations.Param;
 import org.mapstruct.Mapper;
-import org.scoula.domain.chatbot.dto.ChatErrorDto;
-import org.scoula.domain.chatbot.dto.ChatMessageDto;
-import org.scoula.domain.chatbot.dto.ChatSessionDto;
+import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.IntentType;
 
 import java.util.List;
@@ -29,5 +27,13 @@ public interface ChatBotMapper {
     // 에러 저장
     void insertChatError(ChatErrorDto errorDto);
 
+    // 종목 분석 내용 저장
+    void insertAnalysis(ChatAnalysisDto dto);
+    
+    // 종목 추천 내용 저장
+    void insertRecommendation(ChatRecommendationDto dto);
+
+    // 세션 남아있나 확인
+    Integer getActiveSessionIdByUserId(@Param("userId") Integer userId);
 
 }
