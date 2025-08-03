@@ -10,7 +10,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fb2604dc-c262-40c2-bbff-a0208a1c661d" name="변경" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/controller/learning/LearningContentController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/domain/learning/dto/ContentDto.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/mapper/LearningContentMapper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/scoula/service/learning/LearningContentService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/org/scoula/mapper/learning/LearningContentMapper.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/mybatis-config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/mybatis-config.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,6 +51,7 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
       </list>
     </option>
@@ -242,7 +249,7 @@
       <workItem from="1753337077689" duration="6506000" />
       <workItem from="1753354776070" duration="24533000" />
       <workItem from="1754006417523" duration="16354000" />
-      <workItem from="1754201055128" duration="217000" />
+      <workItem from="1754201055128" duration="7417000" />
     </task>
     <task id="LOCAL-00001" summary="learning 콘텐츠 추가 및 퀴즈 기능 구현">
       <option name="closed" value="true" />

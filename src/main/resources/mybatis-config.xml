@@ -17,7 +17,7 @@
         <mapper resource="org/scoula/mapper/mocktrading/HoldingMapper.xml"/>
         <mapper resource="org/scoula/mapper/mocktrading/TranscationMapper.xml"/>
         <mapper resource="org/scoula/mapper/trading/TradingMapper.xml"/>
-
+        <mapper resource="org/scoula/mapper/learning/LearningContentMapper.xml"/>
     </mappers>
 
 </configuration>
