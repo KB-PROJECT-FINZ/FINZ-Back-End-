@@ -202,6 +202,13 @@ public class ChatBotServiceImpl implements ChatBotService {
                 case PORTFOLIO_ANALYZE:
                     // 1. 거래 요약 정보 조회
                     stats = tradingService.getBehaviorStats(userId);
+                    if (stats == null) {
+                        return ChatResponseDto.builder()
+                                .content("📊 분석할 모의투자 내역이 없습니다.")
+                                .intentType(intentType)
+                                .sessionId(sessionId)
+                                .build();
+                    }
 
                     // 2. 거래 요약 정보 기반 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);

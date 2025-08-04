@@ -1,6 +1,7 @@
 package org.scoula.service.trading;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.chatbot.dto.BehaviorStatsDto;
 import org.scoula.domain.trading.dto.TransactionDTO;
 import org.scoula.mapper.TradingMapper;
@@ -10,10 +11,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-
+@Log4j2
 @Service
 @RequiredArgsConstructor
-public abstract class TradingServiceImpl implements TradingService {
+public class TradingServiceImpl implements TradingService {
 
     private final TradingMapper tradingMapper;
 
@@ -26,7 +27,9 @@ public abstract class TradingServiceImpl implements TradingService {
     public BehaviorStatsDto summarizeUserBehavior(int userId) {
         List<TransactionDTO> transactions = tradingMapper.getUserTransactions(userId);
 
-        if (transactions.isEmpty()) {
+        if (transactions == null || transactions.isEmpty()) {
+            log.warn("거래내역 없음: userId = {}", userId);
+
             return BehaviorStatsDto.builder()
                     .transactionCount(0)
                     .analysisPeriod(0)
@@ -58,6 +61,16 @@ public abstract class TradingServiceImpl implements TradingService {
                 .endDate(last.getExecutedAt().substring(0, 10))
                 .totalReturn(returnSum)
                 .build();
+    }
+
+    @Override
+    public BehaviorStatsDto getBehaviorStats(Integer userId) {
+        return null;
+    }
+
+    @Override
+    public List<Long> getTransactionIdsByUser(Integer userId) {
+        return List.of();
     }
 }
 

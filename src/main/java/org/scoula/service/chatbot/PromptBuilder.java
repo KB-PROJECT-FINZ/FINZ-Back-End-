@@ -85,7 +85,7 @@ public class PromptBuilder {
     // 모의투자 성과 분석
     public String buildForPortfolioAnalysis(BehaviorStatsDto stats) {
         return """
-        아래는 사용자 ID %d의 최근 모의투자 내역 통계입니다.
+        아래는 모의투자 내역 통계입니다.
 
         - 분석 대상 거래 수: %d건
         - 분석 기간: %s ~ %s (%d일)
