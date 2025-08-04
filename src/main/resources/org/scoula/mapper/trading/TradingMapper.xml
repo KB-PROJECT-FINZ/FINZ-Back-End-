@@ -10,7 +10,8 @@
             t.stock_name as stockName,
             t.quantity,
             t.total_amount as totalAmount,
-            t.transaction_type as transactionType
+            t.transaction_type as transactionType,
+            t.executed_at
         FROM transactions t
                  JOIN user_accounts ua ON t.account_id = ua.account_id
         WHERE ua.user_id = #{userId}

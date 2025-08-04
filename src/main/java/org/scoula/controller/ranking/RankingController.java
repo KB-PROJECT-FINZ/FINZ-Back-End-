@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,6 +66,22 @@ public class RankingController {
     }
     @GetMapping("/weekly/grouped")
     public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking() {
-        return rankingService.getGroupedWeeklyRanking();
+        Map<String, String> codeToKor = Map.of(
+                "CONSERVATIVE", "보수형",
+                "BALANCED", "균형형",
+                "AGGRESSIVE", "공격형",
+                "SPECIAL", "특수형"
+        );
+
+        Map<String, List<RankingByTraitGroupDto>> raw = rankingService.getGroupedWeeklyRanking();
+
+        // 그룹 코드(key)를 한글 성향명으로 변환
+        Map<String, List<RankingByTraitGroupDto>> mapped = new HashMap<>();
+        raw.forEach((code, list) -> {
+            String kor = codeToKor.getOrDefault(code, "기타");
+            mapped.put(kor, list);
+        });
+
+        return mapped;
     }
 }

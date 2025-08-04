@@ -41,5 +41,6 @@ public interface LearningMapper {
     int updateTotalEarnedCredit(@Param("userId") int userId, @Param("creditAmount") int creditAmount);
     int getTotalEarnedCredit(int userId);
     int getUserReadCount(@Param("userId") int userId);
+    boolean existsQuizByContentId(int contentId);
 }
 

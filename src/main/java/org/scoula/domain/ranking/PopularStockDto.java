@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @Data
-
 public class PopularStockDto {
     private String stockCode;        // 종목 코드
     private String stockName;        // 종목명
