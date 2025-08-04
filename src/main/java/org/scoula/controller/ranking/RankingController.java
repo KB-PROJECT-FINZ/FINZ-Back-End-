@@ -55,33 +55,14 @@ public class RankingController {
     }
 
     @GetMapping("/weekly")
-    public List<RankingByTraitGroupDto> getWeeklyRanking() {
-        try {
-            return rankingService.getWeeklyRanking();
-        } catch (Exception e) {
-            System.out.println("🔥 /weekly 오류: " + e.getMessage());
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "주간 랭킹 조회 실패");
-        }
+    public List<RankingByTraitGroupDto> getWeeklyRanking(@RequestParam(required = false) String baseDate) {
+        System.out.println("/weekly 호출 baseDate = " + baseDate);
+        return rankingService.getWeeklyRanking(baseDate);
     }
+
     @GetMapping("/weekly/grouped")
-    public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking() {
-        Map<String, String> codeToKor = Map.of(
-                "CONSERVATIVE", "보수형",
-                "BALANCED", "균형형",
-                "AGGRESSIVE", "공격형",
-                "SPECIAL", "특수형"
-        );
-
-        Map<String, List<RankingByTraitGroupDto>> raw = rankingService.getGroupedWeeklyRanking();
-
-        // 그룹 코드(key)를 한글 성향명으로 변환
-        Map<String, List<RankingByTraitGroupDto>> mapped = new HashMap<>();
-        raw.forEach((code, list) -> {
-            String kor = codeToKor.getOrDefault(code, "기타");
-            mapped.put(kor, list);
-        });
-
-        return mapped;
+    public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking(@RequestParam(required = false) String baseDate) {
+        System.out.println("/weekly/grouped 호출 baseDate = " + baseDate);
+        return rankingService.getGroupedWeeklyRanking(baseDate);
     }
 }

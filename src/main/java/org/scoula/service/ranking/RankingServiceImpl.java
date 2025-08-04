@@ -18,16 +18,16 @@ public class RankingServiceImpl implements RankingService {
 
     private final RankingMapper rankingMapper;
 
-    private String getThisWeekMondayDate() {
+    private String getLastWeekMondayDate() {
         LocalDate today = LocalDate.now();
-        // 이번 주 월요일 계산
-        LocalDate monday = today.with(DayOfWeek.MONDAY);
-        return monday.toString(); // 'YYYY-MM-DD' 형식
+        LocalDate lastMonday = today.with(DayOfWeek.MONDAY).minusWeeks(1);
+        return lastMonday.toString(); // 'YYYY-MM-DD' 형태 문자열 반환
     }
+
     @Override
     public MyRankingDto getMyRanking(Long userId, String baseDate) {
         if (baseDate == null || baseDate.isBlank()) {
-            baseDate = getThisWeekMondayDate();
+            baseDate = getLastWeekMondayDate();
         }
         return rankingMapper.selectMyRanking(userId, baseDate);
     }
@@ -35,52 +35,67 @@ public class RankingServiceImpl implements RankingService {
     @Override
     public List<PopularStockDto> getTop5Stocks(String baseDate) {
         if (baseDate == null || baseDate.isBlank()) {
-            baseDate = getThisWeekMondayDate();
+            baseDate = getLastWeekMondayDate();
         }
         return rankingMapper.selectPopularStocks(baseDate);
     }
 
     @Override
-    public List<RankingByTraitGroupDto> getWeeklyRanking() {
-        String baseDate = getThisWeekMondayDate();
+    public List<RankingByTraitGroupDto> getWeeklyRanking(String baseDate) {
+        if (baseDate == null || baseDate.isBlank()) {
+            baseDate = getLastWeekMondayDate();
+        }
         return rankingMapper.selectTopRankingWithTraitGroup(baseDate);
     }
-//    @Override
-//    public List<RankingByTraitGroupDto> getWeeklyRanking() {
-//        String baseDate = getThisWeekMondayDate();
-//        List<MyRankingDto> top100 = rankingMapper.selectTopRanking(baseDate);
-//        return top100.stream()
-//                .map(dto -> {
-//                    RankingByTraitGroupDto newDto = new RankingByTraitGroupDto();
-//                    newDto.setUserId(dto.getUserId());
-//                    newDto.setTraitGroup("UNKNOWN");
-//                    newDto.setGainRate(dto.getGainRate());
-//                    newDto.setRanking(dto.getRanking());
-//                    return newDto;
-//                })
-//                .collect(Collectors.toList());
-//    }
 
     @Override
-    public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking() {
-        String baseDate = getThisWeekMondayDate();
-        List<String> groups = List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "SPECIAL");
-
-        Map<String, List<RankingByTraitGroupDto>> result = new HashMap<>();
-        for (String group : groups) {
-            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, baseDate);
-            // 한글 성향명 변환 (옵션)
-            String korGroup = switch (group) {
-                case "CONSERVATIVE" -> "보수형";
-                case "BALANCED" -> "균형형";
-                case "AGGRESSIVE" -> "공격형";
-                case "SPECIAL" -> "특수형";
-                default -> "기타";
-            };
-            // DTO 필드 변환
-            list.forEach(dto -> dto.setTraitGroup(korGroup));
-            result.put(group, list);
+    public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking(String baseDate) {
+        System.out.println("!!getGroupedWeeklyRanking called with baseDate=" + baseDate);
+        if (baseDate == null || baseDate.isBlank()) {
+            baseDate = getLastWeekMondayDate();
         }
+        System.out.println("Effective baseDate=" + baseDate);
+
+        List<String> groups = List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "ANALYTICAL", "EMOTIONAL");
+        Map<String, List<RankingByTraitGroupDto>> result = new LinkedHashMap<>();
+
+        Map<String, String> traitMap = Map.ofEntries(
+                Map.entry("CAG", "보수형"),
+                Map.entry("CSD", "보수형"),
+                Map.entry("IND", "보수형"),
+                Map.entry("VAL", "보수형"),
+                Map.entry("BGT", "균형형"),
+                Map.entry("BSS", "균형형"),
+                Map.entry("AID", "균형형"),
+                Map.entry("AGR", "공격형"),
+                Map.entry("DTA", "공격형"),
+                Map.entry("EXP", "공격형"),
+                Map.entry("THE", "공격형"),
+                Map.entry("INF", "특수형"),
+                Map.entry("SYS", "특수형"),
+                Map.entry("TEC", "특수형"),
+                Map.entry("SOC", "특수형")
+        );
+
+        for (String group : groups) {
+            System.out.println("Processing group: " + group);
+            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, baseDate);
+
+            System.out.println("Fetched " + list.size() + " records for group: " + group);
+
+            for (RankingByTraitGroupDto dto : list) {
+                System.out.println("originalTrait: " + dto.getOriginalTrait());
+                String original = dto.getOriginalTrait();
+                String traitKr = traitMap.getOrDefault(original, "기타");
+                dto.setTraitGroup(traitKr);
+            }
+
+            for (RankingByTraitGroupDto dto : list) {
+                String key = dto.getTraitGroup();
+                result.computeIfAbsent(key, k -> new ArrayList<>()).add(dto);
+            }
+        }
+        System.out.println("Returning grouped ranking result");
         return result;
     }
 }
