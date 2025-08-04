@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -153,81 +154,33 @@ public class ChatBotServiceImpl implements ChatBotService {
             switch (intentType) {
 
                 case RECOMMEND_PROFILE:
-                    // 1. 유저 성향 요약
+                    // 1. 사용자 투자 성향 요약 및 위험 성향 조회
                     String summary = userProfileService.buildProfileSummaryByUserId(userId);
                     String riskType = userProfileService.getRiskTypeByUserId(userId);
-                    log.info("[GPT] 사용자 성향 summary: {}", summary);
-                    log.info("[GPT] 사용자 riskType: {}", riskType);
 
+                    // 2. 거래량 기준 상위 종목 조회 (중복 제거 포함)
+                    List<RecommendationStock> topVolumeStocks = getTopVolumeStocks(10);
 
-                    // 2. 종목 리스트 가져오기 (bingCisCode 참고! : -0은 거래량)
-                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(10, "0");
-                    log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
+                    // 3. 종목 상세 정보 조회 (가격, 지표 등)
+                    List<RecommendationStock> detailedStocks = getDetailedStocks(topVolumeStocks);
 
-                    // 3. 코드/이름 리스트로 분리
-                    List<RecommendationStock> recStocks = rawStocks.stream()
-                            .map(ProfileStockMapper::fromMap)
-                            .collect(Collectors.collectingAndThen(
-                                    Collectors.toMap(
-                                            RecommendationStock::getCode,
-                                            s -> s,
-                                            (s1, s2) -> s1 // 중복되는 문제 해결
-                                    ),
-                                    map -> new ArrayList<>(map.values())
-                            ));
+                    // 4. 사용자 성향(riskType)에 따라 종목 필터링 (조건 미충족 시 fallback 3개)
+                    List<RecommendationStock> filteredStocks = filterStocksByRiskType(riskType, detailedStocks);
 
-                    List<String> tickers = recStocks.stream().map(RecommendationStock::getCode).toList();
-                    List<String> names = recStocks.stream().map(RecommendationStock::getName).toList();
+                    // 5. 필터링된 종목들을 분석용 DTO로 변환하고 DB 저장
+                    List<ChatAnalysisDto> analysisList = convertToAnalysisDtos(filteredStocks);
+                    saveAnalysisListToDb(analysisList);
 
-                    // 4. 상세 정보 조회 (PriceApi 이용)
-                    List<RecommendationStock> enrichedStocks = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
-                    log.info("[GPT] 상세 정보 조회 완료 → {}개", enrichedStocks.size());
+                    // 6. GPT에 분석 프롬프트 요청 후 JSON 응답 수신
+                    String analysisResponse = callAnalysisPrompt(analysisList);
 
-                    // 3. 성향 기반 필터링
-                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, enrichedStocks);
-
-                    boolean usedFallback = false;
-                    if (filteredStocks.isEmpty()) {
-                        log.warn("⚠️ [{}] 조건 통과 종목 없음 → fallback 사용", riskType);
-                        filteredStocks = enrichedStocks.subList(0, Math.min(3, enrichedStocks.size()));
-                        usedFallback = true;
-                    }
-                    log.info("[GPT] 성향 기반 필터링 완료 → {}개", filteredStocks.size());
-
-                    // 6. DTO 매핑
-                    List<ChatAnalysisDto> analysisList = filteredStocks.stream()
-                            .map(ChatAnalysisMapper::toDto)
-                            .toList();
-
-
-                    // 7. DB 저장 (추천된 종목의 데이터를 저장)
-                    for (ChatAnalysisDto dto : analysisList) {
-                        chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
-                    }
-
-                    // 8-1. GPT 분석 요청 프롬프트에 요청 ( 응답 json)
-                    String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
-                    String analysisResponse = openAiClient.getChatCompletion(analysisPrompt);
-
-
-                    log.info("[GPT] GPT 분석 요청 프롬프트 구성 완료");
-                    log.info("📝 [GPT] 분석용 프롬프트 내용 ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓\n{}\n↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑", analysisPrompt);
-
-
-                    // 8-3. 추천 사유 파싱 → DB 저장
-
+                    // 7. GPT 응답(JSON)을 파싱하여 추천 사유 리스트 생성 및 DB 저장
                     List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType);
-                    for (ChatRecommendationDto dto : recResults) {
-                        chatBotMapper.insertRecommendation(dto);
-                    }
-                    log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recResults.size());
+                    saveRecommendationsToDb(recResults);
 
-
-                    // 8. GPT 프롬프트 구성
+                    // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
                     prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
                     log.info("[GPT] 최종 GPT 요청 시작");
-
-
                     break;
 
 
@@ -387,7 +340,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 """.formatted(userMessage);
     }
 
-    // 파싱 메서드
+    // GPT 응답(JSON)에서 추천 사유 파싱하여 DTO 리스트로 변환
     public List<ChatRecommendationDto> parseRecommendationText(
             String gptResponse, List<ChatAnalysisDto> stockList, Integer userId, String riskType) {
 
@@ -428,4 +381,75 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         return result;
     }
+
+    // 랭킹API -> 거개 상위 종목 조회
+    private List<RecommendationStock> getTopVolumeStocks(int count) throws IOException {
+        List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(count, "0");
+        log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
+        return rawStocks.stream()
+                .map(ProfileStockMapper::fromMap)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                RecommendationStock::getCode,
+                                s -> s,
+                                (s1, s2) -> s1 // 중복 제거
+                        ),
+                        map -> new ArrayList<>(map.values())
+                ));
+    }
+
+    // 상세 조회API -> 상세 조회
+    private List<RecommendationStock> getDetailedStocks(List<RecommendationStock> stocks) {
+        List<String> tickers = stocks.stream().map(RecommendationStock::getCode).toList();
+        List<String> names = stocks.stream().map(RecommendationStock::getName).toList();
+        List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+        log.info("[GPT] 상세 정보 조회 완료 → {}개", detailed.size());
+        return detailed;
+    }
+
+    // 리스크 타입 필터링
+    private List<RecommendationStock> filterStocksByRiskType(String riskType, List<RecommendationStock> stocks) {
+        List<RecommendationStock> filtered = ProfileStockFilter.filterByRiskType(riskType, stocks);
+        if (filtered.isEmpty()) {
+            log.warn("⚠️ [{}] 조건 통과 종목 없음 → fallback 사용", riskType);
+            return stocks.subList(0, Math.min(3, stocks.size()));
+        }
+        log.info("[GPT] 성향 기반 필터링 완료 → {}개", filtered.size());
+        return filtered;
+    }
+
+    // 분석내용을 저장하기위한 Dto로 변환
+    private List<ChatAnalysisDto> convertToAnalysisDtos(List<RecommendationStock> stocks) {
+        return stocks.stream()
+                .map(ChatAnalysisMapper::toDto)
+                .toList();
+    }
+
+    // 실제 저장 분석기록 dto -> db
+    private void saveAnalysisListToDb(List<ChatAnalysisDto> analysisList) {
+        for (ChatAnalysisDto dto : analysisList) {
+            chatBotMapper.insertAnalysis(dto);
+        }
+    }
+
+    // 분석 내용 프로롬프트 호출
+    private String callAnalysisPrompt(List<ChatAnalysisDto> analysisList) {
+        String prompt = promptBuilder.buildForStockInsights(analysisList);
+        log.info("[GPT] 분석용 프롬프트 내용 ↓↓↓↓↓↓↓\n{}", prompt);
+        return openAiClient.getChatCompletion(prompt);
+    }
+
+    // 추천사유 분석GPT 응답으로 부터 파싱 -> 저장
+    private void saveRecommendationsToDb(List<ChatRecommendationDto> recommendations) {
+        for (ChatRecommendationDto dto : recommendations) {
+            chatBotMapper.insertRecommendation(dto);
+        }
+        log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recommendations.size());
+    }
+
+
+
+
+
 }
+
