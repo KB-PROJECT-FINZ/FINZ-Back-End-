@@ -85,7 +85,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                             IntentType.UNKNOWN
                     );
                 }
-
                 request.setIntentType(intentType);
             }
 
@@ -153,7 +152,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             String prompt;
             switch (intentType) {
 
-                case RECOMMEND_PROFILE:
+                case RECOMMEND_PROFILE: {
                     // 1. 사용자 투자 성향 요약 및 위험 성향 조회
                     String summary = userProfileService.buildProfileSummaryByUserId(userId);
                     String riskType = userProfileService.getRiskTypeByUserId(userId);
@@ -182,13 +181,23 @@ public class ChatBotServiceImpl implements ChatBotService {
                     prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
                     log.info("[GPT] 최종 GPT 요청 시작");
                     break;
+                }
 
-
-                case RECOMMEND_KEYWORD:
+                case RECOMMEND_KEYWORD: {
+                    // 1. 사용자 키워드 입력받기 (추출)
+                    String keyword = extractKeywordFromMessage(userMessage);
+                    log.info(keyword);
+                    // 2. 거래량 기준 상위 종목 조회(n개)
+                    List<RecommendationStock> topVolumeStocks = getTopVolumeStocks(10);
+                    // 3. 조회된 종목들을 stocks테이블의 업종명과 비교(필터링)
+                    // 4. 필터링된 종목들을 상세조회에 조회
+                    // 5. 분석용 DTO로 변환 , DTO 변환, DB저장
+                    // 6. 분석 프롬프트 요청 JSON 응답 수신
+                    // 7. 응답을 파싱하여 추천 사유 리스트 생성 및 저장
+                    // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
                     prompt = promptBuilder.buildForKeyword(userMessage);
-                    log.info("[GPT] 키워드 기반 추천 프롬프트 생성 완료");
                     break;
-
+                }
                 case STOCK_ANALYZE:
                     prompt = promptBuilder.buildForAnalysis(userMessage);
                     log.info("[GPT] 종목 분석 프롬프트 생성 완료");
@@ -282,8 +291,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .intentType(IntentType.ERROR)
                 .build();
     }
-
-
     // 메세지 저장 함수
     private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
         ChatMessageDto message = ChatMessageDto.builder()
@@ -339,6 +346,88 @@ public class ChatBotServiceImpl implements ChatBotService {
                 User: %s
                 """.formatted(userMessage);
     }
+
+    // 키워드 분류 프롬프트
+    private String buildKeywordExtractionPrompt(String userMessage) {
+        return """
+        You are a keyword extractor for a financial stock chatbot.
+
+        From the following user message, extract the **main keyword** related to industry, sector, theme, or stock category.
+
+        Your answer must be in the following JSON format only:
+        {
+          "keyword": "<extracted keyword>"
+        }
+
+        The keyword must be:
+        - 1 to 3 words max
+        - Relevant to finance, investment, or stocks
+        - No explanation or comment
+
+        Examples:
+
+        User: "AI 관련된 주식 추천해줘"
+        Answer: { "keyword": "AI" }
+
+        User: "2차전지 관련 종목 뭐 있어?"
+        Answer: { "keyword": "2차전지" }
+
+        User: "친환경 에너지 테마주 알려줘"
+        Answer: { "keyword": "친환경 에너지" }
+
+        User: "전기차 관련 주식 뭐가 괜찮아?"
+        Answer: { "keyword": "전기차" }
+
+        User: "반도체 관련주 추천해줘"
+        Answer: { "keyword": "반도체" }
+
+        User: "우주항공 테마는 어때?"
+        Answer: { "keyword": "우주항공" }
+
+        User: "리츠 관련 종목 알려줘"
+        Answer: { "keyword": "리츠" }
+
+        User: "원자력 발전 관련된 기업 있어?"
+        Answer: { "keyword": "원자력 발전" }
+
+        User: "게임주 중에 좋은 거 있어?"
+        Answer: { "keyword": "게임" }
+
+        User: "은행주 어떻게 생각해?"
+        Answer: { "keyword": "은행" }
+
+        User: "해외 여행 수혜주 추천해줘"
+        Answer: { "keyword": "여행" }
+
+        User: "건설업종 중 괜찮은 회사 있어?"
+        Answer: { "keyword": "건설" }
+
+        User: "%s"
+        """.formatted(userMessage);
+    }
+
+
+    // 키워드 추출 함수
+    private String extractKeywordFromMessage(String userMessage) {
+        try {
+            String prompt = buildKeywordExtractionPrompt(userMessage);
+            String gptResponse = openAiClient.getChatCompletion(prompt);
+
+            JsonNode root = objectMapper.readTree(gptResponse);
+            if (root.has("keyword")) {
+                String keyword = root.get("keyword").asText();
+                log.info("GPT로부터 추출된 키워드: {}", keyword);
+                return keyword;
+            }
+        } catch (Exception e) {
+            log.warn("⚠ 키워드 추출 실패, 사용자 원문 사용 → {}", e.getMessage());
+        }
+        return userMessage; // 실패하면 원문 그대로 사용
+    }
+
+
+
+
 
     // GPT 응답(JSON)에서 추천 사유 파싱하여 DTO 리스트로 변환
     public List<ChatRecommendationDto> parseRecommendationText(
