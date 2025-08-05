@@ -9,4 +9,6 @@ import java.util.List;
 @Mapper
 public interface LearningContentMapper {
     List<ContentDto> selectByRiskType(@Param("riskType") String riskType);
+    List<ContentDto> findAllContents();
+    ContentDto findById(@Param("id") Long id);
 }

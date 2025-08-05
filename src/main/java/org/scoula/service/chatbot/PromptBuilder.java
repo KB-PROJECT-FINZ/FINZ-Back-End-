@@ -78,7 +78,7 @@ public class PromptBuilder {
                     .findFirst().orElse(null);
             if (stat == null) continue;
 
-            sb.append("📌 종목명: ").append(stat.getName()).append(" (").append(stat.getTicker()).append(")\n");
+            sb.append(" 종목명: ").append(stat.getName()).append(" (").append(stat.getTicker()).append(")\n");
             sb.append("• GPT 분석: ").append(rec.getReason()).append("\n");
             sb.append("• 현재가: ").append(stat.getPrice()).append("원\n");
             sb.append("• PER: ").append(stat.getPer()).append(", ROE: ").append(stat.getRoe()).append(", EPS: ").append(stat.getEps()).append("\n");
@@ -91,42 +91,54 @@ public class PromptBuilder {
         return sb.toString();
     }
 
-
-
-
-
     // 투자 성향 기반 추천 구버전
-    public String buildForProfile(Integer userId, String summary, List<ChatAnalysisDto> analysisList) {
-        // analysisList 내용을 바탕으로 프롬프트 생성
-        StringBuilder sb = new StringBuilder();
-        sb.append("당신의 투자 성향은 다음과 같습니다: ").append(summary).append("\n\n");
-        sb.append("다음은 성향에 맞는 추천 종목입니다:\n");
-
-        for (ChatAnalysisDto stock : analysisList) {
-            sb.append("- ").append(stock.getName())
-                    .append(": 현재가 ").append(stock.getPrice())
-                    .append(", PER ").append(stock.getPer())
-                    .append(", 거래량 ").append(stock.getVolume())
-                    .append("\n");
-        }
-
-        return sb.toString();
-    }
-
+//    public String buildForProfile(Integer userId, String summary, List<ChatAnalysisDto> analysisList) {
+//        // analysisList 내용을 바탕으로 프롬프트 생성
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("당신의 투자 성향은 다음과 같습니다: ").append(summary).append("\n\n");
+//        sb.append("다음은 성향에 맞는 추천 종목입니다:\n");
+//
+//        for (ChatAnalysisDto stock : analysisList) {
+//            sb.append("- ").append(stock.getName())
+//                    .append(": 현재가 ").append(stock.getPrice())
+//                    .append(", PER ").append(stock.getPer())
+//                    .append(", 거래량 ").append(stock.getVolume())
+//                    .append("\n");
+//        }
+//
+//        return sb.toString();
+//    }
 
 
     // 키워드 기반 추천
     public String buildForKeyword(String keyword) {
         return """
-        다음 키워드와 관련된 종목을 추천해주세요:
+        The user requested stock recommendations related to the keyword: "%s".
 
-        - 키워드: %s
-        - 기준: 테마 관련성, 산업 동향, 시장 전망
-        - 국내외 주식 각각 2개씩 추천
-        - 각 종목은 [종목명, 간단한 추천 사유] 형태
+        Conditions:
+        - Only recommend Korean stocks that are **clearly and directly related to the industry or sector of "%s"**.
+        - **Do NOT include any stocks unrelated to "%s"** such as those in unrelated themes like biotech, secondary batteries, hydrogen vehicles, media/content, gaming, entertainment, or unlisted subsidiaries.
+        - Give priority to companies that are part of the supply chain, key component manufacturers, or direct beneficiaries of "%s".
+        - Exclude duplicate listings, preferred shares, and stocks that are only indirectly related.
+        - Do not recommend stocks just because they are popular or trending — relevance must be based on industrial and factual relationships.
+        - All recommended stocks must be listed on the Korean stock market (KOSPI, KOSDAQ, or KONEX).
+        - **Stock names must be written in Korean only. Do NOT use English stock names.**
+        - You **must recommend at least 5 different stocks** that strictly meet the above criteria.
 
-        """.formatted(keyword);
+        Output format (strictly JSON array only):
+        [
+          { "name": "종목명 (in Korean)", "code": "Ticker Code" },
+          { "name": "종목명2 (in Korean)", "code": "Ticker Code" },
+          ...
+        ]
+
+        Your output must be the raw JSON array only. No explanation, no comments, no formatting outside the JSON.
+        """.formatted(keyword, keyword, keyword, keyword);
     }
+
+
+
+
 
     // 종목 분석 요청
     public String buildForAnalysis(String stockName) {
@@ -160,6 +172,122 @@ public class PromptBuilder {
         - 개선점 및 피드백 요약
 
         """.formatted(userId);
+    }
+
+    // 용어 설명
+    public String buildForTermExplain(String term) {
+        return """
+    아래 투자 용어에 대해 설명해주세요:
+
+    - 용어: %s
+    - 포함할 항목:
+      1. 정의 및 개념
+      2. 투자 시 의미와 활용 예시
+      3. 초보자 관점에서의 해석
+    - 가능한 한 이해하기 쉽게 설명
+
+    """.formatted(term);
+    }
+
+    // 키워드 분류 프롬프트
+    public String buildKeywordExtractionPrompt(String userMessage) {
+        return """
+    You are a keyword extractor for a financial stock chatbot.
+
+    From the following user message, extract the **main keyword** related to industry, sector, theme, or stock category.
+
+    Your answer must be in the following JSON format only:
+    {
+      "keyword": "<extracted keyword>"
+    }
+
+    The keyword must be:
+    - 1 to 3 words max
+    - Relevant to finance, investment, or stocks
+    - No explanation or comment
+
+    Examples:
+
+    User: "AI 관련된 주식 추천해줘"
+    Answer: { "keyword": "AI" }
+
+    User: "2차전지 관련 종목 뭐 있어?"
+    Answer: { "keyword": "2차전지" }
+
+    User: "친환경 에너지 테마주 알려줘"
+    Answer: { "keyword": "친환경 에너지" }
+
+    User: "전기차 관련 주식 뭐가 괜찮아?"
+    Answer: { "keyword": "전기차" }
+
+    User: "반도체 관련주 추천해줘"
+    Answer: { "keyword": "반도체" }
+
+    User: "우주항공 테마는 어때?"
+    Answer: { "keyword": "우주항공" }
+
+    User: "리츠 관련 종목 알려줘"
+    Answer: { "keyword": "리츠" }
+
+    User: "원자력 발전 관련된 기업 있어?"
+    Answer: { "keyword": "원자력 발전" }
+
+    User: "게임주 중에 좋은 거 있어?"
+    Answer: { "keyword": "게임" }
+
+    User: "은행주 어떻게 생각해?"
+    Answer: { "keyword": "은행" }
+
+    User: "해외 여행 수혜주 추천해줘"
+    Answer: { "keyword": "여행" }
+
+    User: "건설업종 중 괜찮은 회사 있어?"
+    Answer: { "keyword": "건설" }
+
+    User: "%s"
+    """.formatted(userMessage);
+    }
+
+    // 의도 분류 프롬프트
+    public String buildIntentClassificationPrompt(String userMessage) {
+        return """
+    You are an intent classifier for a financial chatbot.
+    
+    Classify the user's message into one of the following intent types **based on the meaning**:
+    
+    - MESSAGE: General conversation or small talk.
+    - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
+    - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
+    - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
+    - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
+    - SESSION_END: Wants to end the conversation.
+    - ERROR: Clear error or invalid message.
+    - UNKNOWN: Cannot determine intent.
+    
+    Just return the intent type only, no explanation.
+
+    Example 1:
+    User: "AI 관련된 주식 추천해줘"
+    Answer: RECOMMEND_KEYWORD
+
+    Example 2:
+    User: "내 투자 성향으로 추천해줘"
+    Answer: RECOMMEND_PROFILE
+
+    Example 3:
+    User: "내 성향에 맞는 주식 뭐야?"
+    Answer: RECOMMEND_PROFILE
+
+    Example 4:
+    User: "성향 기반으로 추천해줘"
+    Answer: RECOMMEND_PROFILE
+
+    Example 5:
+    User: "삼성전자 분석해줘"
+    Answer: STOCK_ANALYZE
+
+    User: %s
+    """.formatted(userMessage);
     }
 
     // 세션 종료
