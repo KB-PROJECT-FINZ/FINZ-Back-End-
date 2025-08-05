@@ -230,7 +230,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                     break;
 
                 case PORTFOLIO_ANALYZE:
-                    prompt = promptBuilder.buildForPortfolioAnalysis(userId);
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
                     // 1. 거래 요약 정보 조회
                     stats = tradingService.getBehaviorStats(userId);
@@ -302,7 +301,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
                     break;
             }
-            String content = openAiClient.getChatCompletion(prompt);
+            content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장

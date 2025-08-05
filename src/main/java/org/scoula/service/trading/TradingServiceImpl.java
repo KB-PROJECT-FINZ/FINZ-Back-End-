@@ -65,12 +65,11 @@ public class TradingServiceImpl implements TradingService {
 
     @Override
     public BehaviorStatsDto getBehaviorStats(Integer userId) {
-        return null;
+        return summarizeUserBehavior(userId); // 실제 거래 통계 생성 로직
     }
 
     @Override
     public List<Long> getTransactionIdsByUser(Integer userId) {
-        return List.of();
+        return tradingMapper.getTransactionIdsByUser(userId); // Mapper에 정의된 쿼리 연결
     }
 }
-

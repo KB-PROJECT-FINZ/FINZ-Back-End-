@@ -18,5 +18,11 @@
         ORDER BY t.executed_at DESC
             LIMIT 10
     </select>
-
+    <select id="getTransactionIdsByUser" resultType="long">
+        SELECT
+            t.transaction_id
+        FROM transactions t
+                 JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+    </select>
 </mapper>
