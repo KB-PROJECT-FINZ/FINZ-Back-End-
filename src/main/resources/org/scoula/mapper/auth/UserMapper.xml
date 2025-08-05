@@ -59,5 +59,9 @@
     WHERE risk_type=#{riskType}
 </select>
 
+    <select id="countByEmail" resultType="int">
+        SELECT COUNT(*) FROM user
+        WHERE email = #{email}
+    </select>
 
 </mapper>

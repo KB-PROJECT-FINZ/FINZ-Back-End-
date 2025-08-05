@@ -44,6 +44,9 @@ public class ProfileStockRecommender {
 
                 RecommendationStock stock = toRecommendationStock(name, ticker,response.getOutput());
 
+                log.info("📈 {} EPS: {}, BPS: {}, ROE: {}, PER: {}, PBR: {}",
+                        stock.getName(), stock.getEps(), stock.getBps(), stock.getRoe(), stock.getPer(), stock.getPbr());
+
                 stocks.add(stock);
                 log.info("✅ 상세 데이터 변환 완료 → {} ({})", name, ticker);
 

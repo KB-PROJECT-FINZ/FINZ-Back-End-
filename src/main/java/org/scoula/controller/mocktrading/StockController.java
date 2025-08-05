@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoula.api.mocktrading.PriceApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.RealtimeExecutionClient;
+import org.scoula.domain.mocktrading.MarketOrderRequestDto;
 import org.scoula.domain.mocktrading.OrderRequestDto;
 import org.scoula.util.mocktrading.ConfigManager;
 import org.scoula.service.mocktrading.StockIndustryUpdaterService;
@@ -20,6 +21,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -42,7 +47,61 @@ public class StockController {
         stockIndustryUpdaterService.updateAllStockIndustries();
         return ResponseEntity.ok("✅ 업종 정보 일괄 업데이트 완료");
     }
+    @GetMapping("/prices/{stockCodes}")
+    @ApiOperation(value = "다중 주식 가격 조회", notes = "여러 주식 종목코드를 콤마로 구분하여 한번에 실시간 가격 정보를 조회합니다")
+    @ApiParam(name = "stockCodes", value = "주식 종목코드들을 콤마로 구분 (예: 005930,000660,035420)", required = true, example = "005930,000660,035420")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공적으로 가격 정보들을 조회했습니다"),
+            @ApiResponse(code = 400, message = "잘못된 요청입니다 (종목코드 형식 오류)"),
+            @ApiResponse(code = 500, message = "서버 내부 오류가 발생했습니다")
+    })
+    public ResponseEntity<Map<String, Object>> getMultipleStockPrices(@PathVariable("stockCodes") String stockCodes) {
+        try {
+            // 콤마로 구분된 종목 코드들을 배열로 분리
+            String[] codes = stockCodes.split(",");
 
+            // 결과를 담을 Map 생성
+            Map<String, Object> result = new HashMap<>();
+            Map<String, JsonNode> prices = new HashMap<>();
+            List<String> errors = new ArrayList<>();
+
+            // 각 종목코드에 대해 가격 조회
+            for (String code : codes) {
+                String trimmedCode = code.trim();
+
+                // 종목코드 유효성 검사 (6자리 숫자)
+                if (!trimmedCode.matches("\\d{6}")) {
+                    errors.add(trimmedCode + ": 올바르지 않은 종목코드 형식");
+                    continue;
+                }
+
+                try {
+                    JsonNode priceData = PriceApi.getPriceData(trimmedCode);
+                    prices.put(trimmedCode, priceData);
+                } catch (IOException e) {
+                    errors.add(trimmedCode + ": 가격 조회 실패 - " + e.getMessage());
+                }
+            }
+
+            result.put("success", true);
+            result.put("data", prices);
+            result.put("requestedCount", codes.length);
+            result.put("successCount", prices.size());
+            result.put("errorCount", errors.size());
+
+            if (!errors.isEmpty()) {
+                result.put("errors", errors);
+            }
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "서버 내부 오류: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
     @GetMapping("/price/{stockCode}")
     @ApiOperation(value = "주식 가격 조회", notes = "주식 종목코드를 이용하여 실시간 가격 정보를 조회합니다")
     @ApiParam(name = "code", value = "주식 종목코드 (예: 005930)", required = true, example = "005930")
@@ -584,6 +643,238 @@ public class StockController {
             log.error("일괄 주문 취소/복구 오류: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("주문 일괄 취소 또는 복구 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/order/market")
+    @ApiOperation(value = "시장가 주문 체결", notes = "시장가로 즉시 체결되는 거래를 등록하고 잔고 및 보유 주식 정보를 반영합니다")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "시장가 주문이 성공적으로 체결되었습니다"),
+            @ApiResponse(code = 400, message = "잘못된 요청 데이터입니다"),
+            @ApiResponse(code = 401, message = "로그인이 필요합니다"),
+            @ApiResponse(code = 500, message = "서버 내부 오류가 발생했습니다")
+    })
+    public ResponseEntity<String> orderMarket(
+            @ApiParam(value = "시장가 주문 요청 정보", required = true)
+            @RequestBody MarketOrderRequestDto marketOrderRequest,
+            @ApiIgnore javax.servlet.http.HttpSession session
+    ) {
+        // 1. 세션에서 로그인 사용자 정보 조회
+        org.scoula.domain.Auth.vo.UserVo loginUser = (org.scoula.domain.Auth.vo.UserVo) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        Integer userId = loginUser.getId();
+
+        // 2. userId로 accountId 조회
+        Integer accountId = null;
+        try (Connection conn = DriverManager.getConnection(
+                ConfigManager.get("jdbc.url"),
+                ConfigManager.get("jdbc.username"),
+                ConfigManager.get("jdbc.password"))) {
+
+            String findAccountSql = "SELECT account_id FROM user_accounts WHERE user_id = ?";
+            try (PreparedStatement findStmt = conn.prepareStatement(findAccountSql)) {
+                findStmt.setInt(1, userId);
+                try (ResultSet rs = findStmt.executeQuery()) {
+                    if (rs.next()) {
+                        accountId = rs.getInt("account_id");
+                    }
+                }
+            }
+
+            if (accountId == null || accountId <= 0) {
+                return ResponseEntity.badRequest().body("계좌 정보가 존재하지 않습니다.");
+            }
+
+            // 3. 입력값 검증
+            if (marketOrderRequest.getQuantity() <= 0 ||
+                    marketOrderRequest.getMarketPrice() <= 0 ||
+                    marketOrderRequest.getStockCode() == null ||
+                    marketOrderRequest.getStockName() == null ||
+                    marketOrderRequest.getTransactionType() == null) {
+                return ResponseEntity.badRequest().body("잘못된 주문 정보입니다.");
+            }
+
+            long totalAmount = (long) marketOrderRequest.getQuantity() * marketOrderRequest.getMarketPrice();
+
+            // 4. 매수 주문일 경우 잔고 차감
+            if ("BUY".equalsIgnoreCase(marketOrderRequest.getTransactionType())) {
+                // 4-1. 현재 잔고 조회
+                String balanceSql = "SELECT current_balance FROM user_accounts WHERE account_id = ?";
+                try (PreparedStatement balanceStmt = conn.prepareStatement(balanceSql)) {
+                    balanceStmt.setInt(1, accountId);
+                    try (ResultSet rs = balanceStmt.executeQuery()) {
+                        if (rs.next()) {
+                            long balance = rs.getLong("current_balance");
+                            if (balance < totalAmount) {
+                                return ResponseEntity.badRequest().body("잔고가 부족합니다.");
+                            }
+                        } else {
+                            return ResponseEntity.badRequest().body("계좌 정보를 찾을 수 없습니다.");
+                        }
+                    }
+                }
+
+                // 4-2. 잔고 차감
+                String updateBalanceSql = "UPDATE user_accounts SET current_balance = current_balance - ? WHERE account_id = ?";
+                try (PreparedStatement updateStmt = conn.prepareStatement(updateBalanceSql)) {
+                    updateStmt.setLong(1, totalAmount);
+                    updateStmt.setInt(2, accountId);
+                    int updateResult = updateStmt.executeUpdate();
+                    if (updateResult != 1) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body("잔고 차감에 실패했습니다.");
+                    }
+                }
+
+                // 5. 거래 정보 DB 저장
+                String sql = "INSERT INTO transactions " +
+                        "(account_id, stock_code, stock_name, transaction_type, order_type, quantity, price, total_amount, executed_at, order_created_at, order_price) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)";
+                try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                    pstmt.setInt(1, accountId);
+                    pstmt.setString(2, marketOrderRequest.getStockCode());
+                    pstmt.setString(3, marketOrderRequest.getStockName());
+                    pstmt.setString(4, marketOrderRequest.getTransactionType());
+                    pstmt.setString(5, "MARKET"); // order_type 고정
+                    pstmt.setInt(6, marketOrderRequest.getQuantity());
+                    pstmt.setInt(7, marketOrderRequest.getMarketPrice());
+                    pstmt.setLong(8, totalAmount);
+                    pstmt.setNull(9, java.sql.Types.INTEGER); // order_price는 null
+                    pstmt.executeUpdate();
+                }
+
+                // 6. holdings 테이블 업데이트
+                String selectHoldingSql = "SELECT holding_id, quantity, average_price, total_cost FROM holdings WHERE account_id = ? AND stock_code = ?";
+                try (PreparedStatement selectStmt = conn.prepareStatement(selectHoldingSql)) {
+                    selectStmt.setInt(1, accountId);
+                    selectStmt.setString(2, marketOrderRequest.getStockCode());
+                    try (ResultSet rs = selectStmt.executeQuery()) {
+                        if (rs.next()) {
+                            // 기존 보유 종목: 수량, 총금액, 평균단가 업데이트
+                            int holdingId = rs.getInt("holding_id");
+                            int prevQuantity = rs.getInt("quantity");
+                            long prevTotalCost = rs.getLong("total_cost");
+                            int prevAveragePrice = rs.getInt("average_price");
+
+                            int newQuantity = prevQuantity + marketOrderRequest.getQuantity();
+                            long newTotalCost = prevTotalCost + totalAmount;
+                            int newAveragePrice = (int) (newTotalCost / newQuantity);
+
+                            String updateHoldingSql = "UPDATE holdings SET quantity = ?, average_price = ?, total_cost = ?, updated_at = CURRENT_TIMESTAMP, current_price = NULL, current_value = NULL, profit_loss = NULL, profit_rate = NULL WHERE holding_id = ?";
+                            try (PreparedStatement updateStmt = conn.prepareStatement(updateHoldingSql)) {
+                                updateStmt.setInt(1, newQuantity);
+                                updateStmt.setInt(2, newAveragePrice);
+                                updateStmt.setLong(3, newTotalCost);
+                                updateStmt.setInt(4, holdingId);
+                                updateStmt.executeUpdate();
+                            }
+                        } else {
+                            // 최초 구매: 새 row 추가
+                            String insertHoldingSql = "INSERT INTO holdings " +
+                                    "(account_id, stock_code, stock_name, quantity, average_price, total_cost, created_at, updated_at, current_price, current_value, profit_loss, profit_rate) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, NULL, NULL)";
+                            try (PreparedStatement insertStmt = conn.prepareStatement(insertHoldingSql)) {
+                                insertStmt.setInt(1, accountId);
+                                insertStmt.setString(2, marketOrderRequest.getStockCode());
+                                insertStmt.setString(3, marketOrderRequest.getStockName());
+                                insertStmt.setInt(4, marketOrderRequest.getQuantity());
+                                insertStmt.setInt(5, marketOrderRequest.getMarketPrice());
+                                insertStmt.setLong(6, totalAmount);
+                                insertStmt.executeUpdate();
+                            }
+                        }
+                    }
+                }
+
+                return ResponseEntity.ok("시장가 매수 주문이 성공적으로 체결되었습니다.");
+            } else if ("SELL".equalsIgnoreCase(marketOrderRequest.getTransactionType())) {
+                // 1. holdings에서 보유 주식 수량 조회
+                String selectHoldingSql = "SELECT holding_id, quantity, average_price, total_cost FROM holdings WHERE account_id = ? AND stock_code = ?";
+                try (PreparedStatement selectStmt = conn.prepareStatement(selectHoldingSql)) {
+                    selectStmt.setInt(1, accountId);
+                    selectStmt.setString(2, marketOrderRequest.getStockCode());
+                    try (ResultSet rs = selectStmt.executeQuery()) {
+                        if (rs.next()) {
+                            int holdingId = rs.getInt("holding_id");
+                            int prevQuantity = rs.getInt("quantity");
+                            long prevTotalCost = rs.getLong("total_cost");
+                            int prevAveragePrice = rs.getInt("average_price");
+
+                            // 2. 판매 수량이 보유 수량보다 많으면 에러
+                            if (prevQuantity < marketOrderRequest.getQuantity()) {
+                                return ResponseEntity.badRequest().body("보유 주식 수량이 부족합니다.");
+                            }
+
+                            int newQuantity = prevQuantity - marketOrderRequest.getQuantity();
+                            long sellAmount = totalAmount;
+                            long newTotalCost = prevTotalCost - (long) prevAveragePrice * marketOrderRequest.getQuantity();
+
+                            // 3. 잔고 증가
+                            String updateBalanceSql = "UPDATE user_accounts SET current_balance = current_balance + ? WHERE account_id = ?";
+                            try (PreparedStatement updateStmt = conn.prepareStatement(updateBalanceSql)) {
+                                updateStmt.setLong(1, sellAmount);
+                                updateStmt.setInt(2, accountId);
+                                int updateResult = updateStmt.executeUpdate();
+                                if (updateResult != 1) {
+                                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                            .body("잔고 복구에 실패했습니다.");
+                                }
+                            }
+
+                            // 4. 거래 정보 DB 저장
+                            String sql = "INSERT INTO transactions " +
+                                    "(account_id, stock_code, stock_name, transaction_type, order_type, quantity, price, total_amount, executed_at, order_created_at, order_price) " +
+                                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ?)";
+                            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                                pstmt.setInt(1, accountId);
+                                pstmt.setString(2, marketOrderRequest.getStockCode());
+                                pstmt.setString(3, marketOrderRequest.getStockName());
+                                pstmt.setString(4, marketOrderRequest.getTransactionType());
+                                pstmt.setString(5, "MARKET");
+                                pstmt.setInt(6, marketOrderRequest.getQuantity());
+                                pstmt.setInt(7, marketOrderRequest.getMarketPrice());
+                                pstmt.setLong(8, sellAmount);
+                                pstmt.setNull(9, java.sql.Types.INTEGER);
+                                pstmt.executeUpdate();
+                            }
+
+                            if (newQuantity > 0) {
+                                // 5. holdings 업데이트 (수량/총금액/평균단가)
+                                String updateHoldingSql = "UPDATE holdings SET quantity = ?, total_cost = ?, updated_at = CURRENT_TIMESTAMP, current_price = NULL, current_value = NULL, profit_loss = NULL, profit_rate = NULL WHERE holding_id = ?";
+                                try (PreparedStatement updateStmt = conn.prepareStatement(updateHoldingSql)) {
+                                    updateStmt.setInt(1, newQuantity);
+                                    updateStmt.setLong(2, newTotalCost);
+                                    updateStmt.setInt(3, holdingId);
+                                    updateStmt.executeUpdate();
+                                }
+                            } else {
+                                // 6. holdings에서 row 삭제 (수량 0)
+                                String deleteHoldingSql = "DELETE FROM holdings WHERE holding_id = ?";
+                                try (PreparedStatement deleteStmt = conn.prepareStatement(deleteHoldingSql)) {
+                                    deleteStmt.setInt(1, holdingId);
+                                    deleteStmt.executeUpdate();
+                                }
+                            }
+
+                            return ResponseEntity.ok("시장가 매도 주문이 성공적으로 체결되었습니다.");
+                        } else {
+                            return ResponseEntity.badRequest().body("해당 종목의 보유 주식이 없습니다.");
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("시장가 매도 주문 처리 오류: {}", e.getMessage());
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body("시장가 매도 주문 처리 중 오류가 발생했습니다: " + e.getMessage());
+                }
+            } else {
+                return ResponseEntity.badRequest().body("알 수 없는 거래 유형입니다.");
+            }
+        } catch (Exception e) {
+            log.error("시장가 주문 저장/잔고/보유주식 반영 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("시장가 주문 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 }

@@ -76,7 +76,6 @@ public class MarketController {
             response.put("description", getTabDescription(blngClsCode));
             response.put("timestamp", System.currentTimeMillis());
 
-            log.info("✅ 거래량 순위 조회 성공 - {} 건 반환", ranking.size());
             return ResponseEntity.ok(ranking); // 기존 호환성을 위해 직접 리스트 반환
 
         } catch (Exception e) {

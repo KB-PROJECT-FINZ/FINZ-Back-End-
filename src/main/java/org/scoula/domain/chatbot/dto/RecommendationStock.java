@@ -4,10 +4,12 @@ package org.scoula.domain.chatbot.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class RecommendationStock {
     private String code;
@@ -20,6 +22,7 @@ public class RecommendationStock {
     private Double open;
     private Double high;
     private Double low;
+        private Double bps;
     private Double volume;
     private Double avgPrice;
     private Double foreignRate;
