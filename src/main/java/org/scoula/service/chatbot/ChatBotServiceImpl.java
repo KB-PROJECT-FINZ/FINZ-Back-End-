@@ -150,7 +150,10 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
 
-            String prompt;
+            String prompt = null;
+            String content = null;
+            String analysisResponse = null;
+
             switch (intentType) {
 
                 case RECOMMEND_PROFILE: {
@@ -172,7 +175,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     saveAnalysisListToDb(analysisList);
 
                     // 6. GPT에 분석 프롬프트 요청 후 JSON 응답 수신
-                    String analysisResponse = callAnalysisPrompt(analysisList);
+                    analysisResponse = callAnalysisPrompt(analysisList);
 
                     // 7. GPT 응답(JSON)을 파싱하여 추천 사유 리스트 생성 및 DB 저장
                     List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType,intentType);
@@ -181,6 +184,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
                     prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
                     log.info("[GPT] 최종 GPT 요청 시작");
+
+
                     break;
                 }
 
@@ -206,7 +211,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("📊 분석용 DTO 변환 완료, 개수: {}, 리스트: {}", analysisList.size(), analysisList);
 
                     // 6. 분석 결과 기반으로 요약 프롬프트 구성 → 기존 응답 프롬프트 재사용
-                    String analysisResponse = callAnalysisPrompt(analysisList);
+                    analysisResponse = callAnalysisPrompt(analysisList);
                     log.info("🧠 GPT 분석 응답: {}", analysisResponse);
 
                     // 7. 최종 요약 결과를 사용자에게 전달
@@ -251,16 +256,18 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
                     break;
             }
-            String content = openAiClient.getChatCompletion(prompt);
+            content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
-            ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
-            log.info("[MESSAGE] GPT 응답 저장 완료 (messageId: {})", gptMessage.getId());
+
+            String finalResponse = (analysisResponse != null) ? analysisResponse : openAiClient.getChatCompletion(prompt);
+            ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
+
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
-                    .content(content.trim())
+                    .content(finalResponse.trim())
                     .intentType(intentType)
                     .messageId(gptMessage.getId())
                     .sessionId(sessionId)
