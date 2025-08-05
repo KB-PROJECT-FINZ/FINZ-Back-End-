@@ -233,7 +233,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
                     // 1. 거래 요약 정보 조회
                     stats = tradingService.getBehaviorStats(userId);
-                    if (stats == null || stats.getTransactionCount() == 0) {
+                    if (stats == null || stats.getTransactionCount() == 0 || stats.getStartDate() == null) {
                         return ChatResponseDto.builder()
                                 .content("📊 분석할 모의투자 내역이 없습니다.")
                                 .intentType(intentType)
@@ -265,8 +265,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .suggestionText(suggestion)
                             .transactionCount(stats.getTransactionCount())
                             .analysisPeriod(stats.getAnalysisPeriod())
-                            .startDate(stats.getStartDate().toString())
-                            .endDate(stats.getEndDate().toString())
+                            .startDate(stats.getStartDate() != null ? stats.getStartDate().toString() : null)
+                            .endDate(stats.getEndDate() != null ? stats.getEndDate().toString() : null)
                             .build();
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
