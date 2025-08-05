@@ -1,5 +1,6 @@
 package org.scoula.service.chatbot;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -67,7 +68,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
 
             if (intentType == null || intentType == IntentType.MESSAGE) {
-                String prompt = buildIntentClassificationPrompt(userMessage);
+                String prompt = promptBuilder.buildIntentClassificationPrompt(userMessage);
 
                 // GPT 호출
                 String intentText = openAiClient.getChatCompletion(prompt);
@@ -174,7 +175,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     String analysisResponse = callAnalysisPrompt(analysisList);
 
                     // 7. GPT 응답(JSON)을 파싱하여 추천 사유 리스트 생성 및 DB 저장
-                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType);
+                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType,intentType);
                     saveRecommendationsToDb(recResults);
 
                     // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
@@ -184,19 +185,38 @@ public class ChatBotServiceImpl implements ChatBotService {
                 }
 
                 case RECOMMEND_KEYWORD: {
+                    String riskType = userProfileService.getRiskTypeByUserId(userId);
                     // 1. 사용자 키워드 입력받기 (추출)
                     String keyword = extractKeywordFromMessage(userMessage);
                     log.info(keyword);
-                    // 2. 거래량 기준 상위 종목 조회(n개)
-                    List<RecommendationStock> topVolumeStocks = getTopVolumeStocks(10);
-                    // 3. 조회된 종목들을 stocks테이블의 업종명과 비교(필터링)
-                    // 4. 필터링된 종목들을 상세조회에 조회
-                    // 5. 분석용 DTO로 변환 , DTO 변환, DB저장
-                    // 6. 분석 프롬프트 요청 JSON 응답 수신
-                    // 7. 응답을 파싱하여 추천 사유 리스트 생성 및 저장
-                    // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
-                    prompt = promptBuilder.buildForKeyword(userMessage);
+                    // 2. 키워드를 기반으로 GPT에게 관련 종목 20개 추천 요청 (종목명만 추출되게 프롬프트로 강제)
+                    List<RecommendationStock> stockList = getStocksByKeyword(keyword);
+                    log.info("📥 GPT 추천 종목 수: {}", stockList.size());
+
+                    // 3. 종목 리스트에 대해 상세조회 API 호출 → 기존 상세조회 로직 재사용
+                    List<RecommendationStock> detailed = getDetailedStocks(stockList);
+
+                    // 4. 상세 데이터 기반으로 필터링 (투자 지표 등 기준으로 추림)
+                    List<RecommendationStock> filtered = filterByDefault(detailed);
+                    log.info("🧪 필터링된 종목 수: {}, 리스트: {}", filtered.size(), filtered);
+
+                    // 5. 필터링된 종목들을 GPT 분석 프롬프트에 넣어서 분석 요청 → 기존 분석 프롬프트 재사용
+                    List<ChatAnalysisDto> analysisList = convertToAnalysisDtos(filtered);
+                    saveAnalysisListToDb(analysisList);
+                    log.info("📊 분석용 DTO 변환 완료, 개수: {}, 리스트: {}", analysisList.size(), analysisList);
+
+                    // 6. 분석 결과 기반으로 요약 프롬프트 구성 → 기존 응답 프롬프트 재사용
+                    String analysisResponse = callAnalysisPrompt(analysisList);
+                    log.info("🧠 GPT 분석 응답: {}", analysisResponse);
+
+                    // 7. 최종 요약 결과를 사용자에게 전달
+                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType,intentType);
+                    saveRecommendationsToDb(recResults);
+                    log.info("📝 최종 추천 사유 개수: {}, 내용: {}", recResults.size(), recResults);
+
+                    prompt = promptBuilder.buildSummaryFromRecommendations(keyword, recResults, analysisList);
                     break;
+
                 }
                 case STOCK_ANALYZE:
                     prompt = promptBuilder.buildForAnalysis(userMessage);
@@ -305,112 +325,27 @@ public class ChatBotServiceImpl implements ChatBotService {
         return message; // ID 포함된 message 반환
     }
 
-    // 의도 분류 프롬프트
-    private String buildIntentClassificationPrompt(String userMessage) {
-        return """
-                You are an intent classifier for a financial chatbot.
-                
-                Classify the user's message into one of the following intent types **based on the meaning**:
-                
-                - MESSAGE: General conversation or small talk.
-                - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
-                - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
-                - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
-                - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
-                - SESSION_END: Wants to end the conversation.
-                - ERROR: Clear error or invalid message.
-                - UNKNOWN: Cannot determine intent.
-                
-                Just return the intent type only, no explanation.
-                
-                            Example 1:
-                            User: "AI 관련된 주식 추천해줘"
-                            Answer: RECOMMEND_KEYWORD
-                
-                            Example 2:
-                            User: "내 투자 성향으로 추천해줘"
-                            Answer: RECOMMEND_PROFILE
-                
-                            Example 3:
-                            User: "내 성향에 맞는 주식 뭐야?"
-                            Answer: RECOMMEND_PROFILE
-                
-                            Example 4:
-                            User: "성향 기반으로 추천해줘"
-                            Answer: RECOMMEND_PROFILE
-                
-                            Example 5:
-                            User: "삼성전자 분석해줘"
-                            Answer: STOCK_ANALYZE
-                
-                User: %s
-                """.formatted(userMessage);
-    }
+    public List<RecommendationStock> getStocksByKeyword(String keyword) {
+        try {
+            String prompt = promptBuilder.buildForKeyword(keyword);
+            String response = openAiClient.getChatCompletion(prompt);
+            log.info("🧠실제GPT 요청 프롬프트 ↓↓↓↓↓\n{}", prompt);
 
-    // 키워드 분류 프롬프트
-    private String buildKeywordExtractionPrompt(String userMessage) {
-        return """
-        You are a keyword extractor for a financial stock chatbot.
+            log.info("🧠 GPT 종목 + 티커 응답: {}", response);
 
-        From the following user message, extract the **main keyword** related to industry, sector, theme, or stock category.
-
-        Your answer must be in the following JSON format only:
-        {
-          "keyword": "<extracted keyword>"
+            return objectMapper.readValue(response, new TypeReference<>() {
+            });
+        } catch (Exception e) {
+            log.warn("⚠ GPT 종목+티커 추천 실패: {}", e.getMessage());
+            return new ArrayList<>();
         }
-
-        The keyword must be:
-        - 1 to 3 words max
-        - Relevant to finance, investment, or stocks
-        - No explanation or comment
-
-        Examples:
-
-        User: "AI 관련된 주식 추천해줘"
-        Answer: { "keyword": "AI" }
-
-        User: "2차전지 관련 종목 뭐 있어?"
-        Answer: { "keyword": "2차전지" }
-
-        User: "친환경 에너지 테마주 알려줘"
-        Answer: { "keyword": "친환경 에너지" }
-
-        User: "전기차 관련 주식 뭐가 괜찮아?"
-        Answer: { "keyword": "전기차" }
-
-        User: "반도체 관련주 추천해줘"
-        Answer: { "keyword": "반도체" }
-
-        User: "우주항공 테마는 어때?"
-        Answer: { "keyword": "우주항공" }
-
-        User: "리츠 관련 종목 알려줘"
-        Answer: { "keyword": "리츠" }
-
-        User: "원자력 발전 관련된 기업 있어?"
-        Answer: { "keyword": "원자력 발전" }
-
-        User: "게임주 중에 좋은 거 있어?"
-        Answer: { "keyword": "게임" }
-
-        User: "은행주 어떻게 생각해?"
-        Answer: { "keyword": "은행" }
-
-        User: "해외 여행 수혜주 추천해줘"
-        Answer: { "keyword": "여행" }
-
-        User: "건설업종 중 괜찮은 회사 있어?"
-        Answer: { "keyword": "건설" }
-
-        User: "%s"
-        """.formatted(userMessage);
     }
 
 
     // 키워드 추출 함수
     private String extractKeywordFromMessage(String userMessage) {
         try {
-            String prompt = buildKeywordExtractionPrompt(userMessage);
+            String prompt = promptBuilder.buildKeywordExtractionPrompt(userMessage);
             String gptResponse = openAiClient.getChatCompletion(prompt);
 
             JsonNode root = objectMapper.readTree(gptResponse);
@@ -425,13 +360,9 @@ public class ChatBotServiceImpl implements ChatBotService {
         return userMessage; // 실패하면 원문 그대로 사용
     }
 
-
-
-
-
     // GPT 응답(JSON)에서 추천 사유 파싱하여 DTO 리스트로 변환
     public List<ChatRecommendationDto> parseRecommendationText(
-            String gptResponse, List<ChatAnalysisDto> stockList, Integer userId, String riskType) {
+            String gptResponse, List<ChatAnalysisDto> stockList, Integer userId, String riskType,IntentType intentType) {
 
         List<ChatRecommendationDto> result = new ArrayList<>();
 
@@ -453,7 +384,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 result.add(ChatRecommendationDto.builder()
                         .userId(userId)
                         .ticker(ticker)
-                        .recommendType("RECOMMEND_PROFILE")
+                        .recommendType(intentType.name())
                         .reason(reason)
                         .riskLevel(null)
                         .expectedReturn(null)
@@ -536,9 +467,21 @@ public class ChatBotServiceImpl implements ChatBotService {
         log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recommendations.size());
     }
 
+    public static List<RecommendationStock> filterByDefault(List<RecommendationStock> stocks) {
+        return stocks.stream()
+                .filter(stock ->
+                        isValid(stock.getPer()) &&
+                                isValid(stock.getPbr()) &&
+                                isValid(stock.getRoe()) &&
+                                isValid(stock.getVolume()) &&
+                                isValid(stock.getPrice())
+                )
+                .collect(Collectors.toList());
+    }
 
-
-
+    private static boolean isValid(Double value) {
+        return value != null && value > 0;
+    }
 
 }
 
