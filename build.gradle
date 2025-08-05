@@ -126,7 +126,14 @@ dependencies {
     // 메일
     implementation 'org.springframework:spring-context-support:5.3.37'
     implementation 'com.sun.mail:javax.mail:1.6.2'
-    }
+    //redis
+//    implementation 'io.lettuce.core:lettuce-core:6.3.1.RELEASE'
+    // Redis
+    implementation 'org.springframework.data:spring-data-redis:2.6.4'
+
+    // Lettuce 클라이언트 (기본 클라이언트로 추천)
+    implementation 'io.lettuce:lettuce-core:6.1.8.RELEASE'
+}
 
 
 war {
