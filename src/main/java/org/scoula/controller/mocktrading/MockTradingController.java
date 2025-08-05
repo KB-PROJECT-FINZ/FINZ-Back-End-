@@ -1,7 +1,9 @@
 package org.scoula.controller.mocktrading;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.scoula.api.mocktrading.ConditionSearchApi;
 import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.domain.mocktrading.vo.UserAccount;
 import org.scoula.domain.mocktrading.vo.Holding;
@@ -9,10 +11,12 @@ import org.scoula.domain.mocktrading.vo.Transaction;
 import org.scoula.service.mocktrading.UserAccountService;
 import org.scoula.service.mocktrading.HoldingService;
 import org.scoula.service.mocktrading.TransactionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -304,6 +308,51 @@ public class MockTradingController {
             log.error("주문 처리 실패", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "주문 처리 중 오류가 발생했습니다."));
+        }
+    }
+    /**
+     * 종목조건검색 목록조회 테스트 - GET 방식
+     *
+     * @param userId 사용자 ID (선택, 기본값: "tls12251")
+     * @param seq 시퀀스 번호 (선택, 기본값: "0")
+     * @return 조회 결과
+     */
+    @GetMapping("/condition-search")
+    public ResponseEntity<Map<String, Object>> getConditionSearchResult(
+            @RequestParam(value = "user_id", defaultValue = "tls12251") String userId,
+            @RequestParam(value = "seq", defaultValue = "0") String seq) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // API 호출
+            JsonNode result = ConditionSearchApi.getConditionSearchResult(userId, seq);
+
+            response.put("success", true);
+            response.put("message", "종목조건검색 목록조회 성공");
+            response.put("data", result);
+            response.put("userId", userId);
+            response.put("seq", seq);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            response.put("success", false);
+            response.put("message", "API 호출 실패: " + e.getMessage());
+            response.put("userId", userId);
+            response.put("seq", seq);
+            response.put("error", e.getClass().getSimpleName());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "예상치 못한 오류: " + e.getMessage());
+            response.put("userId", userId);
+            response.put("seq", seq);
+            response.put("error", e.getClass().getSimpleName());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 }
