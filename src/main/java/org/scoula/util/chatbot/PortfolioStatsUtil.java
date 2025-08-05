@@ -15,43 +15,51 @@ public class PortfolioStatsUtil {
             return BehaviorStatsDto.builder()
                     .transactionCount(0)
                     .analysisPeriod(0)
-                    .startDate("N/A")
-                    .endDate("N/A")
+                    .startDate(null)
+                    .endDate(null)
                     .totalReturn(0.0)
+                    .buyCount(0)
+                    .sellCount(0)
+                    .avgHoldDays(0.0)
                     .build();
         }
 
-        LocalDate start = transactions.stream()
-                .map(t -> LocalDate.parse(t.getExecutedAt().substring(0, 10)))
-                .min(Comparator.naturalOrder())
-                .orElse(LocalDate.now());
+        List<LocalDate> dates = transactions.stream()
+                .map(t -> t.getExecutedAt().toLocalDate())
+                .sorted()
+                .toList();
 
-        LocalDate end = transactions.stream()
-                .map(t -> LocalDate.parse(t.getExecutedAt().substring(0, 10)))
-                .max(Comparator.naturalOrder())
-                .orElse(LocalDate.now());
-
+        LocalDate start = dates.get(0);
+        LocalDate end = dates.get(dates.size() - 1);
         int analysisPeriod = (int) ChronoUnit.DAYS.between(start, end) + 1;
-        int transactionCount = transactions.size();
 
-        double totalBuy = transactions.stream()
-                .filter(t -> "BUY".equalsIgnoreCase(t.getTransactionType()))
-                .mapToDouble(t -> t.getPrice() * t.getQuantity())
-                .sum();
+        int buyCount = 0;
+        int sellCount = 0;
+        double buyTotal = 0.0;
+        double sellTotal = 0.0;
 
-        double totalSell = transactions.stream()
-                .filter(t -> "SELL".equalsIgnoreCase(t.getTransactionType()))
-                .mapToDouble(t -> t.getPrice() * t.getQuantity())
-                .sum();
+        for (TransactionDTO t : transactions) {
+            double amount = t.getPrice() * t.getQuantity();
+            if ("BUY".equalsIgnoreCase(t.getTransactionType())) {
+                buyTotal += amount;
+                buyCount++;
+            } else if ("SELL".equalsIgnoreCase(t.getTransactionType())) {
+                sellTotal += amount;
+                sellCount++;
+            }
+        }
 
-        double totalReturn = totalBuy == 0 ? 0.0 : ((totalSell - totalBuy) / totalBuy) * 100.0;
+        double totalReturn = buyTotal == 0 ? 0.0 : ((sellTotal - buyTotal) / buyTotal) * 100.0;
 
         return BehaviorStatsDto.builder()
-                .transactionCount(transactionCount)
+                .transactionCount(transactions.size())
                 .analysisPeriod(analysisPeriod)
-                .startDate(start.toString())
-                .endDate(end.toString())
-                .totalReturn(totalReturn)
+                .startDate(start)
+                .endDate(end)
+                .totalReturn(Math.round(totalReturn * 100.0) / 100.0)
+                .buyCount(buyCount)
+                .sellCount(sellCount)
+                .avgHoldDays(0.0) // 추후 구현 가능
                 .build();
     }
 }

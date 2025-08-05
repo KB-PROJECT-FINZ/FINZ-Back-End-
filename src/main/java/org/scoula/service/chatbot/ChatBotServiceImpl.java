@@ -265,8 +265,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .suggestionText(suggestion)
                             .transactionCount(stats.getTransactionCount())
                             .analysisPeriod(stats.getAnalysisPeriod())
-                            .startDate(stats.getStartDate())
-                            .endDate(stats.getEndDate())
+                            .startDate(stats.getStartDate().toString())
+                            .endDate(stats.getEndDate().toString())
                             .build();
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
