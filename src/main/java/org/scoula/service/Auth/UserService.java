@@ -17,4 +17,5 @@ public interface UserService {
     UserVo findByUsername(String username);
     String getRiskTypeByUserId(Integer userId);
     RiskTypeDto findRiskTypeByRiskType(String riskType);
+    boolean isEmailAvailable(String email);
 }

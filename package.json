@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "gradle": "^1.2.4"
+    "gradle": "^1.2.4",
+    "tree": "^0.1.3"
   }
 }

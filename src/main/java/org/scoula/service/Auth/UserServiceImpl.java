@@ -46,4 +46,9 @@ public class UserServiceImpl implements UserService {
     public RiskTypeDto findRiskTypeByRiskType(String riskType){
         return userMapper.findRiskTypeByRiskType(riskType);
     };
+
+    @Override
+    public boolean isEmailAvailable(String email) {
+        return userMapper.countByEmail(email) == 0;
+    }
 }
