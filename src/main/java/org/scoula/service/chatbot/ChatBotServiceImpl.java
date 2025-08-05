@@ -240,6 +240,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                                 .sessionId(sessionId)
                                 .build();
                     }
+                    log.info("[📊 Stats] 거래 요약 정보: {}", stats);
 
                     // 2. 거래 요약 정보 기반 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);
