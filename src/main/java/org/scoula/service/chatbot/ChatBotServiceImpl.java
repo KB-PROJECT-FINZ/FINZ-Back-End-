@@ -228,6 +228,10 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
                     break;
 
+                case TERM_EXPLAIN:
+                    prompt = promptBuilder.buildForTermExplain(userMessage);
+                    break;
+
                 case SESSION_END:
                     prompt = "대화를 종료합니다. 감사합니다.";
                     log.info("[GPT] 사용자 의도가 세션 종료");

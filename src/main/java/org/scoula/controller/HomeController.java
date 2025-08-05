@@ -19,20 +19,6 @@ public class HomeController {
         log.info("====================> HomeController / -> Vue.js");
         return "forward:/resources/index.html";
     }
-
-    /**
-     * Vue Router 경로들을 index.html로 포워딩
-     * Vue.js SPA 라우팅 지원
-     */
-    @RequestMapping(value = {
-            "/mock-trading",
-            "/mock-trading/**"
-    })
-    public String mockTrading(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        log.info("Vue Router: {} -> index.html", path);
-        return "forward:/resources/index.html";
-    }
     @GetMapping("/api-docs")
     public String apiDocs() {
         log.info("====================> Redirecting to Swagger UI");

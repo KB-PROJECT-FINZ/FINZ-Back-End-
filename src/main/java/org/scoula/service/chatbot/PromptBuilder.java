@@ -140,7 +140,7 @@ public class PromptBuilder {
 
 
 
-    // 종목 분석 요청(미구현)
+    // 종목 분석 요청
     public String buildForAnalysis(String stockName) {
         return """
         아래 종목에 대한 종합 분석을 해주세요:
@@ -158,7 +158,7 @@ public class PromptBuilder {
         """.formatted(stockName);
     }
 
-    // 모의투자 성과 분석(미구현)
+    // 모의투자 성과 분석
     public String buildForPortfolioAnalysis(Integer userId) {
         return """
         사용자 ID %d의 모의투자 내역을 기반으로 투자 성과를 분석해주세요.
@@ -172,6 +172,21 @@ public class PromptBuilder {
         - 개선점 및 피드백 요약
 
         """.formatted(userId);
+    }
+
+    // 용어 설명
+    public String buildForTermExplain(String term) {
+        return """
+    아래 투자 용어에 대해 설명해주세요:
+
+    - 용어: %s
+    - 포함할 항목:
+      1. 정의 및 개념
+      2. 투자 시 의미와 활용 예시
+      3. 초보자 관점에서의 해석
+    - 가능한 한 이해하기 쉽게 설명
+
+    """.formatted(term);
     }
 
     // 키워드 분류 프롬프트

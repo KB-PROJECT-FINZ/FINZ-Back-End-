@@ -20,6 +20,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -42,7 +46,61 @@ public class StockController {
         stockIndustryUpdaterService.updateAllStockIndustries();
         return ResponseEntity.ok("✅ 업종 정보 일괄 업데이트 완료");
     }
+    @GetMapping("/prices/{stockCodes}")
+    @ApiOperation(value = "다중 주식 가격 조회", notes = "여러 주식 종목코드를 콤마로 구분하여 한번에 실시간 가격 정보를 조회합니다")
+    @ApiParam(name = "stockCodes", value = "주식 종목코드들을 콤마로 구분 (예: 005930,000660,035420)", required = true, example = "005930,000660,035420")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공적으로 가격 정보들을 조회했습니다"),
+            @ApiResponse(code = 400, message = "잘못된 요청입니다 (종목코드 형식 오류)"),
+            @ApiResponse(code = 500, message = "서버 내부 오류가 발생했습니다")
+    })
+    public ResponseEntity<Map<String, Object>> getMultipleStockPrices(@PathVariable("stockCodes") String stockCodes) {
+        try {
+            // 콤마로 구분된 종목코드들을 배열로 분리
+            String[] codes = stockCodes.split(",");
 
+            // 결과를 담을 Map 생성
+            Map<String, Object> result = new HashMap<>();
+            Map<String, JsonNode> prices = new HashMap<>();
+            List<String> errors = new ArrayList<>();
+
+            // 각 종목코드에 대해 가격 조회
+            for (String code : codes) {
+                String trimmedCode = code.trim();
+
+                // 종목코드 유효성 검사 (6자리 숫자)
+                if (!trimmedCode.matches("\\d{6}")) {
+                    errors.add(trimmedCode + ": 올바르지 않은 종목코드 형식");
+                    continue;
+                }
+
+                try {
+                    JsonNode priceData = PriceApi.getPriceData(trimmedCode);
+                    prices.put(trimmedCode, priceData);
+                } catch (IOException e) {
+                    errors.add(trimmedCode + ": 가격 조회 실패 - " + e.getMessage());
+                }
+            }
+
+            result.put("success", true);
+            result.put("data", prices);
+            result.put("requestedCount", codes.length);
+            result.put("successCount", prices.size());
+            result.put("errorCount", errors.size());
+
+            if (!errors.isEmpty()) {
+                result.put("errors", errors);
+            }
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "서버 내부 오류: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
     @GetMapping("/price/{stockCode}")
     @ApiOperation(value = "주식 가격 조회", notes = "주식 종목코드를 이용하여 실시간 가격 정보를 조회합니다")
     @ApiParam(name = "code", value = "주식 종목코드 (예: 005930)", required = true, example = "005930")
