@@ -1,6 +1,7 @@
 package org.scoula.service.redis;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.redis.dto.ChartResponse;
@@ -49,6 +50,43 @@ public class ChartRedisService {
             );
 
             redisTemplate.opsForHash().put(key, time, trimmed);
+        }
+    }
+
+    public void saveKiwoomMinuteToRedis(String stockCode, JsonNode kiwoomResponse) {
+        String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE); // "yyyyMMdd"
+        String redisKey = "price:" + stockCode + ":" + today;
+
+        JsonNode chartArray = kiwoomResponse.get("stk_min_pole_chart_qry");
+        if (chartArray == null || !chartArray.isArray()) return;
+
+        for (JsonNode candle : chartArray) {
+            String cntrTm = candle.path("cntr_tm").asText(); // "20250805133700"
+            if (cntrTm.length() != 14) continue;
+            String datePart = cntrTm.substring(0, 8);
+            if (!datePart.equals(today)) continue;
+
+            String hour = cntrTm.substring(8, 10);
+            String minute = cntrTm.substring(10, 12);
+            String timeKey = hour + ":" + minute; // "13:37"
+
+            // 부호 제거
+            String stck_prpr = candle.path("cur_prc").asText().replaceAll("^[+-]", "");
+            String stck_oprc = candle.path("open_pric").asText().replaceAll("^[+-]", "");
+            String stck_hgpr = candle.path("high_pric").asText().replaceAll("^[+-]", "");
+            String stck_lwpr = candle.path("low_pric").asText().replaceAll("^[+-]", "");
+
+            String cntg_vol = candle.path("trde_qty").asText();
+
+            Map<String, String> value = Map.of(
+                    "stck_prpr", stck_prpr,
+                    "stck_oprc", stck_oprc,
+                    "stck_hgpr", stck_hgpr,
+                    "stck_lwpr", stck_lwpr,
+                    "cntg_vol", cntg_vol
+            );
+
+            redisTemplate.opsForHash().put(redisKey, timeKey, value);
         }
     }
 }

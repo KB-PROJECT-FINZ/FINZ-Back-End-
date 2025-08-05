@@ -10,13 +10,21 @@ import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.scoula.api.mocktrading.MinuteChartApi;
-import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
+import org.scoula.api.mocktrading.MinuteChartApiKiwoom;
 import org.scoula.api.mocktrading.VariousChartApi;
 import org.scoula.domain.redis.dto.ChartResponse;
 import org.scoula.service.redis.ChartRedisService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -27,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChartController {
 
     private final MinuteChartApi minuteChartApi;
+    private final MinuteChartApiKiwoom minuteChartApiKiwoom;
     private final VariousChartApi variousChartApi;
     private final ChartRedisService chartRedisService;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -164,5 +173,138 @@ public class ChartController {
             log.error("Error processing various chart request for stock: {}", stockCode, e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/minute/{stockCode}/kiwoom")
+    @ApiOperation(
+            value = "키움 분봉 차트 데이터 조회",
+            notes = "키움증권 API에서 제공하는 원본 분봉 차트 데이터를 그대로 반환합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공"),
+            @ApiResponse(code = 204, message = "데이터 없음"),
+            @ApiResponse(code = 400, message = "잘못된 요청"),
+            @ApiResponse(code = 500, message = "서버 에러")
+    })
+    public ResponseEntity<JsonNode> getMinuteChartKiwoom(
+            @ApiParam(value = "종목코드 (예: 005930)", required = true)
+            @PathVariable String stockCode
+    ) {
+        log.info("Received Kiwoom minute chart request - Stock: {}", stockCode);
+
+        try {
+            // 입력값 검증
+            if (stockCode == null || stockCode.trim().isEmpty()) {
+                log.warn("Invalid stock code provided: {}", stockCode);
+                return ResponseEntity.badRequest().build();
+            }
+
+            JsonNode result = minuteChartApiKiwoom.getKiwoomMinuteChartData(stockCode);
+
+            if (result == null) {
+                log.info("No chart data found for stock: {}", stockCode);
+                return ResponseEntity.noContent().build();
+            }
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Error processing Kiwoom minute chart request for stock: {}", stockCode, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/minute/{stockCode}/kiwoom/redis")
+    @ApiOperation(
+            value = "키움 분봉 차트 데이터 redis 저장",
+            notes = "키움증권 API에서 제공하는 원본 분봉 차트 데이터를 반환해 가공을 거친 후 redis에 저장합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공"),
+            @ApiResponse(code = 204, message = "데이터 없음"),
+            @ApiResponse(code = 400, message = "잘못된 요청"),
+            @ApiResponse(code = 500, message = "서버 에러")
+    })
+    public ResponseEntity<JsonNode> getMinuteChartKiwoomRedis(
+            @ApiParam(value = "종목코드 (예: 005930)", required = true)
+            @PathVariable String stockCode
+    ) {
+        log.info("Received Kiwoom minute chart request - Stock: {}", stockCode);
+
+        try {
+            // 입력값 검증
+            if (stockCode == null || stockCode.trim().isEmpty()) {
+                log.warn("Invalid stock code provided: {}", stockCode);
+                return ResponseEntity.badRequest().build();
+            }
+
+            JsonNode result = minuteChartApiKiwoom.getKiwoomMinuteChartData(stockCode);
+
+            if (result == null) {
+                log.info("No chart data found for stock: {}", stockCode);
+                return ResponseEntity.noContent().build();
+            }
+
+            // Redis 저장 추가
+            chartRedisService.saveKiwoomMinuteToRedis(stockCode, result);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("Error processing Kiwoom minute chart request for stock: {}", stockCode, e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @PostMapping("/minute/kiwoom/batch")
+    @ApiOperation(
+            value = "여러 종목의 키움 분봉 차트 데이터 동시 조회 및 Redis 저장",
+            notes = "종목코드 배열을 받아 각 종목의 키움 분봉 차트 데이터를 동시에 조회하고 Redis에 저장합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공"),
+            @ApiResponse(code = 400, message = "잘못된 요청"),
+            @ApiResponse(code = 500, message = "서버 에러")
+    })
+    public ResponseEntity<List<JsonNode>> getKiwoomMinuteChartBatch(
+            @ApiParam(value = "종목코드 배열", required = true)
+            @RequestBody List<String> stockCodes
+    ) {
+        log.info("Received Kiwoom minute chart batch request - Stocks: {}", stockCodes);
+
+        if (stockCodes == null || stockCodes.isEmpty()) {
+            log.warn("No stock codes provided");
+            return ResponseEntity.badRequest().build();
+        }
+
+        // 동시성 처리를 위한 ExecutorService
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(stockCodes.size(), 10));
+        List<CompletableFuture<JsonNode>> futures = new ArrayList<>();
+
+        for (String stockCode : stockCodes) {
+            CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    JsonNode result = minuteChartApiKiwoom.getKiwoomMinuteChartData(stockCode);
+                    if (result != null) {
+                        chartRedisService.saveKiwoomMinuteToRedis(stockCode, result);
+                    }
+                    return result;
+                } catch (Exception e) {
+                    log.error("Error processing Kiwoom minute chart for stock: {}", stockCode, e);
+                    return null;
+                }
+            }, executor);
+            futures.add(future);
+        }
+
+        // 모든 작업 완료까지 대기
+        List<JsonNode> results = futures.stream()
+                .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        executor.shutdown();
+
+        return ResponseEntity.ok(results);
     }
 }
