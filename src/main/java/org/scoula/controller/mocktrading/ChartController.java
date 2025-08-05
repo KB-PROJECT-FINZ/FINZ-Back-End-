@@ -1,6 +1,7 @@
 package org.scoula.controller.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -11,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.scoula.api.mocktrading.MinuteChartApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.VariousChartApi;
+import org.scoula.domain.redis.dto.ChartResponse;
+import org.scoula.service.redis.ChartRedisService;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,7 +28,9 @@ public class ChartController {
 
     private final MinuteChartApi minuteChartApi;
     private final VariousChartApi variousChartApi;
-
+    private final ChartRedisService chartRedisService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     @GetMapping("/minute/{stockCode}")
     @ApiOperation(
@@ -98,8 +104,12 @@ public class ChartController {
                 log.info("No full day chart data found for stock: {}", stockCode);
                 return ResponseEntity.noContent().build();
             }
+            //redis에 저장할 dto로 변환
+            ChartResponse response = objectMapper.treeToValue(chartData, ChartResponse.class);
+            //일단 무조건 saveToRedis 실행
+            chartRedisService.saveToRedis(stockCode, response);
+            log.info("Synced chart data to Redis for stockCode: {}", stockCode);
 
-            log.info("Successfully retrieved full day chart data for stock: {}", stockCode);
             return ResponseEntity.ok(chartData);
 
         } catch (Exception e) {
