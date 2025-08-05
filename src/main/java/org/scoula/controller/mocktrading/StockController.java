@@ -57,7 +57,7 @@ public class StockController {
     })
     public ResponseEntity<Map<String, Object>> getMultipleStockPrices(@PathVariable("stockCodes") String stockCodes) {
         try {
-            // 콤마로 구분된 종목코드들을 배열로 분리
+            // 콤마로 구분된 종목 코드들을 배열로 분리
             String[] codes = stockCodes.split(",");
 
             // 결과를 담을 Map 생성
