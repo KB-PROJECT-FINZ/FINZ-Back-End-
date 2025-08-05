@@ -62,17 +62,20 @@ public class ChatBotServiceImpl implements ChatBotService {
             Integer userId = request.getUserId();
             Integer sessionId = request.getSessionId();
 
-            log.info("[INTENT] 초기 intentType: {}", intentType);
+            log.info("초기 intentType = {}", intentType);
 
 
+            // 프론트에서 명시한 intentType이 MESSAGE거나 null인 경우만 GPT 분류
             if (intentType == null || intentType == IntentType.MESSAGE) {
+                log.info("🧠 GPT 분류 수행 시작...");
                 String prompt = buildIntentClassificationPrompt(userMessage);
 
                 // GPT 호출
                 String intentText = openAiClient.getChatCompletion(prompt);
-                log.info("[INTENT] GPT 의도 분류 요청 프롬프트 생성 완료");
 
                 try {
+                    intentType = IntentType.valueOf(intentText);
+                    log.info("🧠 GPT 의도 분류 결과: {}", intentText);
                     intentType = IntentType.valueOf(intentText); // enum 파싱
                     log.info("[INTENT] GPT 의도 분류 결과 → intentType: {}", intentType);
 
@@ -94,7 +97,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
             if (sessionId == null) {
                 // 세션이 없으면 새로 생성
-                log.info("[SESSION] 기존 sessionId 없음 → 새 세션 생성 시도");
+                log.info("세션 생성... sessionId = {}", sessionId);
                 ChatSessionDto newSession = ChatSessionDto.builder()
                         .userId(userId)
                         .lastIntent(intentType)
@@ -104,13 +107,12 @@ public class ChatBotServiceImpl implements ChatBotService {
                 log.info("[SESSION] 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
             } else {
                 // 기존 세션의 마지막 intent 가져옴
-                log.info("[SESSION] 기존 세션 유지 확인 → sessionId: {}, userId: {}", sessionId, userId);
+                log.info("기존 세션의 마지막 intent 가져옴... sessionId = {}", sessionId);
                 IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
-                log.info("[SESSION] 세션 intent 비교 → lastIntent: {}, currentIntent: {}", lastIntent, intentType);
+
                 if (!intentType.equals(lastIntent)) {
                     // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
-                    log.info("[SESSION] 🔄 intent 변경 감지 → 기존 세션 종료 + 새 세션 생성");
-
+                    log.info("세션 종료 시도: {}", sessionId);
                     chatBotMapper.endChatSession(sessionId);
                     log.info("[SESSION] ☑ 기존 세션 종료 완료 → sessionId: {}", sessionId);
 
@@ -122,7 +124,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     sessionId = newSession.getId();
                     log.info("[SESSION] 🆕 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
                 } else {
-                    log.info("[SESSION] ♻️ intent 동일 → lastIntent 갱신만 수행");
+                    log.info("lastIntent만 갱신... sessionId = {}", sessionId);
                     // intent 같음 → lastIntent만 갱신
                     chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
                             .id(sessionId)
@@ -133,8 +135,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
-            log.info("[MESSAGE] 사용자 메시지 저장 완료");
-
+            
             // 에러 발생시 저장
             if (intentType == IntentType.ERROR && userMessage != null && !userMessage.trim().isEmpty()) {
                 ErrorType errorType;
@@ -160,42 +161,27 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 사용자 riskType: {}", riskType);
 
 
-                    // 2. 종목 리스트 가져오기 (bingCisCode 참고! : -0은 거래량)
-                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(10, "0");
-                    log.info("[GPT] 거래량 상위 종목 수신 완료 → {}개", rawStocks.size());
+                    // 2. 종목 리스트 가져오기 (거래량 상위 등)
+                    List<Map<String, Object>> rawStocks = volumeRankingApi.getCombinedVolumeRanking(3, "0");
 
-                    // 3. 코드/이름 리스트로 분리
-                    List<RecommendationStock> recStocks = rawStocks.stream()
-                            .map(ProfileStockMapper::fromMap)
-                            .collect(Collectors.collectingAndThen(
-                                    Collectors.toMap(
-                                            RecommendationStock::getCode,
-                                            s -> s,
-                                            (s1, s2) -> s1 // 중복되는 문제 해결
-                                    ),
-                                    map -> new ArrayList<>(map.values())
-                            ));
-
-                    List<String> tickers = recStocks.stream().map(RecommendationStock::getCode).toList();
-                    List<String> names = recStocks.stream().map(RecommendationStock::getName).toList();
-
-                    // 4. 상세 정보 조회 (PriceApi 이용)
-                    List<RecommendationStock> enrichedStocks = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
-                    log.info("[GPT] 상세 정보 조회 완료 → {}개", enrichedStocks.size());
 
                     // 3. 성향 기반 필터링
-                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, enrichedStocks);
+                    List<RecommendationStock> recStocks = rawStocks.stream()
+                            .map(ProfileStockMapper::fromMap)
+                            .toList();
 
-                    boolean usedFallback = false;
-                    if (filteredStocks.isEmpty()) {
-                        log.warn("⚠️ [{}] 조건 통과 종목 없음 → fallback 사용", riskType);
-                        filteredStocks = enrichedStocks.subList(0, Math.min(3, enrichedStocks.size()));
-                        usedFallback = true;
-                    }
-                    log.info("[GPT] 성향 기반 필터링 완료 → {}개", filteredStocks.size());
+                    List<RecommendationStock> filteredStocks = ProfileStockFilter.filterByRiskType(riskType, recStocks);
 
-                    // 6. DTO 매핑
-                    List<ChatAnalysisDto> analysisList = filteredStocks.stream()
+                    // 4. 종목 코드/이름 추출
+                    List<String> tickers = filteredStocks.stream().map(RecommendationStock::getCode).toList();
+                    List<String> names = filteredStocks.stream().map(RecommendationStock::getName).toList();
+
+
+                    // 5. 상세 정보 조회 (PriceApi 이용)
+                    List<RecommendationStock> detailed = profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
+
+                    // 6. DTO로 매핑 (ChatAnalysisDto)
+                    List<ChatAnalysisDto> analysisList = detailed.stream()
                             .map(ChatAnalysisMapper::toDto)
                             .toList();
 
@@ -205,7 +191,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                         chatBotMapper.insertAnalysis(dto); // 직접 만든 insertAnalysis() 메서드
                     }
 
-                    // 8-1. GPT 분석 요청 프롬프트에 요청 ( 응답 json)
+                    // 8-1. GPT 분석 요청 프롬프트
                     String analysisPrompt = promptBuilder.buildForStockInsights(analysisList);
                     String analysisResponse = openAiClient.getChatCompletion(analysisPrompt);
 
@@ -216,17 +202,12 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     // 8-3. 추천 사유 파싱 → DB 저장
 
-                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType);
-                    for (ChatRecommendationDto dto : recResults) {
-                        chatBotMapper.insertRecommendation(dto);
-                    }
-                    log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recResults.size());
-
+                    // 5,6 에서 저장된 추천 종목의 값을 gpt로 보내서 상세한 분석 요청
+                    // 분석 후 이유와 상세한 기술적 지표, 설명 등 응답 하게 만듦.
+                    // 추천한 이유를 DB에 저장(ChatRecommendationDto.reason)
 
                     // 8. GPT 프롬프트 구성
-                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
-                    log.info("[GPT] 최종 GPT 요청 시작");
-
+                    prompt = promptBuilder.buildForProfile(userId, summary, analysisList);
 
                     break;
 
@@ -246,6 +227,10 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
                     break;
 
+                case TERM_EXPLAIN:
+                    prompt = promptBuilder.buildForTermExplain(userMessage);
+                    break;
+
                 case SESSION_END:
                     prompt = "대화를 종료합니다. 감사합니다.";
                     log.info("[GPT] 사용자 의도가 세션 종료");
@@ -262,7 +247,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 case MESSAGE:
                 default:
                     prompt = userMessage;
-                    log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
+                    log.info("🧠 GPT에 보낼 프롬프트:\n{}", prompt);
                     break;
             }
             String content = openAiClient.getChatCompletion(prompt);
@@ -270,7 +255,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", content, intentType);
-            log.info("[MESSAGE] GPT 응답 저장 완료 (messageId: {})", gptMessage.getId());
+            // TODO: 종목코드 추출 API 연동 필요 -> 추천 데이터 저장
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
@@ -288,19 +273,9 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     // ====================== 예외 처리 함수 ======================
     private ChatResponseDto handleError(Exception e, Integer userId, IntentType intentType) {
-        log.error("[ERROR] OpenAI 호출 중 예외 발생", e);
+        log.error("OpenAI 호출 중 예외 발생", e);
 
-        try {
-            if (intentType != null && intentType != IntentType.ERROR) {
-                Integer activeSessionId = chatBotMapper.getActiveSessionIdByUserId(userId);
-                if (activeSessionId != null) {
-                    chatBotMapper.endChatSession(activeSessionId);
-                    log.info("❌ 에러 발생으로 세션 종료: sessionId = {}", activeSessionId);
-                }
-            }
-        } catch (Exception sessionEx) {
-            log.warn("[SESSION] 에러 발생 시 세션 종료 실패: {}", sessionEx.getMessage());
-        }
+        // chat_errors 테이블 저장
 
         // 에러 타입 분기
         ErrorType errorType;
@@ -348,43 +323,52 @@ public class ChatBotServiceImpl implements ChatBotService {
     // 의도 분류 프롬프트
     private String buildIntentClassificationPrompt(String userMessage) {
         return """
-                You are an intent classifier for a financial chatbot.
+    You are an intent classifier for a financial chatbot.
+
+    Classify the user's message into one of the following intent types **based on the meaning**:
+
+    - MESSAGE: General conversation or small talk.
+    - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
+    - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
+    - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
+    - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
+    - TERM_EXPLAIN: Ask for explanation of a financial term (e.g., PER, ROE, EPS).
+    - SESSION_END: Wants to end the conversation.
+    - ERROR: Clear error or invalid message.
+    - UNKNOWN: Cannot determine intent.
+
+    Just return the intent type only, no explanation.
+
+                Example 1:
+                User: "AI 관련된 주식 추천해줘"
+                Answer: RECOMMEND_KEYWORD
                 
-                Classify the user's message into one of the following intent types **based on the meaning**:
+                Example 2:
+                User: "내 투자 성향으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
                 
-                - MESSAGE: General conversation or small talk.
-                - RECOMMEND_PROFILE: Ask for stock recommendations based on investment profile.
-                - RECOMMEND_KEYWORD: Ask for stock recommendations by keyword (e.g., AI-related stocks).
-                - STOCK_ANALYZE: Ask for analysis of a specific stock (e.g., "Tell me about Samsung Electronics").
-                - PORTFOLIO_ANALYZE: Ask to analyze the user's mock investment performance.
-                - SESSION_END: Wants to end the conversation.
-                - ERROR: Clear error or invalid message.
-                - UNKNOWN: Cannot determine intent.
+                Example 3:
+                User: "내 성향에 맞는 주식 뭐야?"
+                Answer: RECOMMEND_PROFILE
                 
-                Just return the intent type only, no explanation.
+                Example 4:
+                User: "성향 기반으로 추천해줘"
+                Answer: RECOMMEND_PROFILE
                 
-                            Example 1:
-                            User: "AI 관련된 주식 추천해줘"
-                            Answer: RECOMMEND_KEYWORD
+                Example 5:
+                User: "삼성전자 분석해줘"
+                Answer: STOCK_ANALYZE
                 
-                            Example 2:
-                            User: "내 투자 성향으로 추천해줘"
-                            Answer: RECOMMEND_PROFILE
+                Example 6:
+                User: "ROE"
+                Answer: TERM_EXPLAIN
                 
-                            Example 3:
-                            User: "내 성향에 맞는 주식 뭐야?"
-                            Answer: RECOMMEND_PROFILE
-                
-                            Example 4:
-                            User: "성향 기반으로 추천해줘"
-                            Answer: RECOMMEND_PROFILE
-                
-                            Example 5:
-                            User: "삼성전자 분석해줘"
-                            Answer: STOCK_ANALYZE
-                
-                User: %s
-                """.formatted(userMessage);
+                Example 7:
+                User: "EPS가 뭔가요?"
+                Answer: TERM_EXPLAIN
+
+    User: %s
+    """.formatted(userMessage);
     }
 
     // 파싱 메서드
