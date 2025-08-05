@@ -225,5 +225,14 @@ public class AuthController {
         ResponseEntity<String> response = restTemplate.postForEntity("https://kauth.kakao.com/oauth/token", request, String.class);
         return ResponseEntity.ok(response.getBody());
     }
+    @GetMapping("/check-email")
+    public ResponseEntity<Map<String, Boolean>> checkEmail(@RequestParam String email) {
+        boolean available = userService.isEmailAvailable(email);
+        System.out.println("이메일 중복확인 요청 email: " + email);
+        System.out.println("사용 가능 여부: " + available);
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("available", available);
+        return ResponseEntity.ok(response);
+    }
 }
 
