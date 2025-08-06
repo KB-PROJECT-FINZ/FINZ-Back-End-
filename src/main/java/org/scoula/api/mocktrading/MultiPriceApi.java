@@ -19,7 +19,7 @@ public class MultiPriceApi {
 
     // 기본 종목코드 (30개 채우기 위한 더미 데이터)
     private static final String DEFAULT_STOCK_CODE = "005930";
-    private static final String DEFAULT_MARKET_CODE = "J";
+    private static final String DEFAULT_MARKET_CODE = "UN";
 
     /**
      * 다중 주식 가격 조회 (최대 30개)
