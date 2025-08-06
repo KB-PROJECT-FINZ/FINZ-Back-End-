@@ -282,7 +282,7 @@ public class MinuteChartApi {
                         "&FID_COND_MRKT_DIV_CODE=J" +
                         "&FID_INPUT_ISCD=%s" +
                         "&FID_INPUT_HOUR_1=%s" +
-                        "&FID_PW_DATA_INCU_YN=Y",
+                        "&FID_PW_DATA_INCU_YN=N",
                 baseUrl, stockCode, currentTime);
     }
 
@@ -296,7 +296,7 @@ public class MinuteChartApi {
                         "&FID_COND_MRKT_DIV_CODE=J" +
                         "&FID_INPUT_ISCD=%s" +
                         "&FID_INPUT_HOUR_1=%s" +
-                        "&FID_PW_DATA_INCU_YN=Y",
+                        "&FID_PW_DATA_INCU_YN=N",
                 baseUrl, stockCode, timePoint);
     }
 }
