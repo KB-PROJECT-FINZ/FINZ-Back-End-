@@ -315,8 +315,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         chatBotMapper.insertChatError(errorDto);
 
-
         return ChatResponseDto.builder()
+
                 .content("⚠ 서버 오류가 발생했습니다. 다시 시도해주세요.")
                 .intentType(IntentType.ERROR)
                 .build();
