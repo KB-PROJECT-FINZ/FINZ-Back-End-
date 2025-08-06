@@ -13,7 +13,7 @@ import org.scoula.api.mocktrading.MinuteChartApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.VariousChartApi;
 import org.scoula.domain.redis.dto.ChartResponse;
-import org.scoula.service.redis.ChartRedisService;
+//import org.scoula.service.redis.ChartRedisService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +28,7 @@ public class ChartController {
 
     private final MinuteChartApi minuteChartApi;
     private final VariousChartApi variousChartApi;
-    private final ChartRedisService chartRedisService;
+//    private final ChartRedisService chartRedisService;
     private final RedisTemplate<String, Object> redisTemplate;
     private final ObjectMapper objectMapper;
 
@@ -107,7 +107,7 @@ public class ChartController {
             //redis에 저장할 dto로 변환
             ChartResponse response = objectMapper.treeToValue(chartData, ChartResponse.class);
             //일단 무조건 saveToRedis 실행
-            chartRedisService.saveToRedis(stockCode, response);
+//            chartRedisService.saveToRedis(stockCode, response);
             log.info("Synced chart data to Redis for stockCode: {}", stockCode);
 
             return ResponseEntity.ok(chartData);
