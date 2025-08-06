@@ -7,6 +7,7 @@ import org.scoula.domain.trading.dto.TransactionDTO;
 import org.scoula.mapper.TradingMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -35,6 +36,9 @@ public class TradingServiceImpl implements TradingService {
                     .totalReturn(0.0)
                     .startDate(null)
                     .endDate(null)
+                    .buyCount(0)
+                    .sellCount(0)
+                    .avgHoldDays(0.0)
                     .build();
         }
 
@@ -42,22 +46,29 @@ public class TradingServiceImpl implements TradingService {
         TransactionDTO first = transactions.get(transactions.size() - 1);
         TransactionDTO last = transactions.get(0);
 
-        LocalDateTime start = first.getExecutedAt();
-        LocalDateTime end = last.getExecutedAt();
+        LocalDateTime startDateTime = first.getExecutedAt();
+        LocalDateTime endDateTime = last.getExecutedAt();
 
-        long days = ChronoUnit.DAYS.between(start, end);
-        log.info("📅 거래 분석 기간: {} ~ {} → {}일", start, end, days);
+        LocalDate startDate = startDateTime.toLocalDate();
+        LocalDate endDate = endDateTime.toLocalDate();
+        int analysisPeriod = (int) Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
 
-        // 수익률 계산 (매수/매도 기준)
+        log.info("📅 거래 분석 기간: {} ~ {} → {}일", startDate, endDate, analysisPeriod);
+
+        // 수익률 및 매수/매도 수 계산
         double buyAmount = 0.0;
         double sellAmount = 0.0;
+        int buyCount = 0;
+        int sellCount = 0;
 
         for (TransactionDTO t : transactions) {
             double amount = t.getPrice() * t.getQuantity();
             if ("BUY".equalsIgnoreCase(t.getTransactionType())) {
                 buyAmount += amount;
+                buyCount++;
             } else if ("SELL".equalsIgnoreCase(t.getTransactionType())) {
                 sellAmount += amount;
+                sellCount++;
             }
         }
 
@@ -68,10 +79,13 @@ public class TradingServiceImpl implements TradingService {
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
-                .analysisPeriod((int) days)
-                .startDate(start.toLocalDate())  // LocalDate로 바로 전달
-                .endDate(end.toLocalDate())
+                .analysisPeriod(analysisPeriod)
+                .startDate(startDate)
+                .endDate(endDate)
                 .totalReturn(Math.round(rate * 100.0) / 100.0)
+                .buyCount(buyCount)
+                .sellCount(sellCount)
+                .avgHoldDays(0.0) // 추후 구현 가능
                 .build();
     }
 
