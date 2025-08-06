@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.scoula.api.mocktrading.MultiPriceApi;
 import org.scoula.api.mocktrading.PriceApi;
 import org.scoula.api.mocktrading.RealtimeBidsAndAsksClient;
 import org.scoula.api.mocktrading.RealtimeExecutionClient;
@@ -48,25 +49,22 @@ public class StockController {
         return ResponseEntity.ok("✅ 업종 정보 일괄 업데이트 완료");
     }
     @GetMapping("/prices/{stockCodes}")
-    @ApiOperation(value = "다중 주식 가격 조회", notes = "여러 주식 종목코드를 콤마로 구분하여 한번에 실시간 가격 정보를 조회합니다")
+    @ApiOperation(value = "다중 주식 가격 조회", notes = "여러 주식 종목코드를 콤마로 구분하여 한번에 실시간 가격 정보를 조회합니다 (최대 30개)")
     @ApiParam(name = "stockCodes", value = "주식 종목코드들을 콤마로 구분 (예: 005930,000660,035420)", required = true, example = "005930,000660,035420")
     @ApiResponses({
             @ApiResponse(code = 200, message = "성공적으로 가격 정보들을 조회했습니다"),
-            @ApiResponse(code = 400, message = "잘못된 요청입니다 (종목코드 형식 오류)"),
+            @ApiResponse(code = 400, message = "잘못된 요청입니다 (종목코드 형식 오류 또는 개수 초과)"),
             @ApiResponse(code = 500, message = "서버 내부 오류가 발생했습니다")
     })
     public ResponseEntity<Map<String, Object>> getMultipleStockPrices(@PathVariable("stockCodes") String stockCodes) {
         try {
-            // 콤마로 구분된 종목 코드들을 배열로 분리
-            String[] codes = stockCodes.split(",");
-
-            // 결과를 담을 Map 생성
-            Map<String, Object> result = new HashMap<>();
-            Map<String, JsonNode> prices = new HashMap<>();
+            // 콤마로 구분된 종목코드들을 리스트로 분리
+            String[] codeArray = stockCodes.split(",");
+            List<String> requestedCodes = new ArrayList<>();
             List<String> errors = new ArrayList<>();
 
-            // 각 종목코드에 대해 가격 조회
-            for (String code : codes) {
+            // 종목코드 유효성 검사 및 정리
+            for (String code : codeArray) {
                 String trimmedCode = code.trim();
 
                 // 종목코드 유효성 검사 (6자리 숫자)
@@ -75,25 +73,62 @@ public class StockController {
                     continue;
                 }
 
-                try {
-                    JsonNode priceData = PriceApi.getPriceData(trimmedCode);
-                    prices.put(trimmedCode, priceData);
-                } catch (IOException e) {
-                    errors.add(trimmedCode + ": 가격 조회 실패 - " + e.getMessage());
+                requestedCodes.add(trimmedCode);
+            }
+
+            // 최대 30개 제한 확인
+            if (requestedCodes.size() > 30) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "최대 30개의 종목코드까지만 조회 가능합니다. 현재 요청: " + requestedCodes.size() + "개");
+                return ResponseEntity.badRequest().body(errorResult);
+            }
+
+            if (requestedCodes.isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "유효한 종목코드가 없습니다");
+                errorResult.put("errors", errors);
+                return ResponseEntity.badRequest().body(errorResult);
+            }
+
+            try {
+                // 다중 가격 조회 API 호출
+                JsonNode fullResponse = MultiPriceApi.getMultiPriceData(requestedCodes);
+
+                // 요청한 종목들만 필터링
+                Map<String, JsonNode> filteredPrices = MultiPriceApi.filterRequestedStocks(fullResponse, requestedCodes);
+
+                // 결과 구성
+                Map<String, Object> result = new HashMap<>();
+                result.put("success", true);
+                result.put("data", filteredPrices);
+                result.put("requestedCount", requestedCodes.size());
+                result.put("successCount", filteredPrices.size());
+                result.put("errorCount", errors.size());
+
+                if (!errors.isEmpty()) {
+                    result.put("errors", errors);
                 }
+
+                // 조회되지 않은 종목이 있는 경우 에러 목록에 추가
+                for (String code : requestedCodes) {
+                    if (!filteredPrices.containsKey(code)) {
+                        errors.add(code + ": 가격 정보를 찾을 수 없습니다");
+                    }
+                }
+
+                if (!errors.isEmpty()) {
+                    result.put("errors", errors);
+                    result.put("errorCount", errors.size());
+                }
+
+                return ResponseEntity.ok(result);
+
+            } catch (IOException e) {
+                // API 호출 실패 시 기존 방식으로 폴백
+                return fallbackToSingleRequests(requestedCodes, errors);
             }
-
-            result.put("success", true);
-            result.put("data", prices);
-            result.put("requestedCount", codes.length);
-            result.put("successCount", prices.size());
-            result.put("errorCount", errors.size());
-
-            if (!errors.isEmpty()) {
-                result.put("errors", errors);
-            }
-
-            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             Map<String, Object> errorResult = new HashMap<>();
@@ -102,6 +137,37 @@ public class StockController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
     }
+    /**
+     * 다중 조회 실패 시 기존 단일 조회 방식으로 폴백
+     */
+    private ResponseEntity<Map<String, Object>> fallbackToSingleRequests(List<String> requestedCodes, List<String> errors) {
+        Map<String, Object> result = new HashMap<>();
+        Map<String, JsonNode> prices = new HashMap<>();
+
+        // 기존 방식으로 각각 조회
+        for (String code : requestedCodes) {
+            try {
+                JsonNode priceData = PriceApi.getPriceData(code);
+                prices.put(code, priceData);
+            } catch (IOException e) {
+                errors.add(code + ": 가격 조회 실패 - " + e.getMessage());
+            }
+        }
+
+        result.put("success", true);
+        result.put("data", prices);
+        result.put("requestedCount", requestedCodes.size());
+        result.put("successCount", prices.size());
+        result.put("errorCount", errors.size());
+        result.put("fallbackMode", true); // 폴백 모드임을 표시
+
+        if (!errors.isEmpty()) {
+            result.put("errors", errors);
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/price/{stockCode}")
     @ApiOperation(value = "주식 가격 조회", notes = "주식 종목코드를 이용하여 실시간 가격 정보를 조회합니다")
     @ApiParam(name = "code", value = "주식 종목코드 (예: 005930)", required = true, example = "005930")
