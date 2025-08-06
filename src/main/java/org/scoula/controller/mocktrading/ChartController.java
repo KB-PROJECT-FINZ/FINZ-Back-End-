@@ -101,7 +101,6 @@ public class ChartController {
             CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     JsonNode result = minuteChartApiKiwoom.getKiwoomMinuteChartData(stockCode, true);
-                    System.out.println(result);
                     return result;
                 } catch (Exception e) {
                     log.error("Error processing Kiwoom minute chart for stock: {}", stockCode, e);

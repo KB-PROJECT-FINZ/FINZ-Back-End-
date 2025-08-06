@@ -37,7 +37,7 @@ public class MinuteChartApiKiwoom {
         try {
             ObjectMapper mapper = new ObjectMapper();
             ObjectNode body = mapper.createObjectNode();
-            body.put("stk_cd", stockCode);
+            body.put("stk_cd", stockCode+"_AL");
             body.put("tic_scope", "1");
             body.put("upd_stkpc_tp", "0");
 
