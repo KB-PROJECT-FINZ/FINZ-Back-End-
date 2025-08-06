@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.scoula.util.chatbot.OpenAiClient;
-import org.scoula.util.chatbot.ProfileStockFilter;
+import org.scoula.domain.trading.dto.TransactionDTO;
+import org.scoula.service.trading.TradingService;
+import org.scoula.util.chatbot.*;
 import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
@@ -55,6 +56,9 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
 
+    private final TradingService tradingService; // ✅ 이 줄 추가
+
+
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
         try {
@@ -75,6 +79,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                 log.info("[INTENT] GPT 의도 분류 요청 프롬프트 생성 완료");
 
                 try {
+                    intentType = IntentType.valueOf(intentText);
+                    log.info("🧠 GPT 의도 분류 결과: {}", intentText);
                     intentType = IntentType.valueOf(intentText); // enum 파싱
                     log.info("[INTENT] GPT 의도 분류 결과 → intentType: {}", intentType);
 
@@ -86,7 +92,9 @@ public class ChatBotServiceImpl implements ChatBotService {
                             IntentType.UNKNOWN
                     );
                 }
-                request.setIntentType(intentType);
+                request.setIntentType(intentType); // 이후 로직을 위해 저장
+            } else {
+                log.info("✅ 프론트에서 intentType 명시 → GPT 분류 생략: {}", intentType);
             }
 
             // ========================2. 전처리======================
@@ -149,6 +157,8 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 5. OpenAI API 호출 ======================
             // GPT 메시지 포맷 구성
+            String content = "";
+            BehaviorStatsDto stats = null;
 
             String prompt;
             switch (intentType) {
@@ -224,9 +234,54 @@ public class ChatBotServiceImpl implements ChatBotService {
                     break;
 
                 case PORTFOLIO_ANALYZE:
-                    prompt = promptBuilder.buildForPortfolioAnalysis(userId);
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
+                    // 1. 거래 요약 정보 조회
+                    stats = tradingService.getBehaviorStats(userId);
+                    if (stats == null || stats.getTransactionCount() == 0 || stats.getStartDate() == null) {
+                        return ChatResponseDto.builder()
+                                .content("📊 분석할 모의투자 내역이 없습니다.")
+                                .intentType(intentType)
+                                .sessionId(sessionId)
+                                .build();
+                    }
+                    log.info("[📊 Stats] 거래 요약 정보: {}", stats);
+
+                    // 2. 거래 요약 정보 기반 프롬프트 구성
+                    prompt = promptBuilder.buildForPortfolioAnalysis(stats);
+
+                    // 3. GPT 호출
+                    content = openAiClient.getChatCompletion(prompt);
+
+                    // 4. 메시지 저장
+                    ChatMessageDto saved = saveChatMessage(userId, sessionId, "assistant", content, intentType);
+
+                    // 5. 피드백 본문 요약
+                    String[] parts = content.split("개선점\\s*:");
+                    String feedbacksummary = parts[0].trim();
+                    String suggestion = parts.length > 1 ? parts[1].trim() : null;
+
+                    // 6. 리포트 저장
+                    ChatBehaviorFeedbackDto feedback = ChatBehaviorFeedbackDto.builder()
+                            .userId(userId)
+                            .sessionId(sessionId)
+                            .messageId(saved.getId())
+                            .summaryText(feedbacksummary)
+                            .suggestionText(suggestion)
+                            .transactionCount(stats.getTransactionCount())
+                            .analysisPeriod(stats.getAnalysisPeriod())
+                            .startDate(stats.getStartDate() != null ? stats.getStartDate().toString() : null)
+                            .endDate(stats.getEndDate() != null ? stats.getEndDate().toString() : null)
+                            .build();
+                    chatBotMapper.insertChatBehaviorFeedback(feedback);
+
+                    // 7. 연관 거래내역 저장
+                    List<Long> transactionIds = tradingService.getTransactionIdsByUser(userId);
+                    for (Long txId : transactionIds) {
+                        chatBotMapper.insertChatBehaviorFeedbackTransaction(feedback.getId(), txId);
+                    }
+
                     break;
+
 
                 case TERM_EXPLAIN:
                     prompt = promptBuilder.buildForTermExplain(userMessage);
@@ -251,7 +306,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
                     break;
             }
-            String content = openAiClient.getChatCompletion(prompt);
+            content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장

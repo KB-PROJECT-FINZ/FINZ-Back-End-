@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -21,9 +22,11 @@ public class ChatBehaviorFeedbackDto {
     private Integer messageId;
     private String summaryText;
     private String suggestionText;
+
     private Integer transactionCount;
-    private Integer analysisPeriodDays;
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private LocalDateTime generatedAt;
+    private Integer analysisPeriod;
+    private String startDate;
+    private String endDate;
+
+    private List<Long> transactionIds;
 }
