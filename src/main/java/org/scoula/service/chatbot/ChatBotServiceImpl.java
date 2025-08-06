@@ -256,12 +256,11 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
                     break;
             }
-            content = openAiClient.getChatCompletion(prompt);
 
-            // ====================== 8. GPT 응답 저장 ======================
+            // ====================== 8. GPT 응답 저장 ======================   
             // chat_messages 테이블에 GPT 응답 저장
 
-            String finalResponse = (analysisResponse != null) ? analysisResponse : openAiClient.getChatCompletion(prompt);
+            String finalResponse = (analysisResponse != null && !analysisResponse.isBlank()) ? analysisResponse : openAiClient.getChatCompletion(prompt);
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
 
 
