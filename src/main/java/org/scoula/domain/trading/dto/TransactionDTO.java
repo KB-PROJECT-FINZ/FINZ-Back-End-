@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +20,6 @@ public class TransactionDTO {
     private int price;
     private int orderPrice;
     private long totalAmount;
-    private String executedAt;
-    private String orderCreatedAt;
+    private LocalDateTime executedAt; // String → LocalDateTime 변경
+    private LocalDateTime orderCreatedAt;
 } 

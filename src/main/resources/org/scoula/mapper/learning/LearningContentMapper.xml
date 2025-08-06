@@ -16,4 +16,24 @@
         WHERE risk_type = #{riskType}
     </select>
 
+    <select id="findAllContents" resultType="org.scoula.domain.learning.dto.ContentDto">
+        SELECT
+        risk_id AS id,
+        risk_type AS riskType,
+        title,
+        body AS content,
+        label
+        FROM group_info
+    </select>
+
+    <select id="findById" parameterType="long" resultType="org.scoula.domain.learning.dto.ContentDto">
+        SELECT
+            risk_id AS id,
+            risk_type,
+            title,
+            body AS content,
+            label
+        FROM group_info
+        WHERE risk_id = #{id}
+    </select>
 </mapper>

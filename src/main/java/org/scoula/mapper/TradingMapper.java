@@ -8,4 +8,6 @@ import java.util.List;
 @Mapper
 public interface TradingMapper {
     List<TransactionDTO> getUserTransactions(@Param("userId") int userId);
+
+    List<Long> getTransactionIdsByUser(@Param("userId") Integer userId);
 }
