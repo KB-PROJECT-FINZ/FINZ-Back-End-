@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpSession;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,45 +25,36 @@ public class RankingController {
 
     private final RankingService rankingService;
 
+    // 내 수익률(주간 기준)
     @GetMapping("/my")
     public MyRankingDto getMyRanking(HttpSession session,
                                      @RequestParam(required = false) String baseDate) {
         UserVo loginUser = (UserVo) session.getAttribute("loginUser");
-        System.out.println("세션 사용자: " + loginUser);
-        if (loginUser == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 필요");
-        }
+        if (loginUser == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 필요");
 
-        try {
-            Long userId = loginUser.getId().longValue();
-            return rankingService.getMyRanking(userId, baseDate);
-        } catch (Exception e) {
-            System.out.println("🔥 /my 오류: " + e.getMessage());
-            e.printStackTrace(); // 콘솔에 구체적인 오류 출력
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "랭킹 조회 실패");
-        }
+        Long userId = loginUser.getId().longValue();
+        return rankingService.getMyRanking(userId, baseDate);
     }
 
+    // 인기 종목 (실시간 or fallback 지난주)
     @GetMapping("/popular-stocks")
-    public List<PopularStockDto> getTop5Stocks(@RequestParam String baseDate) {
+    public List<PopularStockDto> getPopularStocks() {
         try {
-            return rankingService.getTop5Stocks(baseDate);
+            return rankingService.getRealTimeOrFallbackPopularStocks();
         } catch (Exception e) {
-            System.out.println("🔥 /popular-stocks 오류: " + e.getMessage());
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "인기 종목 조회 실패");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "인기 종목 조회 실패", e);
         }
     }
 
+    // 주간 전체 랭킹
     @GetMapping("/weekly")
     public List<RankingByTraitGroupDto> getWeeklyRanking(@RequestParam(required = false) String baseDate) {
-        System.out.println("/weekly 호출 baseDate = " + baseDate);
         return rankingService.getWeeklyRanking(baseDate);
     }
 
+    // 주간 성향별 랭킹
     @GetMapping("/weekly/grouped")
     public Map<String, List<RankingByTraitGroupDto>> getGroupedRanking(@RequestParam(required = false) String baseDate) {
-        System.out.println("/weekly/grouped 호출 baseDate = " + baseDate);
         return rankingService.getGroupedWeeklyRanking(baseDate);
     }
 }

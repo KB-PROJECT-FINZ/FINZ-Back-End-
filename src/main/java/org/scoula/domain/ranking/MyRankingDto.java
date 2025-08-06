@@ -12,4 +12,5 @@ public class MyRankingDto {
     private Double topPercent;    // 상위 퍼센트 (%)
     private String riskType;     //성향
 
+
 }
