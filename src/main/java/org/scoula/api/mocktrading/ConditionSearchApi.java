@@ -14,7 +14,7 @@ public class ConditionSearchApi {
 
     private static final String APP_KEY = ConfigManager.get("app.key2");
     private static final String APP_SECRET = ConfigManager.get("app.secret2");
-    private static final String TR_ID = "HHKST03900400"; // 종목조건검색 목록조회 TR
+    private static final String TR_ID = "HHKST03900400";
 
     /**
      * 종목조건검색 목록조회 - 전체 응답 JsonNode 반환
