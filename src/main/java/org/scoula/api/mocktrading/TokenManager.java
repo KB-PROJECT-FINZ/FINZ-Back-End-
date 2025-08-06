@@ -19,11 +19,16 @@ public class TokenManager {
     private static final String DB_USER = ConfigManager.get("jdbc.username");
     private static final String DB_PASSWORD = ConfigManager.get("jdbc.password");
 
-    // 한국투자증권 모의투자 API 정보 (2개 키)
+    // 한국투자증권 실전투자 API 정보 (2개 키)
     private static final String APP_KEY = ConfigManager.get("app.key");
     private static final String APP_SECRET = ConfigManager.get("app.secret");
     private static final String APP_KEY2 = ConfigManager.get("app.key2");
     private static final String APP_SECRET2 = ConfigManager.get("app.secret2");
+
+    // 키움증권 API 키
+        private static final String APP_KEY3 = ConfigManager.get("app.key3");
+    private static final String APP_SECRET3 = ConfigManager.get("app.secret3");
+
     private static final String TOKEN_URL = "https://openapi.koreainvestment.com:9443/oauth2/tokenP";
     private static final String APPROVAL_KEY_URL = "https://openapi.koreainvestment.com:9443/oauth2/Approval";
 
@@ -54,7 +59,7 @@ public class TokenManager {
 
     // ✅ 토큰 종류 구분용 enum
     public enum TokenType {
-        MAIN, SUB
+        MAIN, SUB, KIWOOM
     }
 
     // ✅ access token만 필요할 때 (기본: MAIN) + SUB 토큰도 함께 발급
@@ -80,29 +85,122 @@ public class TokenManager {
 
     // ✅ 토큰 종류별로 관리
     public static TokenInfo getTokenInfo(TokenType type) throws IOException {
-        String dbKey = (type == TokenType.MAIN) ? "1" : "2";
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
-            PreparedStatement stmt = conn.prepareStatement(
-                    "SELECT access_token, approval_key, expire_time FROM token_store WHERE token_id = ?");
-            stmt.setString(1, dbKey);
-            ResultSet rs = stmt.executeQuery();
+        String dbKey = "";
+        if(type == TokenType.MAIN) {
+            dbKey = "1";
+        }
+        else if (type == TokenType.SUB) {
+            dbKey = "2";
+        }
+        else if (type == TokenType.KIWOOM) {
+            dbKey = "3";
+        }
+        // 한국투자증권 API
+        if(dbKey.equals("1") || dbKey.equals("2")) {
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                PreparedStatement stmt = conn.prepareStatement(
+                        "SELECT access_token, approval_key, expire_time FROM token_store WHERE token_id = ?");
+                stmt.setString(1, dbKey);
+                ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                String token = rs.getString("access_token");
-                String approvalKey = rs.getString("approval_key");
-                long expireTime = rs.getLong("expire_time");
+                if (rs.next()) {
+                    String token = rs.getString("access_token");
+                    String approvalKey = rs.getString("approval_key");
+                    long expireTime = rs.getLong("expire_time");
 
-                if (System.currentTimeMillis() < expireTime) {
-                    // System.out.println("[TokenManager] 기존 토큰 사용 (" + type + ")");
-                    return new TokenInfo(token, approvalKey, expireTime);
+                    if (System.currentTimeMillis() < expireTime) {
+                        // System.out.println("[TokenManager] 기존 토큰 사용 (" + type + ")");
+                        return new TokenInfo(token, approvalKey, expireTime);
+                    }
                 }
+
+                // 유효하지 않음 → 새 토큰 발급
+                return issueAndStoreNewToken(conn, type, dbKey);
+
+            } catch (SQLException e) {
+                throw new IOException("DB 오류", e);
             }
+        }
+        // 키움 API
+        else {
+            try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD)) {
+                PreparedStatement stmt = conn.prepareStatement(
+                        "SELECT access_token, expire_time FROM token_store WHERE token_id = ?");
+                stmt.setString(1, dbKey);
+                ResultSet rs = stmt.executeQuery();
 
-            // 유효하지 않음 → 새 토큰 발급
-            return issueAndStoreNewToken(conn, type, dbKey);
+                if (rs.next()) {
+                    String token = rs.getString("access_token");
+                    long expireTime = rs.getLong("expire_time");
+                    if (System.currentTimeMillis() < expireTime) {
+                        // 기존 토큰 사용
+                        return new TokenInfo(token, null, expireTime);
+                    }
+                }
 
-        } catch (SQLException e) {
-            throw new IOException("DB 오류", e);
+                // 유효하지 않음 → 새 토큰 발급
+                OkHttpClient client = new OkHttpClient();
+                ObjectMapper mapper = new ObjectMapper();
+
+                Map<String, String> bodyMap = new HashMap<>();
+                bodyMap.put("grant_type", "client_credentials");
+                bodyMap.put("appkey", APP_KEY3);      // 키움 appkey
+                bodyMap.put("secretkey", APP_SECRET3); // 키움 secretkey
+
+                String jsonBody = mapper.writeValueAsString(bodyMap);
+
+                Request tokenRequest = new Request.Builder()
+                        .url("https://api.kiwoom.com/oauth2/token")
+                        .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                        .addHeader("Content-Type", "application/json")
+                        .build();
+
+                String token;
+                long expireTime;
+                try (Response response = client.newCall(tokenRequest).execute()) {
+                    if (!response.isSuccessful()) {
+                        throw new IOException("키움 access_token 발급 실패: " + response.code());
+                    }
+                    String responseBody = response.body().string();
+                    System.out.println("[TokenManager] 키움 토큰 응답 원문: " + responseBody); // 응답 원문 출력
+                    Map<String, Object> responseMap = mapper.readValue(responseBody, Map.class);
+                    token = (String) responseMap.get("token");
+                    Object expiresDtObj = responseMap.get("expires_dt");
+                    if (expiresDtObj != null) {
+                        // "20250806163448" → Unix timestamp(ms)
+                        String expiresDtStr = expiresDtObj.toString();
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+                        sdf.setLenient(false);
+                        try {
+                            java.util.Date date = sdf.parse(expiresDtStr);
+                            expireTime = date.getTime();
+                        } catch (java.text.ParseException e) {
+                            throw new IOException("expires_dt 파싱 실패: " + expiresDtStr, e);
+                        }
+                    } else if (responseMap.get("expires_in") != null) {
+                        long expiresInSec = Long.parseLong(responseMap.get("expires_in").toString());
+                        expireTime = System.currentTimeMillis() + (expiresInSec - 300) * 1000L;
+                    } else {
+                        throw new IOException("만료 시간 정보가 응답에 없습니다.");
+                    }
+                }
+
+                // DB 저장 (approval_key는 null)
+                try (PreparedStatement update = conn.prepareStatement(
+                        "REPLACE INTO token_store (token_id, access_token, approval_key, expire_time) VALUES (?, ?, ?, ?)")) {
+                    update.setString(1, dbKey);
+                    update.setString(2, token);
+                    update.setNull(3, java.sql.Types.VARCHAR); // approval_key는 null
+                    update.setLong(4, expireTime);
+                    update.executeUpdate();
+                } catch (SQLException e) {
+                    throw new IOException("키움 토큰 DB 저장 실패", e);
+                }
+
+                return new TokenInfo(token, null, expireTime);
+            } catch (SQLException e) {
+                throw new IOException("키움 DB 오류", e);
+            }
         }
     }
 
@@ -191,6 +289,8 @@ public class TokenManager {
             return (String) map.get("approval_key");
         }
     }
+
+
 
 }
 
