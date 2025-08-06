@@ -9,29 +9,17 @@
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
         <![CDATA[
         SELECT
-            ua.user_id AS user_id,
-            ah.profit_rate AS gain_rate,
-            it.name_kr AS risk_type,
-            (
-                SELECT COUNT(*) + 1
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate > ah.profit_rate
-            ) AS ranking,
-            (
-                SELECT ROUND(
-                               100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{baseDate}), 2
-                       )
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate <= ah.profit_rate
-            ) AS top_percent
-        FROM user_accounts ua
-                 JOIN asset_history ah ON ua.account_id = ah.account_id
-                 LEFT JOIN user u ON ua.user_id = u.id
-                 LEFT JOIN investment_types it ON u.risk_type = it.risk_type
-        WHERE ua.user_id = #{userId}
-          AND ah.record_date = #{baseDate}
+            u.id AS userId,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking,
+                AVG(ah.profit_rate) AS gainRate,
+            ROUND(100 * (RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) - 1) / COUNT(*) OVER (), 2) AS topPercent,
+            u.risk_type AS riskType
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
+        WHERE u.id = #{userId}
+          AND ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.risk_type
         ]]>
     </select>
 
@@ -74,18 +62,21 @@
 
     <!-- 4) 전체 상위 수익률 TOP 100 -->
     <select id="selectTopRankingWithTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="string">
-        <![CDATA[
+    <![CDATA[
         SELECT
             u.id AS user_id,
             IFNULL(u.nickname, '익명') AS nickname,
-            it.name_kr AS trait_group,
-            ah.profit_rate AS gain_rate,
-            RANK() OVER (ORDER BY ah.profit_rate DESC) AS ranking
+            rt.group_code AS trait_group,
+            rt.name_kr AS trait_group_name,
+            u.risk_type AS original_trait,
+            AVG(ah.profit_rate) AS gain_rate,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking
         FROM asset_history ah
                  JOIN user_accounts ua ON ah.account_id = ua.account_id
                  JOIN user u ON ua.user_id = u.id
-                 LEFT JOIN investment_types it ON u.risk_type = it.risk_type
-        WHERE ah.record_date = #{baseDate}
+                 JOIN investment_types rt ON u.risk_type = rt.risk_type
+        WHERE ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.nickname, rt.group_code, rt.name_kr, u.risk_type
         ORDER BY gain_rate DESC
             LIMIT 100
         ]]>
@@ -99,22 +90,26 @@
             IFNULL(u.nickname, '익명') AS nickname,
             rt.group_code AS trait_group,
             u.risk_type AS original_trait,
-            ah.profit_rate AS gain_rate,
-            RANK() OVER (ORDER BY ah.profit_rate DESC) AS ranking
+            ROUND(AVG(ah.profit_rate), 2) AS gain_rate,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking
         FROM asset_history ah
                  JOIN user_accounts ua ON ah.account_id = ua.account_id
                  JOIN user u ON ua.user_id = u.id
                  JOIN investment_types rt ON u.risk_type = rt.risk_type
         WHERE rt.group_code = #{traitGroup}
-          AND ah.record_date = #{baseDate}
+          AND ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.nickname, rt.group_code, u.risk_type
         ORDER BY gain_rate DESC
             LIMIT 100
         ]]>
     </select>
 
     <!-- 6) baseDate 데이터 존재 여부 확인 -->
-    <select id="existsAssetHistoryByDate" parameterType="java.time.LocalDate" resultType="boolean">
-        SELECT EXISTS(SELECT 1 FROM asset_history WHERE record_date = #{baseDate})
+    <select id="existsAssetHistoryByDate" parameterType="java.time.LocalDate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1 FROM asset_history
+            WHERE record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        )
     </select>
 
 

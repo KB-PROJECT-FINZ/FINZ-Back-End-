@@ -8,6 +8,7 @@ import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.RankingByTraitGroupDto;
 import org.scoula.service.ranking.RankingService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,13 +28,12 @@ public class RankingController {
 
     // 내 수익률(주간 기준)
     @GetMapping("/my")
-    public MyRankingDto getMyRanking(HttpSession session,
-                                     @RequestParam(required = false) String baseDate) {
-        UserVo loginUser = (UserVo) session.getAttribute("loginUser");
-        if (loginUser == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 필요");
+    public ResponseEntity<MyRankingDto> getMyRanking(
+            @RequestParam Long userId,
+            @RequestParam(required = false) String baseDate) {
 
-        Long userId = loginUser.getId().longValue();
-        return rankingService.getMyRanking(userId, baseDate);
+        MyRankingDto myRanking = rankingService.getMyRanking(userId, baseDate);
+        return ResponseEntity.ok(myRanking);
     }
 
     // 인기 종목 (실시간 or fallback 지난주)
