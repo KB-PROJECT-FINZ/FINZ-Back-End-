@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -256,21 +258,34 @@ public class ChatBotServiceImpl implements ChatBotService {
                     ChatMessageDto saved = saveChatMessage(userId, sessionId, "assistant", content, intentType);
 
                     // 5. 피드백 본문 요약
-                    String[] parts = content.split("개선점\\s*:");
-                    String feedbacksummary = parts[0].trim();
-                    String suggestion = parts.length > 1 ? parts[1].trim() : null;
+                    String summary = null;
+                    String risk = null;
+                    String suggestion = null;
+
+                    Pattern pattern = Pattern.compile("(?s)1\\..*?(?=2\\.|$)|2\\..*?(?=3\\.|$)|3\\..*");
+                    Matcher matcher = pattern.matcher(content);
+                    List<String> parts = new ArrayList<>();
+                    while (matcher.find()) {
+                        parts.add(matcher.group().trim());
+                    }
+
+                    if (parts.size() > 0) summary = parts.get(0);
+                    if (parts.size() > 1) risk = parts.get(1);
+                    if (parts.size() > 2) suggestion = parts.get(2);
+
 
                     // 6. 리포트 저장
                     ChatBehaviorFeedbackDto feedback = ChatBehaviorFeedbackDto.builder()
                             .userId(userId)
                             .sessionId(sessionId)
                             .messageId(saved.getId())
-                            .summaryText(feedbacksummary)
+                            .summaryText(summary)
+                            .riskText(risk)
                             .suggestionText(suggestion)
                             .transactionCount(stats.getTransactionCount())
                             .analysisPeriod(stats.getAnalysisPeriod())
-                            .startDate(stats.getStartDate() != null ? stats.getStartDate().toString() : null)
-                            .endDate(stats.getEndDate() != null ? stats.getEndDate().toString() : null)
+                            .startDate(stats.getStartDate().toString())
+                            .endDate(stats.getEndDate().toString())
                             .build();
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
