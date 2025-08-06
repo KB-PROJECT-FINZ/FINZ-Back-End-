@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public class ConditionSearchApi {
 
-    private static final String BASE_URL = "https://openapi.koreainvestment.com:9443/";
+    private static final String BASE_URL = "https://openapi.koreainvestment.com:9443";
     private static final String ENDPOINT = "/uapi/domestic-stock/v1/quotations/psearch-result";
 
     private static final String APP_KEY = ConfigManager.get("app.key2");
