@@ -9,12 +9,12 @@ import java.io.IOException;
 
 public class ConditionSearchApi {
 
-    private static final String BASE_URL = "https://openapivts.koreainvestment.com:29443";
+    private static final String BASE_URL = "https://openapi.koreainvestment.com:9443";
     private static final String ENDPOINT = "/uapi/domestic-stock/v1/quotations/psearch-result";
 
-    private static final String APP_KEY = ConfigManager.get("app.key");
-    private static final String APP_SECRET = ConfigManager.get("app.secret");
-    private static final String TR_ID = "HHKST03900400"; // 종목조건검색 목록조회 TR
+    private static final String APP_KEY = ConfigManager.get("app.key2");
+    private static final String APP_SECRET = ConfigManager.get("app.secret2");
+    private static final String TR_ID = "HHKST03900400";
 
     /**
      * 종목조건검색 목록조회 - 전체 응답 JsonNode 반환
@@ -25,7 +25,8 @@ public class ConditionSearchApi {
      * @throws IOException API 호출 실패 시
      */
     public static JsonNode getConditionSearchResult(String userId, String seq) throws IOException {
-        String token = TokenManager.getAccessToken();
+        TokenManager.TokenInfo subTokenInfo = TokenManager.getTokenInfo(TokenManager.TokenType.SUB);
+        String token = subTokenInfo.getAccessToken();
 
         HttpUrl url = HttpUrl.parse(BASE_URL + ENDPOINT).newBuilder()
                 .addQueryParameter("user_id", userId)
