@@ -5,16 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.scoula.util.chatbot.OpenAiClient;
-import org.scoula.util.chatbot.ProfileStockFilter;
+import org.scoula.util.chatbot.*;
 import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
 
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
-import org.scoula.util.chatbot.ChatAnalysisMapper;
-import org.scoula.util.chatbot.ProfileStockMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -50,6 +47,9 @@ public class ChatBotServiceImpl implements ChatBotService {
 
     @Autowired
     private UserProfileService userProfileService;
+
+    @Autowired
+    private StockNameParser stockNameParser;
 
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
@@ -152,7 +152,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             String prompt = null;
             String content = null;
-            String analysisResponse = null;
+            String gptAnalysisResponse = null;
 
             switch (intentType) {
 
@@ -175,15 +175,15 @@ public class ChatBotServiceImpl implements ChatBotService {
                     saveAnalysisListToDb(analysisList);
 
                     // 6. GPT에 분석 프롬프트 요청 후 JSON 응답 수신
-                    analysisResponse = callAnalysisPrompt(analysisList);
+                    gptAnalysisResponse = callAnalysisPrompt(analysisList);
 
                     // 7. GPT 응답(JSON)을 파싱하여 추천 사유 리스트 생성 및 DB 저장
-                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType,intentType);
+                    List<ChatRecommendationDto> recResults = parseRecommendationText(gptAnalysisResponse, analysisList, userId, riskType,intentType);
                     saveRecommendationsToDb(recResults);
 
                     // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
-                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
-                    log.info("[GPT] 최종 GPT 요청 시작");
+//                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
+//                    log.info("[GPT] 최종 GPT 요청 시작");
 
 
                     break;
@@ -211,21 +211,50 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("📊 분석용 DTO 변환 완료, 개수: {}, 리스트: {}", analysisList.size(), analysisList);
 
                     // 6. 분석 결과 기반으로 요약 프롬프트 구성 → 기존 응답 프롬프트 재사용
-                    analysisResponse = callAnalysisPrompt(analysisList);
-                    log.info("🧠 GPT 분석 응답: {}", analysisResponse);
+                    gptAnalysisResponse = callAnalysisPrompt(analysisList);
+                    log.info("🧠 GPT 분석 응답: {}", gptAnalysisResponse);
 
                     // 7. 최종 요약 결과를 사용자에게 전달
-                    List<ChatRecommendationDto> recResults = parseRecommendationText(analysisResponse, analysisList, userId, riskType,intentType);
-                    saveRecommendationsToDb(recResults);
-                    log.info("📝 최종 추천 사유 개수: {}, 내용: {}", recResults.size(), recResults);
-
-                    prompt = promptBuilder.buildSummaryFromRecommendations(keyword, recResults, analysisList);
+//                    List<ChatRecommendationDto> recResults = parseRecommendationText(gptAnalysisResponse, analysisList, userId, riskType,intentType);
+//                    saveRecommendationsToDb(recResults);
+//                    log.info("📝 최종 추천 사유 개수: {}, 내용: {}", recResults.size(), recResults);
+//                    prompt = promptBuilder.buildSummaryFromRecommendations(keyword, recResults, analysisList);
                     break;
 
                 }
                 case STOCK_ANALYZE:
-                    prompt = promptBuilder.buildForAnalysis(userMessage);
-                    log.info("[GPT] 종목 분석 프롬프트 생성 완료");
+                    // 1. 종목명 추출 프롬프트 생성 및 GPT 호출
+                    prompt = promptBuilder.stockextractionPrompt(userMessage);
+                    String gptResponse = openAiClient.getChatCompletion(prompt);
+
+                    // 2. GPT 응답 파싱 → 종목명, 티커 추출
+                    StockExtractionResultDto result = stockNameParser.parseStockExtraction(gptResponse);
+
+                    // 3. 종목명 누락 시 예외 처리
+                    if (result.getStockName() == null || result.getStockName().isBlank()) {
+                        log.info("❌ 종목명을 정확히 입력해주세요.");
+                        break;
+                    }
+
+                    // 4. 종목명 + 티커로 RecommendationStock 객체 생성
+                    RecommendationStock raw = RecommendationStock.builder()
+                            .name(result.getStockName())
+                            .code(result.getTicker())
+                            .build();
+
+                    // 5. 상세 정보 API 조회 (PER, PBR 등)
+                    List<RecommendationStock> detailed = getDetailedStocks(List.of(raw));
+                    if (detailed.isEmpty()) {
+                        log.info("❌ 해당 종목의 상세 정보를 찾을 수 없습니다.");
+                        break;
+                    }
+
+                    // 6. 분석용 DTO 변환
+                    ChatAnalysisDto dto = ChatAnalysisMapper.toDto(detailed.get(0));
+
+                    // 7. GPT 분석 프롬프트 호출
+                    gptAnalysisResponse = callAnalysisPrompt(List.of(dto));
+
                     break;
 
                 case PORTFOLIO_ANALYZE:
@@ -260,7 +289,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             // ====================== 8. GPT 응답 저장 ======================   
             // chat_messages 테이블에 GPT 응답 저장
 
-            String finalResponse = (analysisResponse != null && !analysisResponse.isBlank()) ? analysisResponse : openAiClient.getChatCompletion(prompt);
+            String finalResponse = (gptAnalysisResponse != null && !gptAnalysisResponse.isBlank()) ? gptAnalysisResponse : openAiClient.getChatCompletion(prompt);
             ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
 
 
@@ -477,6 +506,7 @@ public class ChatBotServiceImpl implements ChatBotService {
         log.info("[GPT] GPT 응답 기반 추천 사유 파싱 완료 → {}개", recommendations.size());
     }
 
+    // 필터링 함수
     public static List<RecommendationStock> filterByDefault(List<RecommendationStock> stocks) {
         return stocks.stream()
                 .filter(stock ->
@@ -493,5 +523,6 @@ public class ChatBotServiceImpl implements ChatBotService {
         return value != null && value > 0;
     }
 
+    // 종목명 추출
 }
 
