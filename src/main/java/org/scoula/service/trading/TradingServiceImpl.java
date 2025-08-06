@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
+import java.util.*;
 
 @Log4j2
 @Service
@@ -76,6 +76,30 @@ public class TradingServiceImpl implements TradingService {
         double rate = buyAmount == 0 ? 0.0 : (returnSum / buyAmount) * 100;
 
         log.info("💰 총 매수: {}, 총 매도: {}, 수익률: {}%", buyAmount, sellAmount, rate);
+// 평균 보유일 계산
+        double totalHoldingDays = 0.0;
+        int holdingPairs = 0;
+        Map<String, LocalDateTime> buyMap = new HashMap<>();
+
+        for (TransactionDTO tx : transactions) {
+            String code = tx.getStockCode();
+            LocalDateTime time = tx.getExecutedAt();
+
+            if ("BUY".equalsIgnoreCase(tx.getTransactionType())) {
+                buyMap.put(code, time);
+            } else if ("SELL".equalsIgnoreCase(tx.getTransactionType())) {
+                if (buyMap.containsKey(code)) {
+                    LocalDateTime buyTime = buyMap.get(code);
+                    long hold = ChronoUnit.DAYS.between(buyTime, time);
+                    totalHoldingDays += hold;
+                    holdingPairs++;
+                    buyMap.remove(code);
+                }
+            }
+        }
+
+        double avgHoldDays = holdingPairs == 0 ? 0.0 : totalHoldingDays / holdingPairs;
+        log.info("⏳ 평균 보유일: {}일 (총 쌍: {})", avgHoldDays, holdingPairs);
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
