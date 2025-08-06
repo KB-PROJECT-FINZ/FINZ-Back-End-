@@ -6,17 +6,25 @@
 
     <select id="getUserTransactions" resultType="org.scoula.domain.trading.dto.TransactionDTO">
         SELECT
-            t.stock_code as stockCode,
-            t.stock_name as stockName,
+            t.transaction_id       AS transactionId,
+            t.account_id           AS accountId,
+            t.stock_code           AS stockCode,
+            t.stock_name           AS stockName,
+            t.transaction_type     AS transactionType,
             t.quantity,
-            t.total_amount as totalAmount,
-            t.transaction_type as transactionType,
-            t.executed_at
+            t.price,
+            t.total_amount         AS totalAmount,
+            t.executed_at          AS executedAt
         FROM transactions t
                  JOIN user_accounts ua ON t.account_id = ua.account_id
         WHERE ua.user_id = #{userId}
         ORDER BY t.executed_at DESC
-            LIMIT 10
     </select>
-
+    <select id="getTransactionIdsByUser" resultType="long">
+        SELECT
+            t.transaction_id
+        FROM transactions t
+                 JOIN user_accounts ua ON t.account_id = ua.account_id
+        WHERE ua.user_id = #{userId}
+    </select>
 </mapper>
