@@ -227,16 +227,24 @@ public class PromptBuilder {
     // 용어 설명
     public String buildForTermExplain(String term) {
         return """
-    아래 투자 용어에 대해 설명해주세요:
+아래 투자 용어에 대해 JSON 형식으로 설명해주세요.
 
-    - 용어: %s
-    - 포함할 항목:
-      1. 정의 및 개념
-      2. 투자 시 의미와 활용 예시
-      3. 초보자 관점에서의 해석
-    - 가능한 한 이해하기 쉽게 설명
+조건:
+- JSON 구조는 다음과 같아야 합니다:
 
-    """.formatted(term);
+{
+  "term": "용어명",
+  "definition": "정의 및 개념",
+  "meaning": "투자 시 의미와 활용 예시",
+  "beginnerTip": "초보자 관점에서의 해석"
+}
+
+요청 내용:
+- 용어: %s
+- 각 항목은 반드시 포함
+- 초보자도 이해할 수 있도록 간단하고 친절하게 작성
+
+""".formatted(term);
     }
 
     // 키워드 분류 프롬프트
