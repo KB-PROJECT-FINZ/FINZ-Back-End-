@@ -18,9 +18,12 @@ public class MinuteChartApiKiwoom {
     /**
      * 키움증권 분봉 차트 데이터 조회 (컨트롤러에서 호출)
      */
-    public JsonNode getKiwoomMinuteChartData(
-            String stockCode
-    ) {
+
+    public JsonNode getKiwoomMinuteChartData(String stockCode) {
+        return getKiwoomMinuteChartData(stockCode, false);
+    }
+
+    public JsonNode getKiwoomMinuteChartData(String stockCode, boolean wrapWithStockCode) {
         log.info("Fetching Kiwoom minute chart data for stock: {}", stockCode);
 
         String accessToken;
@@ -33,8 +36,8 @@ public class MinuteChartApiKiwoom {
 
         try {
             ObjectMapper mapper = new ObjectMapper();
-            com.fasterxml.jackson.databind.node.ObjectNode body = mapper.createObjectNode();
-            body.put("stk_cd", stockCode);
+            ObjectNode body = mapper.createObjectNode();
+            body.put("stk_cd", stockCode+"_AL");
             body.put("tic_scope", "1");
             body.put("upd_stkpc_tp", "0");
 
@@ -44,9 +47,6 @@ public class MinuteChartApiKiwoom {
                     .addHeader("authorization", "Bearer " + accessToken)
                     .addHeader("api-id", "ka10080")
                     .addHeader("Content-Type", "application/json");
-
-//            if (contYn != null) builder.addHeader("cont-yn", contYn);
-//            if (nextKey != null) builder.addHeader("next-key", nextKey);
 
             okhttp3.Request request = builder
                     .post(okhttp3.RequestBody.create(body.toString(), okhttp3.MediaType.parse("application/json")))
@@ -60,7 +60,6 @@ public class MinuteChartApiKiwoom {
                 String responseBody = response.body().string();
                 JsonNode result = mapper.readTree(responseBody);
 
-                // result에서 분봉 배열 추출 (예: result.get("stk_min_pole_chart_qry"))
                 JsonNode chartArray = result.get("stk_min_pole_chart_qry");
                 if (chartArray == null || !chartArray.isArray()) {
                     log.warn("분봉 데이터가 없습니다.");
@@ -98,7 +97,14 @@ public class MinuteChartApiKiwoom {
                     processedArray.add(obj);
                 }
 
-                return processedArray;
+                if (wrapWithStockCode) {
+                    ObjectNode wrapped = mapper.createObjectNode();
+                    wrapped.put("stock_code", stockCode);
+                    wrapped.set("data", processedArray);
+                    return wrapped;
+                } else {
+                    return processedArray;
+                }
             }
         } catch (Exception e) {
             log.error("Error fetching Kiwoom minute chart data for stock: {}", stockCode, e);
