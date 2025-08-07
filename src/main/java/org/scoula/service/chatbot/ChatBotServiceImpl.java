@@ -60,7 +60,15 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
 
-    private final TradingService tradingService; // ✅ 이 줄 추가
+    private final TradingService tradingService;
+
+    //피드백 기간 설정
+    private int extractPeriodDays(String message) {
+        if (message.contains("1개월")) return 30;
+        if (message.contains("3개월")) return 90;
+        if (message.contains("6개월")) return 180;
+        return 90; // 기본값 (3개월)
+    }
 
 
     @Override
@@ -270,16 +278,21 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                 case PORTFOLIO_ANALYZE:
                     log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
+
+                    // 📌 기간 추출
+                    int periodDays = extractPeriodDays(userMessage);
+                    log.info("📆 사용자 지정 분석 기간: {}일", periodDays);
+
                     // 1. 거래 요약 정보 조회
-                    stats = tradingService.getBehaviorStats(userId);
-                    if (stats == null || stats.getTransactionCount() == 0 || stats.getStartDate() == null) {
+                    stats = tradingService.getBehaviorStats(userId, periodDays);
+                    if (stats == null || stats.getStartDate() == null || stats.getEndDate() == null) {
                         return ChatResponseDto.builder()
-                                .content("📊 분석할 모의투자 내역이 없습니다.")
+                                .content("📊 선택한 기간 동안 거래 내역이 없습니다.")
                                 .intentType(intentType)
                                 .sessionId(sessionId)
                                 .build();
                     }
-                    log.info("[📊 Stats] 거래 요약 정보: {}", stats);
+                    log.info("[📊 Stats] 거래 요약 정보 ({}일): {}", periodDays, stats);
 
                     // 2. 거래 요약 정보 기반 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);
@@ -323,11 +336,10 @@ public class ChatBotServiceImpl implements ChatBotService {
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
                     // 7. 연관 거래내역 저장
-                    List<Long> transactionIds = tradingService.getTransactionIdsByUser(userId);
+                    List<Long> transactionIds = tradingService.getTransactionIdsByUser(userId, periodDays);
                     for (Long txId : transactionIds) {
                         chatBotMapper.insertChatBehaviorFeedbackTransaction(feedback.getId(), txId);
                     }
-
                     break;
 
 
