@@ -17,11 +17,14 @@
             SUM(CASE WHEN it.group_code IN ('ANALYTICAL', 'EMOTIONAL') THEN h.quantity ELSE 0 END) AS specialRatio
 
         FROM holdings h
-                 JOIN user u ON h.account_id = u.id
+                 JOIN user_accounts ua ON h.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
                  JOIN investment_types it ON u.risk_type = it.risk_type
                  JOIN stocks s ON h.stock_code = s.code
-        WHERE h.account_id = #{userId}
-        GROUP BY h.stock_code
+
+        WHERE ua.user_id = #{userId}
+
+        GROUP BY h.stock_code, s.name, s.image_url
         ORDER BY gain DESC
             LIMIT 5
     </select>
@@ -29,59 +32,55 @@
     <!-- (2) 내 수익률 분포 위치 (기존 유지) -->
     <select id="findMyDistribution" resultMap="MyDistributionResultMap" parameterType="long">
         WITH
-            -- 종목별 수익률 계산
-            stock_profits AS (
-                SELECT
-                    h.stock_code,
-                    s.name AS stock_name,
-                    h.account_id,
-                    CASE
-                        WHEN h.average_price > 0 THEN ROUND((h.current_price - h.average_price) / h.average_price * 100, 2)
-                        ELSE 0
-                        END AS profit_rate
-                FROM holdings h
-                         JOIN stocks s ON h.stock_code = s.code
-            ),
-            -- 내 보유 종목 수익률
-            my_profits AS (
-                SELECT * FROM stock_profits WHERE account_id = #{userId}
-            ),
-            -- 종목별 수익률 랭킹 계산
-            ranked AS (
-                SELECT
-                    stock_code,
-                    profit_rate,
-                    RANK() OVER (PARTITION BY stock_code ORDER BY profit_rate DESC) AS ranking,
-                        COUNT(*) OVER (PARTITION BY stock_code) AS total_count
-                FROM stock_profits
-            ),
-            -- 종목별 수익률 분포 계산
-            distribution AS (
-                SELECT
-                    stock_code,
-                    SUM(CASE WHEN profit_rate &lt; -10 THEN 1 ELSE 0 END) AS bin1,
-                    SUM(CASE WHEN profit_rate BETWEEN -10 AND 0 THEN 1 ELSE 0 END) AS bin2,
-                    SUM(CASE WHEN profit_rate BETWEEN 0 AND 10 THEN 1 ELSE 0 END) AS bin3,
-                    SUM(CASE WHEN profit_rate BETWEEN 10 AND 20 THEN 1 ELSE 0 END) AS bin4,
-                    SUM(CASE WHEN profit_rate BETWEEN 20 AND 30 THEN 1 ELSE 0 END) AS bin5,
-                    SUM(CASE WHEN profit_rate &gt; 30 THEN 1 ELSE 0 END) AS bin6
-                FROM stock_profits
-                GROUP BY stock_code
-            )
+        stock_profits AS (
         SELECT
-            CONCAT('종목 ', mp.stock_name) AS stock_name,
-            mp.profit_rate AS gain_rate,
-            r.ranking AS position_index,
-            CONCAT('상위 ', ROUND(100 * (r.total_count - r.ranking + 1) / r.total_count, 1), '%') AS position_label,
-            d.bin1 AS distribution_bin1,
-            d.bin2 AS distribution_bin2,
-            d.bin3 AS distribution_bin3,
-            d.bin4 AS distribution_bin4,
-            d.bin5 AS distribution_bin5,
-            d.bin6 AS distribution_bin6
+        h.stock_code,
+        h.stock_name,
+        ua.user_id,
+        CASE
+        WHEN h.average_price > 0 THEN ROUND((h.current_price - h.average_price) / h.average_price * 100, 2)
+        ELSE 0
+        END AS profit_rate
+        FROM holdings h
+        JOIN user_accounts ua ON h.account_id = ua.account_id
+        ),
+        my_profits AS (
+        SELECT * FROM stock_profits WHERE user_id = #{userId}
+        ),
+        ranked AS (
+        SELECT
+        stock_code,
+        profit_rate,
+        RANK() OVER (PARTITION BY stock_code ORDER BY profit_rate DESC) AS ranking,
+        COUNT(*) OVER (PARTITION BY stock_code) AS total_count
+        FROM stock_profits
+        ),
+        distribution AS (
+        SELECT
+        stock_code,
+        SUM(CASE WHEN profit_rate &lt; -10 THEN 1 ELSE 0 END) AS bin1,
+        SUM(CASE WHEN profit_rate BETWEEN -10 AND 0 THEN 1 ELSE 0 END) AS bin2,
+        SUM(CASE WHEN profit_rate BETWEEN 0 AND 10 THEN 1 ELSE 0 END) AS bin3,
+        SUM(CASE WHEN profit_rate BETWEEN 10 AND 20 THEN 1 ELSE 0 END) AS bin4,
+        SUM(CASE WHEN profit_rate BETWEEN 20 AND 30 THEN 1 ELSE 0 END) AS bin5,
+        SUM(CASE WHEN profit_rate &gt; 30 THEN 1 ELSE 0 END) AS bin6
+        FROM stock_profits
+        GROUP BY stock_code
+        )
+        SELECT
+        CONCAT('종목 ', mp.stock_name) AS stock_name,
+        mp.profit_rate AS gain_rate,
+        r.ranking AS position_index,
+        CONCAT('상위 ', ROUND(100 * (r.total_count - r.ranking + 1) / r.total_count, 1), '%') AS position_label,
+        d.bin1 AS distribution_bin1,
+        d.bin2 AS distribution_bin2,
+        d.bin3 AS distribution_bin3,
+        d.bin4 AS distribution_bin4,
+        d.bin5 AS distribution_bin5,
+        d.bin6 AS distribution_bin6
         FROM my_profits mp
-                 JOIN ranked r ON mp.stock_code = r.stock_code AND mp.profit_rate = r.profit_rate
-                 JOIN distribution d ON mp.stock_code = d.stock_code
+        JOIN ranked r ON mp.stock_code = r.stock_code AND mp.profit_rate = r.profit_rate
+        JOIN distribution d ON mp.stock_code = d.stock_code
     </select>
 
     <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
@@ -99,7 +98,7 @@
         </collection>
     </resultMap>
 
-    <!-- (3) 성향별 인기 종목 + 로고 포함 -->
+    <!-- (3) 성향별 인기 종목 -->
     <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         SELECT
             p.stock_code,
