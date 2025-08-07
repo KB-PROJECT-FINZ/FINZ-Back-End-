@@ -11,15 +11,13 @@ import java.util.*;
 @Log4j2
 public class PortfolioStatsUtil {
 
-    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions) {
+    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions, int requestedPeriod) {
         if (transactions == null || transactions.isEmpty()) {
             return emptyStats();
         }
 
         List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
-        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));        LocalDate startDate = transactions.get(0).getExecutedAt().toLocalDate();
-        LocalDate endDate = transactions.get(transactions.size() - 1).getExecutedAt().toLocalDate();
-        int analysisPeriod = (int) Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
+        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
 
         int buyCount = 0;
         int sellCount = 0;
@@ -73,22 +71,17 @@ public class PortfolioStatsUtil {
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
-                .analysisPeriod(analysisPeriod)
-                .startDate(startDate)
-                .endDate(endDate)
                 .totalReturn(Math.round(totalReturn * 100.0) / 100.0)
                 .buyCount(buyCount)
                 .sellCount(sellCount)
                 .avgHoldDays(Math.round(avgHoldDays * 10.0) / 10.0)
+                .requestedPeriod(requestedPeriod) // ✅ 여기에 설정
                 .build();
     }
 
     private static BehaviorStatsDto emptyStats() {
         return BehaviorStatsDto.builder()
                 .transactionCount(0)
-                .analysisPeriod(0)
-                .startDate(null)
-                .endDate(null)
                 .totalReturn(0.0)
                 .buyCount(0)
                 .sellCount(0)

@@ -285,7 +285,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 2. 거래 요약 정보 조회
                     stats = tradingService.getBehaviorStats(userId, requestedPeriod);
 
-                    if (stats == null || stats.getStartDate() == null || stats.getEndDate() == null) {
+                    if (stats == null ) {
                         return ChatResponseDto.builder()
                                 .content("📊 선택한 기간 동안 거래 내역이 없습니다.")
                                 .intentType(intentType)
@@ -295,8 +295,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                                 .build();
                     }
 
-                    int actualAnalysisPeriod = stats.getAnalysisPeriod();
-                    log.info("[📊 Stats] 거래 요약 정보 - 요청: {}일 / 실제: {}일", requestedPeriod, actualAnalysisPeriod);
+                    log.info("[📊 Stats] 거래 요약 정보 - 요청: {}일 , requestedPeriod");
 
                     // 3. 거래 요약 정보 기반 GPT 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);
@@ -335,9 +334,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .riskText(risk)
                             .suggestionText(suggestion)
                             .transactionCount(stats.getTransactionCount())
-                            .analysisPeriod(actualAnalysisPeriod)
-                            .startDate(stats.getStartDate().toString())
-                            .endDate(stats.getEndDate().toString())
                             .build();
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
@@ -396,7 +392,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                     .intentType(intentType)
                     .messageId(gptMessage.getId())
                     .sessionId(sessionId)
-                    .analysisPeriod(stats != null ? stats.getAnalysisPeriod() : null)
                     .requestedPeriod(requestedPeriod)
                     .build();
 
