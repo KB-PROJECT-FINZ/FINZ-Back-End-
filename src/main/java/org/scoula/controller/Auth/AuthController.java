@@ -46,7 +46,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     @ResponseBody
     public ResponseEntity<?> logout(HttpSession session) {
         session.invalidate();
@@ -234,5 +234,6 @@ public class AuthController {
         response.put("available", available);
         return ResponseEntity.ok(response);
     }
+
 }
 
