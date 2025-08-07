@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import javax.mail.internet.MimeMessage;
 
 @Service
-public class MailService {
+public abstract class MailService {
 
     @Autowired
     private JavaMailSender mailSender;
@@ -50,4 +50,6 @@ public class MailService {
                 "<br><p>감사합니다. - FINZ</p>" +
                 "</div>";
     }
+
+    public abstract void sendResetPasswordEmail(String to, String tempPassword);
 }
