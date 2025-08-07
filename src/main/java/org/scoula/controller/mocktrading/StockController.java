@@ -1,6 +1,7 @@
 package org.scoula.controller.mocktrading;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,15 +18,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -710,6 +710,286 @@ public class StockController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("주문 일괄 취소 또는 복구 중 오류가 발생했습니다: " + e.getMessage());
         }
+    }
+
+    @PostMapping("/orders/settle")
+    @ApiOperation(value = "거래 대기 주문(지정가) 주문 체결", notes = "거래 대기 목록의 거래를 체결하고 잔고 및 보유 주식 정보를 반영합니다")
+    public ResponseEntity<?> settleOrders(@ApiIgnore javax.servlet.http.HttpSession session) {
+        // 1. 세션에서 로그인 사용자 정보 조회
+        org.scoula.domain.Auth.vo.UserVo loginUser = (org.scoula.domain.Auth.vo.UserVo) session.getAttribute("loginUser");
+        if (loginUser == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        Integer userId = loginUser.getId();
+
+        // 2. userId로 accountId 조회
+        Integer accountId = null;
+        try (Connection conn = DriverManager.getConnection(
+                ConfigManager.get("jdbc.url"),
+                ConfigManager.get("jdbc.username"),
+                ConfigManager.get("jdbc.password"))) {
+            String findAccountSql = "SELECT account_id FROM user_accounts WHERE user_id = ?";
+            try (PreparedStatement findStmt = conn.prepareStatement(findAccountSql)) {
+                findStmt.setInt(1, userId);
+                try (ResultSet rs = findStmt.executeQuery()) {
+                    if (rs.next()) {
+                        accountId = rs.getInt("account_id");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("계좌 ID 조회 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("계좌 ID 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        if (accountId == null) {
+            return ResponseEntity.badRequest().body("계좌 정보가 존재하지 않습니다.");
+        }
+
+        // 3. 거래 대기 목록 조회
+        List<org.scoula.domain.mocktrading.PendingOrderDto> pendingOrders = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(
+                ConfigManager.get("jdbc.url"),
+                ConfigManager.get("jdbc.username"),
+                ConfigManager.get("jdbc.password"))) {
+            String sql = "SELECT order_id, account_id, stock_code, stock_name, order_type, quantity, target_price, created_at FROM pending_orders WHERE account_id = ? ORDER BY created_at DESC";
+            try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, accountId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    while (rs.next()) {
+                        org.scoula.domain.mocktrading.PendingOrderDto dto = new org.scoula.domain.mocktrading.PendingOrderDto();
+                        dto.setOrderId(rs.getInt("order_id"));
+                        dto.setAccountId(rs.getInt("account_id"));
+                        dto.setStockCode(rs.getString("stock_code"));
+                        dto.setStockName(rs.getString("stock_name"));
+                        dto.setOrderType(rs.getString("order_type"));
+                        dto.setQuantity(rs.getInt("quantity"));
+                        dto.setTargetPrice(rs.getInt("target_price"));
+                        dto.setCreatedAt(rs.getTimestamp("created_at"));
+                        pendingOrders.add(dto);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("거래 대기 목록 조회 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("거래 대기 목록 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+        if (pendingOrders.isEmpty()) {
+            return ResponseEntity.ok("체결 가능한 대기 주문이 없습니다.");
+        }
+
+        // 4. 종목코드 추출 및 분봉 데이터 조회
+        Set<String> stockCodes = pendingOrders.stream()
+                .map(org.scoula.domain.mocktrading.PendingOrderDto::getStockCode)
+                .collect(Collectors.toSet());
+
+        System.out.println("추출된 종목코드: " + stockCodes);
+
+        // 분봉 데이터 batch 조회 (RestTemplate 직접 생성)
+        String chartApiUrl = "http://localhost:8080/api/chart/minute/batch";
+        ObjectMapper mapper = new ObjectMapper();
+        List<String> codeList = new ArrayList<>(stockCodes);
+        JsonNode chartResponse;
+        try {
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+            chartResponse = restTemplate.postForObject(chartApiUrl, codeList, JsonNode.class);
+        } catch (Exception e) {
+            log.error("분봉 데이터 조회 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("분봉 데이터 조회 중 오류가 발생했습니다: " + e.getMessage());
+        }
+
+        // 종목별 분봉 데이터 매핑
+        Map<String, JsonNode> stockChartMap = new HashMap<>();
+        if (chartResponse != null && chartResponse.isArray()) {
+            for (JsonNode stockNode : chartResponse) {
+                String code = stockNode.get("stock_code").asText();
+                stockChartMap.put(code, stockNode.get("data"));
+            }
+        }
+        
+        // stockChartMap까지 생성 확인 완료
+
+        // 5. 각 주문별 체결 여부 판별 및 처리
+        try (Connection conn = DriverManager.getConnection(
+                ConfigManager.get("jdbc.url"),
+                ConfigManager.get("jdbc.username"),
+                ConfigManager.get("jdbc.password"))) {
+            conn.setAutoCommit(false); // 트랜잭션
+
+            for (org.scoula.domain.mocktrading.PendingOrderDto order : pendingOrders) {
+                JsonNode minuteData = stockChartMap.get(order.getStockCode());
+                if (minuteData == null || !minuteData.isArray()) continue;
+
+                long createdAt = order.getCreatedAt() != null ? order.getCreatedAt().getTime() : 0L;
+                long now = System.currentTimeMillis();
+
+                boolean isBuy = "BUY".equalsIgnoreCase(order.getOrderType());
+                boolean isSell = "SELL".equalsIgnoreCase(order.getOrderType());
+                boolean executed = false;
+
+                // 최고가/최저가 및 해당 분봉 시간 저장용
+                Integer maxHigh = null, minLow = null;
+                String maxHighTime = null, minLowTime = null;
+
+                for (JsonNode candle : minuteData) {
+                    String today = new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date());
+                    String stckCntgHour = candle.get("stck_cntg_hour").asText(); // "093000"
+                    String dateTimeStr = today + stckCntgHour; // "20250806093000"
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMddHHmmss");
+                    long candleTime = sdf.parse(dateTimeStr).getTime();
+
+                    if (candleTime < createdAt || candleTime > now) continue;
+
+                    int high = candle.get("stck_hgpr").asInt();
+                    int low = candle.get("stck_lwpr").asInt();
+
+                    // 최고가/최저가 및 시간 갱신
+                    if (maxHigh == null || high > maxHigh) {
+                        maxHigh = high;
+                        maxHighTime = stckCntgHour;
+                    }
+                    if (minLow == null || low < minLow) {
+                        minLow = low;
+                        minLowTime = stckCntgHour;
+                    }
+
+                    if (isBuy && order.getTargetPrice() >= low) {
+                        executed = true;
+                        break;
+                    }
+                    if (isSell && order.getTargetPrice() <= high) {
+                        executed = true;
+                        break;
+                    }
+                }
+
+                // 구간 최고가/최저가 결과 출력
+                System.out.println(
+                        String.format(
+                                "[%s] 주문ID: %d, createdAt~now 구간 최고가: %s (%s), 최저가: %s (%s)",
+                                order.getStockCode(),
+                                order.getOrderId(),
+                                maxHigh != null ? maxHigh : "N/A",
+                                maxHighTime != null ? maxHighTime : "N/A",
+                                minLow != null ? minLow : "N/A",
+                                minLowTime != null ? minLowTime : "N/A"
+                        )
+                );
+
+                if (!executed) continue;
+
+                // 6. 체결 처리 (holdings/transactions/pending_orders)
+                if (isBuy) {
+                    // holdings upsert
+                    String selectHoldingSql = "SELECT holding_id, quantity, average_price, total_cost FROM holdings WHERE account_id = ? AND stock_code = ?";
+                    Integer holdingId = null;
+                    int prevQuantity = 0;
+                    long prevTotalCost = 0;
+                    int prevAveragePrice = 0;
+                    try (PreparedStatement selectStmt = conn.prepareStatement(selectHoldingSql)) {
+                        selectStmt.setInt(1, order.getAccountId());
+                        selectStmt.setString(2, order.getStockCode());
+                        try (ResultSet rs = selectStmt.executeQuery()) {
+                            if (rs.next()) {
+                                holdingId = rs.getInt("holding_id");
+                                prevQuantity = rs.getInt("quantity");
+                                prevTotalCost = rs.getLong("total_cost");
+                                prevAveragePrice = rs.getInt("average_price");
+                            }
+                        }
+                    }
+                    int newQuantity = prevQuantity + order.getQuantity();
+                    long newTotalCost = prevTotalCost + (long) order.getQuantity() * order.getTargetPrice();
+                    int newAveragePrice = (int) (newTotalCost / newQuantity);
+
+                    if (holdingId != null) {
+                        // update
+                        String updateSql = "UPDATE holdings SET quantity = ?, average_price = ?, total_cost = ?, updated_at = CURRENT_TIMESTAMP WHERE holding_id = ?";
+                        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                            updateStmt.setInt(1, newQuantity);
+                            updateStmt.setInt(2, newAveragePrice);
+                            updateStmt.setLong(3, newTotalCost);
+                            updateStmt.setInt(4, holdingId);
+                            updateStmt.executeUpdate();
+                        }
+                    } else {
+                        // insert
+                        String insertSql = "INSERT INTO holdings (account_id, stock_code, stock_name, quantity, average_price, total_cost, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+                        try (PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
+                            insertStmt.setInt(1, order.getAccountId());
+                            insertStmt.setString(2, order.getStockCode());
+                            insertStmt.setString(3, order.getStockName());
+                            insertStmt.setInt(4, order.getQuantity());
+                            insertStmt.setInt(5, order.getTargetPrice());
+                            insertStmt.setLong(6, (long) order.getQuantity() * order.getTargetPrice());
+                            insertStmt.executeUpdate();
+                        }
+                    }
+                } else if (isSell) {
+                    // holdings update or delete
+                    String selectHoldingSql = "SELECT holding_id, quantity FROM holdings WHERE account_id = ? AND stock_code = ?";
+                    Integer holdingId = null;
+                    int prevQuantity = 0;
+                    try (PreparedStatement selectStmt = conn.prepareStatement(selectHoldingSql)) {
+                        selectStmt.setInt(1, order.getAccountId());
+                        selectStmt.setString(2, order.getStockCode());
+                        try (ResultSet rs = selectStmt.executeQuery()) {
+                            if (rs.next()) {
+                                holdingId = rs.getInt("holding_id");
+                                prevQuantity = rs.getInt("quantity");
+                            }
+                        }
+                    }
+                    int newQuantity = prevQuantity - order.getQuantity();
+                    if (newQuantity > 0) {
+                        String updateSql = "UPDATE holdings SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE holding_id = ?";
+                        try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+                            updateStmt.setInt(1, newQuantity);
+                            updateStmt.setInt(2, holdingId);
+                            updateStmt.executeUpdate();
+                        }
+                    } else {
+                        String deleteSql = "DELETE FROM holdings WHERE holding_id = ?";
+                        try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
+                            deleteStmt.setInt(1, holdingId);
+                            deleteStmt.executeUpdate();
+                        }
+                    }
+                }
+
+                // transactions insert
+                String insertTransSql = "INSERT INTO transactions (account_id, stock_code, stock_name, transaction_type, order_type, quantity, price, total_amount, executed_at, order_created_at, order_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+                try (PreparedStatement pstmt = conn.prepareStatement(insertTransSql)) {
+                    pstmt.setInt(1, order.getAccountId());
+                    pstmt.setString(2, order.getStockCode());
+                    pstmt.setString(3, order.getStockName());
+                    pstmt.setString(4, order.getOrderType());
+                    pstmt.setString(5, "LIMIT");
+                    pstmt.setInt(6, order.getQuantity());
+                    pstmt.setInt(7, order.getTargetPrice());
+                    pstmt.setLong(8, (long) order.getQuantity() * order.getTargetPrice());
+                    pstmt.setTimestamp(9, order.getCreatedAt());
+                    pstmt.setInt(10, order.getTargetPrice());
+                    pstmt.executeUpdate();
+                }
+
+                // pending_orders delete
+                String deleteOrderSql = "DELETE FROM pending_orders WHERE order_id = ?";
+                try (PreparedStatement deleteStmt = conn.prepareStatement(deleteOrderSql)) {
+                    deleteStmt.setInt(1, order.getOrderId());
+                    deleteStmt.executeUpdate();
+                }
+            }
+            conn.commit();
+        } catch (Exception e) {
+            log.error("거래 체결 처리 오류: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("거래 체결 처리 중 오류가 발생했습니다: " + e.getMessage());
+        }
+
+        return ResponseEntity.ok("거래 대기 주문 체결 처리가 완료되었습니다.");
     }
 
     @PostMapping("/order/market")

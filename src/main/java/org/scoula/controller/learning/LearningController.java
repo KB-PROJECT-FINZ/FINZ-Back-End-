@@ -25,6 +25,7 @@ public class LearningController {
     private final LearningService learningService;
 
     private final LearningGptService learningGptService;
+
     //콘텐츠 목록
     @GetMapping("/contents")
     public ResponseEntity<List<LearningContentDTO>> getAllContents() {
@@ -60,6 +61,7 @@ public class LearningController {
             return ResponseEntity.status(500).body("학습 기록 저장 실패");
         }
     }
+
     // 사용자 크레딧 조회
     @GetMapping("/user/credit")
     public ResponseEntity<Integer> getUserCredit(@LoginUser UserVo user) {
@@ -127,7 +129,7 @@ public class LearningController {
 
     // 퀴즈 결과 저장 (오답용)
     @PostMapping("/quiz/result/save")
-    public ResponseEntity<String> saveQuizResult(@LoginUser UserVo user,@RequestBody QuizResultDTO dto) {
+    public ResponseEntity<String> saveQuizResult(@LoginUser UserVo user, @RequestBody QuizResultDTO dto) {
         try {
             learningService.saveResult(user.getId(), dto.getQuizId(), dto.isCorrect(), dto.getSelectedAnswer(), 0);
             return ResponseEntity.ok("퀴즈 결과가 저장되었습니다.");
@@ -136,17 +138,20 @@ public class LearningController {
             return ResponseEntity.status(500).body("퀴즈 결과 저장 실패");
         }
     }
+
     //컨텐츠 상세페이지에서 읽었는지 유무 판단하기 위해
     @GetMapping("/history/complete")
     public boolean userCompletedContent(@LoginUser UserVo user, @RequestParam int contentId) {
         return learningService.hasCompleted(user.getId(), contentId);
     }
+
     //완료된 학습 컨텐츠 분류
     @GetMapping("/history/complete/list")
     public List<LearningContentDTO> getCompletedContents(@LoginUser UserVo user) {
         return learningService.getCompletedContents(user.getId());
     }
-//    사용자 별 추천 콘텐츠 분류
+
+    //    사용자 별 추천 콘텐츠 분류
     @GetMapping("/recommend/list")
     public ResponseEntity<List<LearningContentDTO>> recommendList(@LoginUser UserVo user) {
         return ResponseEntity.ok(learningGptService.recommendLearningContents(user.getId(), 5));
@@ -163,10 +168,14 @@ public class LearningController {
             return ResponseEntity.status(500).body(0);
         }
     }
-        //사용자 별 완료된 컨텐츠 개수 조회
-        @GetMapping("/history/count")
-        public int getUserReadCount (@LoginUser UserVo user){
-            return learningService.getUserReadCount(user.getId());
-        }
+
+    //사용자 별 완료된 컨텐츠 개수 조회
+    @GetMapping("/history/count")
+    public int getUserReadCount(@LoginUser UserVo user) {
+        return learningService.getUserReadCount(user.getId());
     }
+
+}
+
+
 

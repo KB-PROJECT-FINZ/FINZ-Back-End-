@@ -32,21 +32,6 @@ public class ChatAnalysisMapper {
                 .build();
     }
 
-    private static Float parseFloat(String val) {
-        try {
-            return val == null || val.isBlank() ? null : Float.parseFloat(val.replace(",", ""));
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static Long parseLong(String val) {
-        try {
-            return val == null || val.isBlank() ? null : Long.parseLong(val.replace(",", ""));
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
     private static Float toFloat(Double value) {
         return value == null ? null : value.floatValue();
