@@ -4,3 +4,4 @@
 # (선택) JSON, YAML 등도 인코딩 강제하고 싶으면 아래 추가
 *.json text eol=lf working-tree-encoding=UTF-8
 *.yml  text eol=lf working-tree-encoding=UTF-8
+*.java text eol=lf

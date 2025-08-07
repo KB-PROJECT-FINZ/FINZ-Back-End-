@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/task https://www.springframework.org/schema/task/spring-task.xsd">
 
     <!-- Root Context: defines shared resources visible to all other web components -->
     <bean id="mailSender" class="org.springframework.mail.javamail.JavaMailSenderImpl">
@@ -23,7 +26,9 @@
                 <prop key="mail.smtp.ssl.protocols">TLSv1.2</prop>
             </props>
         </property>
+
     </bean>
 
+    <task:annotation-driven />
 
 </beans>
