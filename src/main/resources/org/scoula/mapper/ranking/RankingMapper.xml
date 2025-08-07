@@ -5,56 +5,25 @@
 
 <mapper namespace="org.scoula.mapper.ranking.RankingMapper">
 
-    <!-- (1) 내 수익률 및 전체 순위 -->
+    <!-- 1) 내 수익률 및 전체 순위 -->
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
-       <![CDATA[
+        <![CDATA[
         SELECT
-            u.id AS user_id,
-            COALESCE(ROUND(AVG(h.profit_rate), 2), NULL) AS gain_rate,
-            it.name_kr AS risk_type,
-            CASE
-                WHEN COUNT(h.profit_rate) = 0 THEN NULL
-                ELSE (
-                    SELECT COUNT(*) + 1
-                    FROM (
-                             SELECT account_id, ROUND(AVG(profit_rate), 2) AS avg_rate
-                             FROM holdings
-                             GROUP BY account_id
-                         ) sub
-                    WHERE sub.avg_rate > ROUND(AVG(h.profit_rate), 2)
-                )
-                END AS ranking,
-            CASE
-                WHEN COUNT(h.profit_rate) = 0 THEN NULL
-                ELSE (
-                    SELECT ROUND(
-                                   100.0 * COUNT(*) / (SELECT COUNT(DISTINCT account_id) FROM holdings),
-                                   2
-                           )
-                    FROM (
-                             SELECT account_id, ROUND(AVG(profit_rate), 2) AS avg_rate
-                             FROM holdings
-                             GROUP BY account_id
-                         ) sub
-                    WHERE sub.avg_rate <= ROUND(AVG(h.profit_rate), 2)
-                )
-                END AS top_percent
-        FROM user u
-                 LEFT JOIN holdings h ON u.id = h.account_id
-                 LEFT JOIN investment_types it ON u.risk_type = it.risk_type
+            u.id AS userId,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking,
+                AVG(ah.profit_rate) AS gainRate,
+            ROUND(100 * (RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) - 1) / COUNT(*) OVER (), 2) AS topPercent,
+            u.risk_type AS riskType
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
         WHERE u.id = #{userId}
-        GROUP BY u.id, it.name_kr
+          AND ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.risk_type
         ]]>
     </select>
-    <resultMap id="myRankingMap" type="org.scoula.domain.ranking.MyRankingDto">
-        <result column="user_id" property="userId"/>
-        <result column="gain_rate" property="gainRate"/>
-        <result column="risk_type" property="riskType"/>
-        <result column="ranking" property="ranking"/>
-        <result column="top_percent" property="topPercent"/>
-    </resultMap>
 
-    <!-- (2) 전체 인기 종목 Top5 -->
+    <!-- 2) 인기 종목 (지난주 등 기간 기준) -->
     <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         <![CDATA[
         SELECT
@@ -69,58 +38,79 @@
           AND t.executed_at < DATE_ADD(#{baseDate}, INTERVAL 7 DAY)
         GROUP BY t.stock_code, s.name, s.image_url
         ORDER BY transaction_count DESC
-            LIMIT 5
+            LIMIT 10
         ]]>
     </select>
 
-    <!-- (3) 전체 상위 수익률 TOP 100 -->
+    <!-- 3) 실시간 인기 종목 (오늘 기준) -->
+    <select id="selectRealTimePopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+        <![CDATA[
+        SELECT
+            t.stock_code AS stock_code,
+            s.name AS stock_name,
+            COUNT(*) AS transaction_count,
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking,
+                s.image_url AS image_url
+        FROM transactions t
+                 JOIN stocks s ON t.stock_code = s.code
+        WHERE DATE(t.executed_at) = #{baseDate}
+        GROUP BY t.stock_code, s.name, s.image_url
+        ORDER BY transaction_count DESC
+            LIMIT 10
+        ]]>
+    </select>
+
+    <!-- 4) 전체 상위 수익률 TOP 100 -->
     <select id="selectTopRankingWithTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="string">
+    <![CDATA[
         SELECT
-            ranked.user_id,
-            ranked.nickname,
-            ranked.trait_group,
-            ranked.gain_rate,
-            ranked.ranking
-        FROM (
-                 SELECT
-                     h.account_id AS user_id,
-                     u.nickname AS nickname,
-                     rt.name_kr AS trait_group,
-                     ROUND(AVG(h.profit_rate), 2) AS gain_rate,
-                     RANK() OVER (ORDER BY ROUND(AVG(h.profit_rate), 2) DESC) AS ranking
-                 FROM holdings h
-                          JOIN user u ON h.account_id = u.id
-                          JOIN investment_types rt ON u.risk_type = rt.risk_type
-                 GROUP BY h.account_id, u.nickname, rt.name_kr
-             ) ranked
+            u.id AS user_id,
+            IFNULL(u.nickname, '익명') AS nickname,
+            rt.group_code AS trait_group,
+            rt.name_kr AS trait_group_name,
+            u.risk_type AS original_trait,
+            AVG(ah.profit_rate) AS gain_rate,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
+                 JOIN investment_types rt ON u.risk_type = rt.risk_type
+        WHERE ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.nickname, rt.group_code, rt.name_kr, u.risk_type
+        ORDER BY gain_rate DESC
             LIMIT 100
+        ]]>
     </select>
 
-
-    <!-- (4) 성향 그룹별 상위 수익률 TOP 100 -->
+    <!-- 5) 성향 그룹별 상위 수익률 TOP 100 -->
     <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="map">
+        <![CDATA[
         SELECT
-        ranked.user_id,
-        ranked.nickname,
-        ranked.trait_group,
-        ranked.original_trait,
-        ranked.gain_rate,
-        ranked.ranking
-        FROM (
-        SELECT
-        h.account_id AS user_id,
-        u.nickname AS nickname,
-        rt.group_code AS trait_group,
-        u.risk_type AS original_trait,
-        ROUND(AVG(h.profit_rate), 2) AS gain_rate,
-        RANK() OVER (ORDER BY ROUND(AVG(h.profit_rate), 2) DESC) AS ranking
-        FROM holdings h
-        JOIN user u ON h.account_id = u.id
-        JOIN investment_types rt ON u.risk_type = rt.risk_type
+            u.id AS user_id,
+            IFNULL(u.nickname, '익명') AS nickname,
+            rt.group_code AS trait_group,
+            u.risk_type AS original_trait,
+            ROUND(AVG(ah.profit_rate), 2) AS gain_rate,
+            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking
+        FROM asset_history ah
+                 JOIN user_accounts ua ON ah.account_id = ua.account_id
+                 JOIN user u ON ua.user_id = u.id
+                 JOIN investment_types rt ON u.risk_type = rt.risk_type
         WHERE rt.group_code = #{traitGroup}
-        GROUP BY h.account_id, u.nickname, u.risk_type
-        ) ranked
-        LIMIT 100
+          AND ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        GROUP BY u.id, u.nickname, rt.group_code, u.risk_type
+        ORDER BY gain_rate DESC
+            LIMIT 100
+        ]]>
     </select>
+
+    <!-- 6) baseDate 데이터 존재 여부 확인 -->
+    <select id="existsAssetHistoryByDate" parameterType="java.time.LocalDate" resultType="int">
+        SELECT EXISTS(
+            SELECT 1 FROM asset_history
+            WHERE record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+        )
+    </select>
+
 
 </mapper>

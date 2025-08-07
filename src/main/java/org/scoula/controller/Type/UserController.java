@@ -30,7 +30,7 @@ public class UserController {
         boolean success = userService.updateRiskType(dto.getUsername(), dto.getRiskType());
 
         if (success) {
-            // ✅ 최신 정보로 세션 전체 객체를 덮어쓰기
+            //  최신 정보로 세션 전체 객체를 덮어쓰기
             UserVo refreshed = userService.findByUsername(dto.getUsername());
             if (refreshed != null) {
                 session.setAttribute("loginUser", refreshed); // 완전히 새 객체로 갱신

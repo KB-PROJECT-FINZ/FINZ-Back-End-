@@ -6,7 +6,8 @@ import org.scoula.domain.mocktrading.vo.UserAccount;
 import java.math.BigDecimal;
 import java.util.List;
 
-public interface UserAccountMapper {
+public interface
+UserAccountMapper {
 
     /**
      * 가상 계좌 생성

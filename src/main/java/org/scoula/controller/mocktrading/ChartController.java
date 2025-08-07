@@ -72,6 +72,55 @@ public class ChartController {
         }
     }
 
+    @PostMapping("/minute/batch")
+    @ApiOperation(
+            value = "여러 종목의 키움 분봉 차트 데이터 동시 조회",
+            notes = "종목코드 배열을 받아 각 종목의 키움 분봉 차트 데이터를 동시에 조회합니다."
+    )
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "성공"),
+            @ApiResponse(code = 400, message = "잘못된 요청"),
+            @ApiResponse(code = 500, message = "서버 에러")
+    })
+    public ResponseEntity<List<JsonNode>> getKiwoomMinuteChartBatch(
+            @ApiParam(value = "종목코드 배열", required = true)
+            @RequestBody List<String> stockCodes
+    ) {
+        log.info("Received Kiwoom minute chart batch request - Stocks: {}", stockCodes);
+
+        if (stockCodes == null || stockCodes.isEmpty()) {
+            log.warn("No stock codes provided");
+            return ResponseEntity.badRequest().build();
+        }
+
+        // 동시성 처리를 위한 ExecutorService
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(stockCodes.size(), 10));
+        List<CompletableFuture<JsonNode>> futures = new ArrayList<>();
+
+        for (String stockCode : stockCodes) {
+            CompletableFuture<JsonNode> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    JsonNode result = minuteChartApiKiwoom.getKiwoomMinuteChartData(stockCode, true);
+                    return result;
+                } catch (Exception e) {
+                    log.error("Error processing Kiwoom minute chart for stock: {}", stockCode, e);
+                    return null;
+                }
+            }, executor);
+            futures.add(future);
+        }
+
+        // 모든 작업 완료까지 대기
+        List<JsonNode> results = futures.stream()
+                .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        executor.shutdown();
+
+        return ResponseEntity.ok(results);
+    }
+
     @GetMapping("/various/{stockCode}")
     @ApiOperation(
             value = "일/주/월/년별 차트 데이터 조회",
