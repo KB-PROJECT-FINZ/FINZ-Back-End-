@@ -201,9 +201,14 @@ public class PromptBuilder {
         return """
         아래는 모의투자 내역 통계입니다.
 
-        - 분석 대상 거래 수: %d건
-        - 분석 기간: %s ~ %s (%d일)
+        📊 거래 요약
+        - 총 거래 횟수: %d회
+        - 분석 기간: %d일
         - 총 수익률: %.2f%%
+        🪙 거래 활동
+        - 매수 횟수: %d회
+        - 매도 횟수: %d회
+        - 평균 보유일: %.2f일
 
         위 통계를 바탕으로 사용자의 투자 성향 및 전략에 대해 분석하고,
         개선점과 피드백을 요약해 주세요.
@@ -217,26 +222,35 @@ public class PromptBuilder {
         - 반복 표현(예: "더 많이 연구해야 한다")은 피하고, 구체적인 행동 중심으로 조언해줘
         """.formatted(
                 stats.getTransactionCount(),
-                stats.getStartDate(),
-                stats.getEndDate(),
                 stats.getAnalysisPeriod(),
-                stats.getTotalReturn()
+                stats.getTotalReturn(),
+                stats.getBuyCount(),
+                stats.getSellCount(),
+                stats.getAvgHoldDays()
         );
     }
 
     // 용어 설명
     public String buildForTermExplain(String term) {
         return """
-    아래 투자 용어에 대해 설명해주세요:
+아래 투자 용어에 대해 JSON 형식으로 설명해주세요.
 
-    - 용어: %s
-    - 포함할 항목:
-      1. 정의 및 개념
-      2. 투자 시 의미와 활용 예시
-      3. 초보자 관점에서의 해석
-    - 가능한 한 이해하기 쉽게 설명
+조건:
+- JSON 구조는 다음과 같아야 합니다:
 
-    """.formatted(term);
+{
+  "term": "용어명",
+  "definition": "정의 및 개념",
+  "meaning": "투자 시 의미와 활용 예시",
+  "beginnerTip": "초보자 관점에서의 해석"
+}
+
+요청 내용:
+- 용어: %s
+- 각 항목은 반드시 포함
+- 초보자도 이해할 수 있도록 간단하고 친절하게 작성
+
+""".formatted(term);
     }
 
     // 키워드 분류 프롬프트
