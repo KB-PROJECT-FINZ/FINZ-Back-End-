@@ -35,7 +35,7 @@ public class PromptBuilder {
     ```json
     {
       "ticker": "005930",
-      "reason": "삼성전자는 AI 반도체 시장 확대와 수익성 개선 기대감에 따라 성장 가능성이 **있어 보여요**. PER이 낮고 ROE가 양호해서 **투자 매력이 있어요**. 사용자의 단기/공격형 성향과도 **잘 어울려요**."
+      "reason": "삼성전자는 AI 반도체 시장 확대와 수익성 개선 기대감에 따라 성장 가능성이 **있어 보여요**. PER이 낮고 ROE가 양호해서 **투자 매력이 있어요**. 사용자의 단기/공격형 성향과도 **잘 어울려요**.",
       "riskLevel": "중간",
       "timingComment": "최근 조정 이후 기술적으로 안정화 구간. 분할 매수 고려 가능",
       "futureOutlook": "AI 수요 증가로 인한 실적 개선 기대. 단, 글로벌 경기 둔화는 주의 필요"
@@ -138,26 +138,63 @@ public class PromptBuilder {
     }
 
 
-
-
-
-    // 종목 분석 요청
-    public String buildForAnalysis(String stockName) {
+    // 종목 추출프롬프트
+    public String stockextractionPrompt(String userMessage) {
         return """
-        아래 종목에 대한 종합 분석을 해주세요:
+        Extract the stock name and its ticker symbol from the user input below.
 
-        - 종목명: %s
+        Format your output **exactly** as follows:
+        Stock: <stock name>
+        Ticker: <ticker symbol or null if unknown>
 
-        항목:
-        1. 기업 개요
-        2. 재무 지표 (PER, ROE, EPS 등)
-        3. 성장성/시장 점유율
-        4. 기술적 분석 요약
-        5. 주요 리스크
-        6. 종합 의견
+        Rules:
+        - Return only the **first** stock mentioned, if there are multiple.
+        - If you cannot find a valid ticker, write `null`.
+        - The stock name must appear in the input. Do not guess new ones.
+        - Do not include any explanations or additional text — just the 2 lines in the format.
 
-        """.formatted(stockName);
+        🧪 Examples:
+        Input: 삼성전자 분석해줘  
+        Output:  
+        Stock: 삼성전자  
+        Ticker: 005930
+
+        Input: 카카오 주가 어때?  
+        Output:  
+        Stock: 카카오  
+        Ticker: 035720
+
+        Input: 테슬라 어때?  
+        Output:  
+        Stock: 테슬라  
+        Ticker: null
+
+        Input: 삼성전자 어때?  
+        Output:  
+        Stock: 삼성전자  
+        Ticker: 005930
+
+        Input: 테슬라 ㄱㅊ?  
+        Output:  
+        Stock: 테슬라  
+        Ticker: null
+
+        Input: 카카오  
+        Output:  
+        Stock: 카카오  
+        Ticker: 035720
+
+        Input: 현대차 알려줘  
+        Output:  
+        Stock: 현대차  
+        Ticker: 005380
+
+        👉 Input: %s  
+        Output:
+        """.formatted(userMessage);
     }
+
+
 
     // 모의투자 성과 분석
     public String buildForPortfolioAnalysis(BehaviorStatsDto stats) {

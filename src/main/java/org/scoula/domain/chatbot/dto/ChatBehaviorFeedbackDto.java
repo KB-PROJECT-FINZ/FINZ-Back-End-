@@ -21,6 +21,7 @@ public class ChatBehaviorFeedbackDto {
     private Integer sessionId;
     private Integer messageId;
     private String summaryText;
+    private String riskText;
     private String suggestionText;
 
     private Integer transactionCount;
