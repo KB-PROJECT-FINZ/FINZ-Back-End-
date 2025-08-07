@@ -23,11 +23,9 @@ import org.springframework.web.client.RestTemplate;
 
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -336,7 +334,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
                     // 7. 연관 거래내역 저장
-                    List<Long> transactionIds = tradingService.getTransactionIdsByUser(userId, periodDays);
+                    List<TransactionDTO> transactions = tradingService.getUserTransactions(userId);
+                    transactions.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
+
+                    List<Long> transactionIds = transactions.stream()
+                            .filter(tx -> tx.getExecutedAt().toLocalDate().isAfter(LocalDate.now().minusDays(periodDays)))
+                            .map(tx -> (long) tx.getTransactionId())
+                            .collect(Collectors.toList());
+
                     for (Long txId : transactionIds) {
                         chatBotMapper.insertChatBehaviorFeedbackTransaction(feedback.getId(), txId);
                     }
