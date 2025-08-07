@@ -11,10 +11,13 @@
             t.stock_code           AS stockCode,
             t.stock_name           AS stockName,
             t.transaction_type     AS transactionType,
+            t.order_type           AS orderType,
             t.quantity,
             t.price,
+            t.order_price          AS orderPrice,
             t.total_amount         AS totalAmount,
-            t.executed_at          AS executedAt
+            t.executed_at          AS executedAt,
+            t.order_created_at     AS orderCreatedAt
         FROM transactions t
                  JOIN user_accounts ua ON t.account_id = ua.account_id
         WHERE ua.user_id = #{userId}
