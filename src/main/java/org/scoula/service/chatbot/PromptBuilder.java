@@ -201,9 +201,14 @@ public class PromptBuilder {
         return """
         아래는 모의투자 내역 통계입니다.
 
-        - 분석 대상 거래 수: %d건
-        - 분석 기간: %s ~ %s (%d일)
+        📊 거래 요약
+        - 총 거래 횟수: %d회
+        - 분석 기간: %d일
         - 총 수익률: %.2f%%
+        🪙 거래 활동
+        - 매수 횟수: %d회
+        - 매도 횟수: %d회
+        - 평균 보유일: %.2f일
 
         위 통계를 바탕으로 사용자의 투자 성향 및 전략에 대해 분석하고,
         개선점과 피드백을 요약해 주세요.
@@ -217,10 +222,11 @@ public class PromptBuilder {
         - 반복 표현(예: "더 많이 연구해야 한다")은 피하고, 구체적인 행동 중심으로 조언해줘
         """.formatted(
                 stats.getTransactionCount(),
-                stats.getStartDate(),
-                stats.getEndDate(),
                 stats.getAnalysisPeriod(),
-                stats.getTotalReturn()
+                stats.getTotalReturn(),
+                stats.getBuyCount(),
+                stats.getSellCount(),
+                stats.getAvgHoldDays()
         );
     }
 
