@@ -57,15 +57,14 @@ public class ChatBotServiceImpl implements ChatBotService {
     // 쳇봇 mapper 주입
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
-
     private final TradingService tradingService;
 
     //피드백 기간 설정
-    private int extractPeriodDays(String message) {
-        if (message.contains("1개월")) return 30;
-        if (message.contains("3개월")) return 90;
+    public int extractPeriodDays(String message) {
         if (message.contains("6개월")) return 180;
-        return 90; // 기본값 (3개월)
+        if (message.contains("3개월")) return 90;
+        if (message.contains("1개월")) return 30;
+        return 30; // 기본값
     }
 
 
@@ -170,6 +169,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             String prompt = null;
             String content = null;
             String gptAnalysisResponse = null;
+            Integer requestedPeriod = null;
 
             switch (intentType) {
 
@@ -274,34 +274,40 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     break;
 
-                case PORTFOLIO_ANALYZE:
-                    log.info("[GPT] 포트폴리오 분석 프롬프트 생성 완료");
+                case PORTFOLIO_ANALYZE: {
+                    log.info("[GPT] 포트폴리오 분석 프롬프트 생성 시작");
 
-                    // 📌 기간 추출
-                    int periodDays = extractPeriodDays(userMessage);
-                    log.info("📆 사용자 지정 분석 기간: {}일", periodDays);
+                    // 1. 사용자 요청 분석 기간 추출
+                    requestedPeriod = extractPeriodDays(userMessage);
+                    final int finalRequestedPeriod = requestedPeriod;
+                    log.info("📆 사용자 요청 분석 기간: {}일", requestedPeriod);
 
-                    // 1. 거래 요약 정보 조회
-                    stats = tradingService.getBehaviorStats(userId, periodDays);
+                    // 2. 거래 요약 정보 조회
+                    stats = tradingService.getBehaviorStats(userId, requestedPeriod);
+
                     if (stats == null || stats.getStartDate() == null || stats.getEndDate() == null) {
                         return ChatResponseDto.builder()
                                 .content("📊 선택한 기간 동안 거래 내역이 없습니다.")
                                 .intentType(intentType)
                                 .sessionId(sessionId)
+                                .analysisPeriod(null)
+                                .requestedPeriod(requestedPeriod)
                                 .build();
                     }
-                    log.info("[📊 Stats] 거래 요약 정보 ({}일): {}", periodDays, stats);
 
-                    // 2. 거래 요약 정보 기반 프롬프트 구성
+                    int actualAnalysisPeriod = stats.getAnalysisPeriod();
+                    log.info("[📊 Stats] 거래 요약 정보 - 요청: {}일 / 실제: {}일", requestedPeriod, actualAnalysisPeriod);
+
+                    // 3. 거래 요약 정보 기반 GPT 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);
 
-                    // 3. GPT 호출
+                    // 4. GPT 호출
                     content = openAiClient.getChatCompletion(prompt);
 
-                    // 4. 메시지 저장
+                    // 5. 메시지 저장
                     ChatMessageDto saved = saveChatMessage(userId, sessionId, "assistant", content, intentType);
 
-                    // 5. 피드백 본문 요약
+                    // 6. GPT 응답 요약 (1. 특징, 2. 리스크, 3. 제안)
                     String summary = null;
                     String risk = null;
                     String suggestion = null;
@@ -312,7 +318,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     while (matcher.find()) {
                         String section = matcher.group().trim();
-                        // 숫자 머릿말 제거: "1. 투자 전략의 특징:" → 제거
                         section = section.replaceFirst("^\\d+\\.\\s*[^:\\n]+:\\s*", "").trim();
                         parts.add(section);
                     }
@@ -321,8 +326,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     if (parts.size() > 1) risk = parts.get(1);
                     if (parts.size() > 2) suggestion = parts.get(2);
 
-
-                    // 6. 리포트 저장
+                    // 7. 피드백 DB 저장
                     ChatBehaviorFeedbackDto feedback = ChatBehaviorFeedbackDto.builder()
                             .userId(userId)
                             .sessionId(sessionId)
@@ -331,25 +335,27 @@ public class ChatBotServiceImpl implements ChatBotService {
                             .riskText(risk)
                             .suggestionText(suggestion)
                             .transactionCount(stats.getTransactionCount())
-                            .analysisPeriod(stats.getAnalysisPeriod())
+                            .analysisPeriod(actualAnalysisPeriod)
                             .startDate(stats.getStartDate().toString())
                             .endDate(stats.getEndDate().toString())
                             .build();
                     chatBotMapper.insertChatBehaviorFeedback(feedback);
 
-                    // 7. 연관 거래내역 저장
+                    // 8. 연관 거래내역 저장
                     List<TransactionDTO> transactions = tradingService.getUserTransactions(userId);
                     transactions.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
 
                     List<Long> transactionIds = transactions.stream()
-                            .filter(tx -> tx.getExecutedAt().toLocalDate().isAfter(LocalDate.now().minusDays(periodDays)))
+                            .filter(tx -> tx.getExecutedAt().toLocalDate().isAfter(LocalDate.now().minusDays(finalRequestedPeriod)))
                             .map(tx -> (long) tx.getTransactionId())
                             .collect(Collectors.toList());
 
                     for (Long txId : transactionIds) {
                         chatBotMapper.insertChatBehaviorFeedbackTransaction(feedback.getId(), txId);
                     }
+
                     break;
+                }
 
 
                 case TERM_EXPLAIN:
@@ -390,6 +396,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                     .intentType(intentType)
                     .messageId(gptMessage.getId())
                     .sessionId(sessionId)
+                    .analysisPeriod(stats != null ? stats.getAnalysisPeriod() : null)
+                    .requestedPeriod(requestedPeriod)
                     .build();
 
         } catch (Exception e) {
