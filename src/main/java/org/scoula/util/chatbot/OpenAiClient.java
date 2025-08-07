@@ -3,6 +3,7 @@ package org.scoula.util.chatbot;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import java.util.List;
 import java.util.Map;
 
+@Log4j2
 @Component
 @RequiredArgsConstructor
 public class OpenAiClient {
@@ -34,7 +36,7 @@ public class OpenAiClient {
     public String getChatCompletion(String prompt) {
         try {
             Map<String, Object> message = Map.of("role", "user", "content", prompt);
-            Map<String, Object> body = Map.of("model", model, "messages", List.of(message), "temperature", 0.6);
+                     Map<String, Object> body = Map.of("model", model, "messages", List.of(message), "temperature", 0.6);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
