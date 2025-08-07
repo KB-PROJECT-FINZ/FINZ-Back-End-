@@ -309,8 +309,12 @@ public class ChatBotServiceImpl implements ChatBotService {
                     Pattern pattern = Pattern.compile("(?s)1\\..*?(?=2\\.|$)|2\\..*?(?=3\\.|$)|3\\..*");
                     Matcher matcher = pattern.matcher(content);
                     List<String> parts = new ArrayList<>();
+
                     while (matcher.find()) {
-                        parts.add(matcher.group().trim());
+                        String section = matcher.group().trim();
+                        // 숫자 머릿말 제거: "1. 투자 전략의 특징:" → 제거
+                        section = section.replaceFirst("^\\d+\\.\\s*[^:\\n]+:\\s*", "").trim();
+                        parts.add(section);
                     }
 
                     if (parts.size() > 0) summary = parts.get(0);

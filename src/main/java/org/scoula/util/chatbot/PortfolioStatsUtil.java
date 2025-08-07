@@ -11,13 +11,13 @@ import java.util.*;
 @Log4j2
 public class PortfolioStatsUtil {
 
-    public static BehaviorStatsDto calculateWithQuantity(List<TransactionDTO> transactions) {
+    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions) {
         if (transactions == null || transactions.isEmpty()) {
             return emptyStats();
         }
 
-        List<TransactionDTO> sortedTransactions = new ArrayList<>(transactions);
-        sortedTransactions.sort(Comparator.comparing(TransactionDTO::getExecutedAt));        LocalDate startDate = transactions.get(0).getExecutedAt().toLocalDate();
+        List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
+        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));        LocalDate startDate = transactions.get(0).getExecutedAt().toLocalDate();
         LocalDate endDate = transactions.get(transactions.size() - 1).getExecutedAt().toLocalDate();
         int analysisPeriod = (int) Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
 
@@ -26,56 +26,50 @@ public class PortfolioStatsUtil {
         double buyTotal = 0.0;
         double sellTotal = 0.0;
 
-        Map<String, Queue<BuyLot>> buyMap = new HashMap<>();
+        Map<String, Queue<Lot>> buyMap = new HashMap<>();
         long totalHoldDays = 0;
-        int totalMatchedQty = 0;
+        int matchedQuantity = 0;
 
-        for (TransactionDTO tx : transactions) {
+        for (TransactionDTO tx : sortedTx) {
             String code = tx.getStockCode();
-            LocalDate txDate = tx.getExecutedAt().toLocalDate();
-            int quantity = tx.getQuantity();
-            double amount = tx.getPrice() * quantity;
+            LocalDate date = tx.getExecutedAt().toLocalDate();
+            int qty = tx.getQuantity();
+            double amount = tx.getPrice() * qty;
 
             if ("BUY".equalsIgnoreCase(tx.getTransactionType())) {
                 buyTotal += amount;
                 buyCount++;
-
-                buyMap.computeIfAbsent(code, k -> new LinkedList<>())
-                        .add(new BuyLot(txDate, quantity));
-
+                buyMap.computeIfAbsent(code, k -> new LinkedList<>()).add(new Lot(date, qty));
             } else if ("SELL".equalsIgnoreCase(tx.getTransactionType())) {
                 sellTotal += amount;
                 sellCount++;
+                Queue<Lot> lots = buyMap.get(code);
+                if (lots != null) {
+                    int remainingQty = qty;
+                    while (remainingQty > 0 && !lots.isEmpty()) {
+                        Lot lot = lots.peek();
+                        int matchedQty = Math.min(remainingQty, lot.quantity);
+                        long holdDays = ChronoUnit.DAYS.between(lot.buyDate, date);
+                        if (holdDays >= 0) {
+                            totalHoldDays += holdDays * matchedQty;
+                            matchedQuantity += matchedQty;
+                        } else {
+                            log.warn("⛔️ 음수 보유일 발생: BUY={}, SELL={}", lot.buyDate, date);
+                        }
 
-                Queue<BuyLot> queue = buyMap.getOrDefault(code, new LinkedList<>());
-                int remaining = quantity;
-
-                while (remaining > 0 && !queue.isEmpty()) {
-                    BuyLot lot = queue.peek();
-                    int matchedQty = Math.min(remaining, lot.qty);
-                    long holdDays = ChronoUnit.DAYS.between(lot.date, txDate);
-
-                    if (holdDays >= 0) {
-                        totalHoldDays += holdDays * matchedQty;
-                        totalMatchedQty += matchedQty;
-                    } else {
-                        log.warn("⛔ 음수 보유일 발생: BUY={}, SELL={}", lot.date, txDate);
+                        if (lot.quantity > matchedQty) {
+                            lot.quantity -= matchedQty;
+                        } else {
+                            lots.poll();
+                        }
+                        remainingQty -= matchedQty;
                     }
-
-                    lot.qty -= matchedQty;
-                    remaining -= matchedQty;
-
-                    if (lot.qty == 0) queue.poll(); // 다 쓴 lot 제거
-                }
-
-                if (remaining > 0) {
-                    log.warn("⚠ 남은 미매칭 매도 수량: {} (종목: {})", remaining, code);
                 }
             }
         }
 
-        double totalReturn = (buyTotal == 0) ? 0.0 : ((sellTotal - buyTotal) / buyTotal) * 100.0;
-        double avgHoldDays = (totalMatchedQty == 0) ? 0.0 : (double) totalHoldDays / totalMatchedQty;
+        double totalReturn = buyTotal == 0 ? 0.0 : ((sellTotal - buyTotal) / buyTotal) * 100.0;
+        double avgHoldDays = matchedQuantity == 0 ? 0.0 : (double) totalHoldDays / matchedQuantity;
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
@@ -102,14 +96,13 @@ public class PortfolioStatsUtil {
                 .build();
     }
 
-    // 내부 클래스: 매수 Lot
-    private static class BuyLot {
-        LocalDate date;
-        int qty;
+    private static class Lot {
+        LocalDate buyDate;
+        int quantity;
 
-        BuyLot(LocalDate date, int qty) {
-            this.date = date;
-            this.qty = qty;
+        Lot(LocalDate buyDate, int quantity) {
+            this.buyDate = buyDate;
+            this.quantity = quantity;
         }
     }
 }

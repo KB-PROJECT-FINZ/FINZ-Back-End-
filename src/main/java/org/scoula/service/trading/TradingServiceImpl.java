@@ -26,7 +26,7 @@ public class TradingServiceImpl implements TradingService {
     @Override
     public BehaviorStatsDto summarizeUserBehavior(int userId) {
         List<TransactionDTO> transactions = tradingMapper.getUserTransactions(userId);
-        return PortfolioStatsUtil.calculateWithQuantity(transactions); // ✅ 수량 기반 계산
+        return PortfolioStatsUtil.calculate(transactions); // ✅ 수량 기반 계산
     }
 
     @Override
@@ -45,7 +45,7 @@ public class TradingServiceImpl implements TradingService {
 
         log.info("📊 [기간 필터] 거래 수 ({}일): {}건", periodDays, filtered.size());
 
-        return PortfolioStatsUtil.calculateWithQuantity(filtered); // ✅ 수량 기반 계산
+        return PortfolioStatsUtil.calculate(filtered); // ✅ 수량 기반 계산
     }
 
     @Override
