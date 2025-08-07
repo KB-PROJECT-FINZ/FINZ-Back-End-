@@ -195,7 +195,7 @@ public class MockTradingController {
      */
     @GetMapping("/transactions")
     public ResponseEntity<?> getUserTransactions(HttpSession session,
-                                                 @RequestParam(defaultValue = "50") int limit,
+                                                 @RequestParam(defaultValue = "1000") int limit,
                                                  @RequestParam(defaultValue = "0") int offset) {
         try {
             UserVo loginUser = (UserVo) session.getAttribute("loginUser");
