@@ -15,6 +15,8 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,6 +29,46 @@ public class FeedbackListController {
     @GetMapping
     public List<JournalFeedback> getAllFeedbacks(@LoginUser UserVo user) {
         return journalFeedbackService.getAllFeedbacks(user.getId());
+    }
+
+    /**
+     * summary_text에서 수익률을 추출하는 메서드
+     * 예시 텍스트: "총 수익률이 -71.73%로 음수인 것으로 보아..."
+     */
+    private Double extractReturnRate(String summaryText) {
+        if (summaryText == null || summaryText.trim().isEmpty()) {
+            return 0.0;
+        }
+
+        try {
+            // 정규표현식으로 수익률 패턴 매칭
+            Pattern pattern = Pattern.compile("총?\\s*수익률[이가]?\\s*([+-]?\\d+\\.?\\d*)%");
+            Matcher matcher = pattern.matcher(summaryText);
+
+            if (matcher.find()) {
+                String returnRateStr = matcher.group(1);
+                Double returnRate = Double.parseDouble(returnRateStr);
+                log.info("추출된 수익률: {}%", returnRate);
+                return returnRate;
+            }
+
+            Pattern alternativePattern = Pattern.compile("수익률:?\\s*([+-]?\\d+\\.?\\d*)%");
+            Matcher alternativeMatcher = alternativePattern.matcher(summaryText);
+
+            if (alternativeMatcher.find()) {
+                String returnRateStr = alternativeMatcher.group(1);
+                Double returnRate = Double.parseDouble(returnRateStr);
+                log.info("추출된 수익률 (대안 패턴): {}%", returnRate);
+                return returnRate;
+            }
+
+            log.warn("수익률 정보를 찾을 수 없습니다. 텍스트: {}", summaryText);
+            return 0.0;
+
+        } catch (NumberFormatException e) {
+            log.error("수익률 파싱 오류: {}", e.getMessage());
+            return 0.0;
+        }
     }
 
     /**
@@ -58,6 +100,9 @@ public class FeedbackListController {
                 ));
             }
 
+            // summary_text에서 수익률 추출
+            Double totalReturn = extractReturnRate(latestReport.getSummaryText());
+
             // DTO를 프론트엔드 응답 형태로 변환
             Map<String, Object> responseData = Map.of(
                     "stats", Map.of(
@@ -65,7 +110,7 @@ public class FeedbackListController {
                             "analysisPeriod", latestReport.getAnalysisPeriodDays(),
                             "startDate", latestReport.getStartDate().toString(),
                             "endDate", latestReport.getEndDate().toString(),
-                            "totalReturn", 0.0 // TODO: 수익률 계산 로직 추가 필요
+                            "totalReturn", totalReturn // 추출된 수익률 사용
                     ),
                     "aiAnalysis", Map.of(
                             "strategy", latestReport.getSummaryText(),
@@ -74,7 +119,8 @@ public class FeedbackListController {
                     )
             );
 
-            log.info("사용자 {}의 AI 분석 리포트 조회 성공 - 리포트 ID: {}", userId, latestReport.getId());
+            log.info("사용자 {}의 AI 분석 리포트 조회 성공 - 리포트 ID: {}, 수익률: {}%",
+                    userId, latestReport.getId(), totalReturn);
             return ResponseEntity.ok(Map.of(
                     "message", "분석 결과 조회 성공",
                     "data", responseData
