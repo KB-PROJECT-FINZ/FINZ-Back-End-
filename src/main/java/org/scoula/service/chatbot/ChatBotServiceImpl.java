@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.trading.dto.TransactionDTO;
+import org.scoula.service.chatbot.session.ChatSessionService;
 import org.scoula.service.trading.TradingService;
 import org.scoula.util.chatbot.*;
 import org.scoula.api.mocktrading.VolumeRankingApi;
@@ -14,7 +15,6 @@ import org.scoula.domain.chatbot.enums.ErrorType;
 
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
@@ -40,6 +40,9 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
     private final TradingService tradingService;
+
+    // 세션
+    private final ChatSessionService chatSessionService;
 
     //피드백 기간 설정
     public int extractPeriodDays(String message) {
@@ -90,44 +93,8 @@ public class ChatBotServiceImpl implements ChatBotService {
             // TODO: 민감 정보 마스킹 로직
 
             // 세션 관리 (intent 바뀌면 종료하고 새 세션 생성)
-            if (sessionId == null) {
-                // 세션이 없으면 새로 생성
-                log.info("[SESSION] 기존 sessionId 없음 → 새 세션 생성 시도");
-                ChatSessionDto newSession = ChatSessionDto.builder()
-                        .userId(userId)
-                        .lastIntent(intentType)
-                        .build();
-                chatBotMapper.insertChatSession(newSession);
-                sessionId = newSession.getId();
-                log.info("[SESSION] 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
-            } else {
-                // 기존 세션의 마지막 intent 가져옴
-                log.info("[SESSION] 기존 세션 유지 확인 → sessionId: {}, userId: {}", sessionId, userId);
-                IntentType lastIntent = chatBotMapper.getLastIntentBySessionId(sessionId);
-                log.info("[SESSION] 세션 intent 비교 → lastIntent: {}, currentIntent: {}", lastIntent, intentType);
-                if (!intentType.equals(lastIntent)) {
-                    // intent 바뀜 → 이전 세션 종료 + 새 세션 생성
-                    log.info("[SESSION] 🔄 intent 변경 감지 → 기존 세션 종료 + 새 세션 생성");
+            sessionId = chatSessionService.ensureSession(userId, sessionId, intentType);
 
-                    chatBotMapper.endChatSession(sessionId);
-                    log.info("[SESSION] ☑ 기존 세션 종료 완료 → sessionId: {}", sessionId);
-
-                    ChatSessionDto newSession = ChatSessionDto.builder()
-                            .userId(userId)
-                            .lastIntent(intentType)
-                            .build();
-                    chatBotMapper.insertChatSession(newSession);
-                    sessionId = newSession.getId();
-                    log.info("[SESSION] 🆕 새 세션 생성 완료 → sessionId: {}, intentType: {}", sessionId, intentType);
-                } else {
-                    log.info("[SESSION] ♻️ intent 동일 → lastIntent 갱신만 수행");
-                    // intent 같음 → lastIntent만 갱신
-                    chatBotMapper.updateChatSessionIntent(ChatSessionDto.builder()
-                            .id(sessionId)
-                            .lastIntent(intentType)
-                            .build());
-                }
-            }
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
             saveChatMessage(userId, sessionId, "user", userMessage, intentType);
@@ -394,11 +361,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         try {
             if (intentType != null && intentType != IntentType.ERROR) {
-                Integer activeSessionId = chatBotMapper.getActiveSessionIdByUserId(userId);
-                if (activeSessionId != null) {
-                    chatBotMapper.endChatSession(activeSessionId);
-                    log.info("❌ 에러 발생으로 세션 종료: sessionId = {}", activeSessionId);
-                }
+                chatSessionService.endActiveSessionIfAny(userId);
             }
         } catch (Exception sessionEx) {
             log.warn("[SESSION] 에러 발생 시 세션 종료 실패: {}", sessionEx.getMessage());
