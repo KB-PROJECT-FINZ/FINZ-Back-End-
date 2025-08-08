@@ -224,7 +224,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 2. 거래 요약 정보 조회
                     stats = tradingService.getBehaviorStats(userId, requestedPeriod);
 
-                    if (stats == null ) {
+                    if (stats == null) {
                         return ChatResponseDto.builder()
                                 .content("📊 선택한 기간 동안 거래 내역이 없습니다.")
                                 .intentType(intentType)
@@ -236,18 +236,18 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     log.info("[📊 Stats] 거래 요약 정보 - 시작일: {}, 종료일: {}", stats.getAnalysisStart(), stats.getAnalysisEnd());
 
-                    // 3. 거래 요약 정보 기반 GPT 프롬프트 구성
+                    // 3. GPT 요청 프롬프트 구성
                     prompt = promptBuilder.buildForPortfolioAnalysis(stats);
 
                     // 4. GPT 호출
                     content = openAiClient.getChatCompletion(prompt);
                     log.warn("GPT 응답 원문 ↓↓↓↓↓↓↓↓↓↓↓\n{}", content);
 
-                    // 5. 메시지 저장
+                    // 5. GPT 응답 저장
                     gptMessage = messageService.save(userId, sessionId, "assistant", content, intentType);
                     assistantSaved = true;
 
-                    // 6. GPT 응답 파싱 → 요약 정보 추출 (JSON 기반)
+                    // 6. GPT 응답 파싱
                     ChatBehaviorFeedbackDto parsed = extractSummaryParts(content);
 
                     if (parsed == null) {
@@ -262,11 +262,11 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 7. 피드백 저장
                     parsed.setUserId(userId);
                     parsed.setSessionId(sessionId);
-                    parsed.setMessageId(saved.getId());
+                    parsed.setMessageId(gptMessage.getId());
                     parsed.setTransactionCount(stats.getTransactionCount());
                     chatBotMapper.insertChatBehaviorFeedback(parsed);
 
-                    // 8. 연관 거래 저장
+                    // 8. 연관 거래 내역 저장
                     List<TransactionDTO> transactions = tradingService.getUserTransactions(userId);
                     transactions.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
                     final BehaviorStatsDto finalStats = stats;
