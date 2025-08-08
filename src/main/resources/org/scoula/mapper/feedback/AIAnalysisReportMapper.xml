@@ -14,9 +14,9 @@
         <result property="riskText" column="risk_text"/>
         <result property="suggestionText" column="suggestion_text"/>
         <result property="transactionCount" column="transaction_count"/>
-        <result property="analysisPeriodDays" column="analysis_period_days"/>
-        <result property="startDate" column="start_date"/>
-        <result property="endDate" column="end_date"/>
+        <result property="analysisPeriod" column="analysis_period"/>
+        <result property="analysisStart" column="analysis_start"/>
+        <result property="analysisEnd" column="analysis_end"/>
         <result property="generatedAt" column="generated_at"/>
     </resultMap>
 
@@ -31,9 +31,9 @@
             risk_text,
             suggestion_text,
             transaction_count,
-            analysis_period_days,
-            start_date,
-            end_date,
+            analysis_period,
+            analysis_Start,
+            analysis_End,
             generated_at
         FROM chat_behavior_feedback
         WHERE user_id = #{userId}
