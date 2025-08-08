@@ -19,6 +19,9 @@ public class PortfolioStatsUtil {
         List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
         sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
 
+        LocalDate startDate = sortedTx.get(0).getExecutedAt().toLocalDate();  //  분석 시작일
+        LocalDate endDate = sortedTx.get(sortedTx.size() - 1).getExecutedAt().toLocalDate();  //  분석 종료일
+
         int buyCount = 0;
         int sellCount = 0;
         double buyTotal = 0.0;
@@ -28,9 +31,19 @@ public class PortfolioStatsUtil {
         long totalHoldDays = 0;
         int matchedQuantity = 0;
 
+        // ✅ 분석 기간 기준 날짜 설정
+        LocalDate analysisEnd = LocalDate.now();
+        LocalDate analysisStart = analysisEnd.minusDays(requestedPeriod);
+
         for (TransactionDTO tx : sortedTx) {
             String code = tx.getStockCode();
             LocalDate date = tx.getExecutedAt().toLocalDate();
+
+            // ✅ 요청한 기간 이외의 거래는 건너뜀
+            if (date.isBefore(analysisStart) || date.isAfter(analysisEnd)) {
+                continue;
+            }
+
             int qty = tx.getQuantity();
             double amount = tx.getPrice() * qty;
 
@@ -75,9 +88,12 @@ public class PortfolioStatsUtil {
                 .buyCount(buyCount)
                 .sellCount(sellCount)
                 .avgHoldDays(Math.round(avgHoldDays * 10.0) / 10.0)
-                .requestedPeriod(requestedPeriod) // ✅ 여기에 설정
+                .requestedPeriod(requestedPeriod) //  사용자 요청 기간
+                .analysisStart(analysisStart)     //  분석 시작일
+                .analysisEnd(analysisEnd)         //  분석 종료일
                 .build();
     }
+
 
     private static BehaviorStatsDto emptyStats() {
         return BehaviorStatsDto.builder()

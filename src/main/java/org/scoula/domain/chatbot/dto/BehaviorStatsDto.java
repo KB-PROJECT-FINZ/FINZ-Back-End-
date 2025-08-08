@@ -15,5 +15,7 @@ public class BehaviorStatsDto {
     private int sellCount;            // 매도 횟수
     private double avgHoldDays;       // 평균 보유일 (추후 구현 필요)
     private int requestedPeriod;      // 사용자 요청 분석 기간 (일)
+    private LocalDate analysisStart;      // 분석 시작일
+    private LocalDate analysisEnd;        // 분석 종료일
 
 }

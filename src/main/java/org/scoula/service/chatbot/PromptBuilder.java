@@ -5,6 +5,7 @@ import org.scoula.domain.chatbot.dto.ChatAnalysisDto;
 import org.scoula.domain.chatbot.dto.ChatRecommendationDto;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
@@ -198,6 +199,8 @@ public class PromptBuilder {
 
     // 모의투자 성과 분석
     public String buildForPortfolioAnalysis(BehaviorStatsDto stats) {
+        LocalDate endDate = LocalDate.now();
+        LocalDate startDate = endDate.minusDays(stats.getRequestedPeriod());
         return """
         사용자는 최근 %d일 동안의 거래에 대해 분석을 요청했습니다.
 
@@ -213,21 +216,25 @@ public class PromptBuilder {
         위 통계를 바탕으로 사용자의 투자 성향 및 전략에 대해 분석하고,
         개선점과 피드백을 요약해 주세요.
 
-        출력 항목:
-        1. 투자 전략의 특징: 거래 수, 수익률, 보유 종목 수 등을 기준으로 전략 성향 요약
-        2. 리스크 및 개선점: 현재 전략의 한계점과 구체적 개선 방안 제시
-        3. 개인 맞춤 조언: 초보자 관점에서 구체적인 다음 행동 제안 (단, 중복 없이 실용적으로)
-
+    
+                📝 출력 형식 (정확히 이 구조로 JSON으로 반환하세요):
+                {
+                  "periodDays": %d,
+                  "startDate": "%s",
+                  "endDate": "%s",
+                  "strategySummary": "...",
+                  "riskPoint": "...",
+                  "suggestion": "..."
+                }
         [주의사항]
         - 데이터가 적을 경우에도 의미 있는 조언을 해줘
         - 반복 표현(예: "더 많이 연구해야 한다")은 피하고, 구체적인 행동 중심으로 조언해줘
         """.formatted(
                 stats.getRequestedPeriod(),
-                stats.getTransactionCount(),
-                stats.getTotalReturn(),
-                stats.getBuyCount(),
-                stats.getSellCount(),
-                stats.getAvgHoldDays()
+                stats.getTransactionCount(), stats.getTotalReturn(),
+                stats.getBuyCount(), stats.getSellCount(), stats.getAvgHoldDays(),
+                stats.getRequestedPeriod(),
+                startDate.toString(), endDate.toString()
         );
     }
 
