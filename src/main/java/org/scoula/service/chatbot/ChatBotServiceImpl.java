@@ -8,7 +8,6 @@ import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.trading.dto.TransactionDTO;
 import org.scoula.service.trading.TradingService;
 import org.scoula.util.chatbot.*;
-import org.scoula.util.chatbot.*;
 import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
@@ -16,10 +15,7 @@ import org.scoula.domain.chatbot.enums.ErrorType;
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 
 import java.io.IOException;
@@ -36,25 +32,11 @@ import java.util.stream.Collectors;
 public class ChatBotServiceImpl implements ChatBotService {
 
     private final PromptBuilder promptBuilder;
-
-    @Autowired
-    private OpenAiClient openAiClient;
-
-    // 성향에 따른 종목 추천 유틸
-    @Autowired
-    private ProfileStockRecommender profileStockRecommender;
-
-    // 모의투자팀이 열심히 만든~ 볼륨랭킹
-    @Autowired
-    private VolumeRankingApi volumeRankingApi;
-
-    @Autowired
-    private UserProfileService userProfileService;
-
-    @Autowired
-    private StockNameParser stockNameParser;
-
-    // 쳇봇 mapper 주입
+    private final OpenAiClient openAiClient;
+    private final ProfileStockRecommender profileStockRecommender;
+    private final VolumeRankingApi volumeRankingApi;
+    private final UserProfileService userProfileService;
+    private final StockNameParser stockNameParser;
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
     private final TradingService tradingService;
