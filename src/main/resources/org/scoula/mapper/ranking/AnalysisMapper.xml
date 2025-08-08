@@ -26,61 +26,21 @@
 
         GROUP BY h.stock_code, s.name, s.image_url
         ORDER BY gain DESC
-            LIMIT 5
+
     </select>
 
     <!-- (2) 내 수익률 분포 위치 (기존 유지) -->
     <select id="findMyDistribution" resultMap="MyDistributionResultMap" parameterType="long">
-        WITH
-        stock_profits AS (
         SELECT
-        h.stock_code,
-        h.stock_name,
-        ua.user_id,
-        CASE
-        WHEN h.average_price > 0 THEN ROUND((h.current_price - h.average_price) / h.average_price * 100, 2)
-        ELSE 0
-        END AS profit_rate
-        FROM holdings h
-        JOIN user_accounts ua ON h.account_id = ua.account_id
-        ),
-        my_profits AS (
-        SELECT * FROM stock_profits WHERE user_id = #{userId}
-        ),
-        ranked AS (
-        SELECT
-        stock_code,
-        profit_rate,
-        RANK() OVER (PARTITION BY stock_code ORDER BY profit_rate DESC) AS ranking,
-        COUNT(*) OVER (PARTITION BY stock_code) AS total_count
-        FROM stock_profits
-        ),
-        distribution AS (
-        SELECT
-        stock_code,
-        SUM(CASE WHEN profit_rate &lt; -10 THEN 1 ELSE 0 END) AS bin1,
-        SUM(CASE WHEN profit_rate BETWEEN -10 AND 0 THEN 1 ELSE 0 END) AS bin2,
-        SUM(CASE WHEN profit_rate BETWEEN 0 AND 10 THEN 1 ELSE 0 END) AS bin3,
-        SUM(CASE WHEN profit_rate BETWEEN 10 AND 20 THEN 1 ELSE 0 END) AS bin4,
-        SUM(CASE WHEN profit_rate BETWEEN 20 AND 30 THEN 1 ELSE 0 END) AS bin5,
-        SUM(CASE WHEN profit_rate &gt; 30 THEN 1 ELSE 0 END) AS bin6
-        FROM stock_profits
-        GROUP BY stock_code
-        )
-        SELECT
-        CONCAT('종목 ', mp.stock_name) AS stock_name,
-        mp.profit_rate AS gain_rate,
-        r.ranking AS position_index,
-        CONCAT('상위 ', ROUND(100 * (r.total_count - r.ranking + 1) / r.total_count, 1), '%') AS position_label,
-        d.bin1 AS distribution_bin1,
-        d.bin2 AS distribution_bin2,
-        d.bin3 AS distribution_bin3,
-        d.bin4 AS distribution_bin4,
-        d.bin5 AS distribution_bin5,
-        d.bin6 AS distribution_bin6
-        FROM my_profits mp
-        JOIN ranked r ON mp.stock_code = r.stock_code AND mp.profit_rate = r.profit_rate
-        JOIN distribution d ON mp.stock_code = d.stock_code
+        stock_code AS stockCode,
+        stock_name AS stockName,
+        gain,
+        position_index AS positionIndex,
+        position_label AS positionLabel,
+        distribution_bins AS distributionBins,  <!-- JSON 혹은 구분자 형태라면 별도 처리 필요 -->
+        color
+        FROM my_stock_distribution
+        WHERE user_id = #{userId}
     </select>
 
     <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
@@ -112,5 +72,46 @@
         ORDER BY p.ranking
             LIMIT 50
     </select>
+
+    <!-- 내 수익률 분포 업데이트 -->
+    <update id="updateDistribution" parameterType="map">
+        UPDATE my_stock_distribution
+        SET
+            gain_rate = #{distribution.gainRate},
+            position_index = #{distribution.positionIndex},
+            position_label = #{distribution.positionLabel},
+            bin_0 = #{distribution.distributionBins[0]},
+            bin_1 = #{distribution.distributionBins[1]},
+            bin_2 = #{distribution.distributionBins[2]},
+            bin_3 = #{distribution.distributionBins[3]},
+            bin_4 = #{distribution.distributionBins[4]},
+            bin_5 = #{distribution.distributionBins[5]},
+            color = #{distribution.color},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = #{userId}
+          AND stock_code = #{distribution.stockCode}
+    </update>
+
+    <!-- 내 수익률 분포 신규 저장 -->
+    <insert id="insertDistribution" parameterType="map">
+        INSERT INTO my_stock_distribution
+        (user_id, stock_code, stock_name, gain_rate, position_index, position_label,
+         bin_0, bin_1, bin_2, bin_3, bin_4, bin_5, color)
+        VALUES (
+                   #{userId},
+                   #{distribution.stockCode},
+                   #{distribution.stockName},
+                   #{distribution.gainRate},
+                   #{distribution.positionIndex},
+                   #{distribution.positionLabel},
+                   #{distribution.distributionBins[0]},
+                   #{distribution.distributionBins[1]},
+                   #{distribution.distributionBins[2]},
+                   #{distribution.distributionBins[3]},
+                   #{distribution.distributionBins[4]},
+                   #{distribution.distributionBins[5]},
+                   #{distribution.color}
+               )
+    </insert>
 
 </mapper>

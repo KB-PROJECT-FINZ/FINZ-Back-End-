@@ -11,15 +11,16 @@ import java.util.*;
 @Log4j2
 public class PortfolioStatsUtil {
 
-    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions) {
+    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions, int requestedPeriod) {
         if (transactions == null || transactions.isEmpty()) {
             return emptyStats();
         }
 
         List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
-        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));        LocalDate startDate = transactions.get(0).getExecutedAt().toLocalDate();
-        LocalDate endDate = transactions.get(transactions.size() - 1).getExecutedAt().toLocalDate();
-        int analysisPeriod = (int) Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
+        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
+
+        LocalDate startDate = sortedTx.get(0).getExecutedAt().toLocalDate();  //  분석 시작일
+        LocalDate endDate = sortedTx.get(sortedTx.size() - 1).getExecutedAt().toLocalDate();  //  분석 종료일
 
         int buyCount = 0;
         int sellCount = 0;
@@ -30,9 +31,19 @@ public class PortfolioStatsUtil {
         long totalHoldDays = 0;
         int matchedQuantity = 0;
 
+        // ✅ 분석 기간 기준 날짜 설정
+        LocalDate analysisEnd = LocalDate.now();
+        LocalDate analysisStart = analysisEnd.minusDays(requestedPeriod);
+
         for (TransactionDTO tx : sortedTx) {
             String code = tx.getStockCode();
             LocalDate date = tx.getExecutedAt().toLocalDate();
+
+            // ✅ 요청한 기간 이외의 거래는 건너뜀
+            if (date.isBefore(analysisStart) || date.isAfter(analysisEnd)) {
+                continue;
+            }
+
             int qty = tx.getQuantity();
             double amount = tx.getPrice() * qty;
 
@@ -73,22 +84,20 @@ public class PortfolioStatsUtil {
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
-                .analysisPeriod(analysisPeriod)
-                .startDate(startDate)
-                .endDate(endDate)
                 .totalReturn(Math.round(totalReturn * 100.0) / 100.0)
                 .buyCount(buyCount)
                 .sellCount(sellCount)
                 .avgHoldDays(Math.round(avgHoldDays * 10.0) / 10.0)
+                .requestedPeriod(requestedPeriod) //  사용자 요청 기간
+                .analysisStart(analysisStart)     //  분석 시작일
+                .analysisEnd(analysisEnd)         //  분석 종료일
                 .build();
     }
+
 
     private static BehaviorStatsDto emptyStats() {
         return BehaviorStatsDto.builder()
                 .transactionCount(0)
-                .analysisPeriod(0)
-                .startDate(null)
-                .endDate(null)
                 .totalReturn(0.0)
                 .buyCount(0)
                 .sellCount(0)

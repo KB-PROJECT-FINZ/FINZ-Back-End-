@@ -7,10 +7,12 @@ import java.util.List;
 
 @Data
 public class MyDistributionDto {
-    private String stockName;    // 종목명
-    private double gainRate;     // 내 수익률
-    private int positionIndex;   // 내 위치 인덱스
-    private String positionLabel;// 퍼센트 라벨
-    private List<Integer> distributionBins; // 수익률 분포 구간 배열
+    private String stockCode;
+    private String stockName;
+    private Double gainRate;
+    private Integer positionIndex;
+    private String positionLabel;
+    private List<Integer> distributionBins;  // 예: [0, 2, 5, 10, 4, 1]
+    private String color;
 
 }
