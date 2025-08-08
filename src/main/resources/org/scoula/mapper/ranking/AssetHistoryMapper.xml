@@ -6,8 +6,8 @@
 
     <insert id="insertAssetHistory" parameterType="map">
         INSERT INTO asset_history (
-            account_id, base_date, total_asset_value, cash_balance,
-            stock_value, profit_loss, realized_profit_loss, profit_rate
+            account_id, record_date, total_asset_value, cash_balance,
+            stock_value, daily_profit_loss, cumulative_profit_loss, profit_rate
         ) VALUES (
                      #{accountId}, #{baseDate}, #{totalAssetValue}, #{cashBalance},
                      #{stockValue}, #{profitLoss}, #{realizedProfitLoss}, #{profitRate}

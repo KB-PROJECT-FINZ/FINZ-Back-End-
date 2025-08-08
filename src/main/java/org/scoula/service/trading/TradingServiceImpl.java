@@ -18,22 +18,18 @@ public class TradingServiceImpl implements TradingService {
 
     private final TradingMapper tradingMapper;
 
+    // 전체 거래 내역 조회
     @Override
     public List<TransactionDTO> getUserTransactions(int userId) {
-        return tradingMapper.getUserTransactions(userId);
+        List<Integer> accountIds = tradingMapper.getAccountIdsByUser(userId);
+        if (accountIds == null || accountIds.isEmpty()) {
+            log.warn("⚠️ userId={}에 해당하는 계좌가 없습니다.", userId);
+            return List.of();
+        }
+        return tradingMapper.getTransactionsByAccountIds(accountIds);
     }
 
-    @Override
-    public BehaviorStatsDto summarizeUserBehavior(int userId) {
-        List<TransactionDTO> transactions = tradingMapper.getUserTransactions(userId);
-        return PortfolioStatsUtil.calculate(transactions); // ✅ 수량 기반 계산
-    }
-
-    @Override
-    public BehaviorStatsDto getBehaviorStats(Integer userId) {
-        return summarizeUserBehavior(userId);
-    }
-
+    // 요청된 기간 내 거래 기반 행동 분석
     @Override
     public BehaviorStatsDto getBehaviorStats(Integer userId, int periodDays) {
         List<TransactionDTO> allTx = getUserTransactions(userId);
@@ -45,14 +41,19 @@ public class TradingServiceImpl implements TradingService {
 
         log.info("📊 [기간 필터] 거래 수 ({}일): {}건", periodDays, filtered.size());
 
-        return PortfolioStatsUtil.calculate(filtered); // ✅ 수량 기반 계산
+        return PortfolioStatsUtil.calculate(filtered, periodDays);
     }
 
+    // 전체 거래 ID 조회 (계좌 기반으로 통일)
     @Override
     public List<Long> getTransactionIdsByUser(Integer userId) {
-        return tradingMapper.getTransactionIdsByUser(userId);
+        List<TransactionDTO> transactions = getUserTransactions(userId);
+        return transactions.stream()
+                .map(tx -> (long) tx.getTransactionId())
+                .toList();
     }
 
+    // 요청된 기간 내 거래 ID만 필터링
     @Override
     public List<Long> getTransactionIdsByUser(Integer userId, int periodDays) {
         List<TransactionDTO> allTx = getUserTransactions(userId);
