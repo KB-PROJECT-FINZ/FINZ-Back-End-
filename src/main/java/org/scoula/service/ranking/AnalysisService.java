@@ -15,4 +15,8 @@ public interface AnalysisService {
 
     // (3) 유사 성향 투자자 인기 종목 조회
     List<PopularStockDto> getPopularStocksByTrait(String traitGroup);
+
+    void saveMyStockDistribution(int userId, List<MyDistributionDto> distributions);
+
+
 }

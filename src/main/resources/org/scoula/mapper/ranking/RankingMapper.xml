@@ -8,18 +8,21 @@
     <!-- 1) 내 수익률 및 전체 순위 -->
     <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
         <![CDATA[
-        SELECT
-            u.id AS userId,
-            RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking,
-                AVG(ah.profit_rate) AS gainRate,
-            ROUND(100 * (RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) - 1) / COUNT(*) OVER (), 2) AS topPercent,
-            u.risk_type AS riskType
-        FROM asset_history ah
-                 JOIN user_accounts ua ON ah.account_id = ua.account_id
-                 JOIN user u ON ua.user_id = u.id
-        WHERE u.id = #{userId}
-          AND ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
-        GROUP BY u.id, u.risk_type
+        SELECT *
+        FROM (
+                 SELECT
+                     u.id AS userId,
+                     RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) AS ranking,
+                         AVG(ah.profit_rate) AS gainRate,
+                     ROUND(100 * (RANK() OVER (ORDER BY AVG(ah.profit_rate) DESC) - 1) / COUNT(*) OVER (), 2) AS topPercent,
+                     u.risk_type AS riskType
+                 FROM asset_history ah
+                          JOIN user_accounts ua ON ah.account_id = ua.account_id
+                          JOIN user u ON ua.user_id = u.id
+                 WHERE ah.record_date BETWEEN #{baseDate} AND DATE_ADD(#{baseDate}, INTERVAL 6 DAY)
+                 GROUP BY u.id, u.risk_type
+             ) sub
+        WHERE sub.userId = #{userId}
         ]]>
     </select>
 
