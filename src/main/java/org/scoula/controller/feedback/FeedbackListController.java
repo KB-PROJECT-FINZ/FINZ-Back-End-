@@ -107,10 +107,14 @@ public class FeedbackListController {
             Map<String, Object> responseData = Map.of(
                     "stats", Map.of(
                             "transactionCount", latestReport.getTransactionCount(),
-                            "analysisPeriod", latestReport.getAnalysisPeriodDays(),
-                            "startDate", latestReport.getStartDate().toString(),
-                            "endDate", latestReport.getEndDate().toString(),
-                            "totalReturn", totalReturn // 추출된 수익률 사용
+                            "analysisPeriod", latestReport.getAnalysisPeriod(),
+                            "analysisStart", latestReport.getAnalysisStart() != null
+                                    ? latestReport.getAnalysisStart().toString()
+                                    : "N/A",
+                            "analysisEnd", latestReport.getAnalysisEnd() != null
+                                    ? latestReport.getAnalysisEnd().toString()
+                                    : "N/A",
+                            "totalReturn", totalReturn
                     ),
                     "aiAnalysis", Map.of(
                             "strategy", latestReport.getSummaryText(),
