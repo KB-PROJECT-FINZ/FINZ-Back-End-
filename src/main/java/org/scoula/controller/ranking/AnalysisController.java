@@ -2,14 +2,13 @@ package org.scoula.controller.ranking;
 
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.ranking.MyDistributionDto;
+import org.scoula.domain.ranking.MyDistributionRequest;
 import org.scoula.domain.ranking.PopularStockDto;
 import org.scoula.domain.ranking.TraitStockDto;
 import org.scoula.service.ranking.AnalysisService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -38,5 +37,10 @@ public class AnalysisController {
     @GetMapping("/popular-stocks")
     public List<PopularStockDto> getPopularStocks(@RequestParam String traitGroup) {
         return analysisService.getPopularStocksByTrait(traitGroup);
+    }
+    @PostMapping("/my-distribution/save")
+    public ResponseEntity<?> saveMyStockDistribution(@RequestBody MyDistributionRequest request) {
+        analysisService.saveMyStockDistribution(request.getUserId(), request.getDistributions());
+        return ResponseEntity.ok().build();
     }
 }

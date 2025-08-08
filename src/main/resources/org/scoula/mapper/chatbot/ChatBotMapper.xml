@@ -107,11 +107,17 @@
 
     <!--    모의 투자 리포트 피드백 저장 -->
     <insert id="insertChatBehaviorFeedback" parameterType="org.scoula.domain.chatbot.dto.ChatBehaviorFeedbackDto" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO chat_behavior_feedback
-        (user_id, session_id, message_id, summary_text, risk_text, suggestion_text, transaction_count, analysis_period_days, start_date, end_date)
-        VALUES
-            (#{userId}, #{sessionId}, #{messageId}, #{summaryText}, #{riskText}, #{suggestionText}, #{transactionCount}, #{analysisPeriod}, #{startDate}, #{endDate})
-    </insert>
+        INSERT INTO chat_behavior_feedback (
+        user_id, session_id, message_id,
+        summary_text, risk_text, suggestion_text,
+        transaction_count, analysis_period,
+        analysis_start, analysis_end
+        ) VALUES (
+        #{userId}, #{sessionId}, #{messageId},
+        #{summaryText}, #{riskText}, #{suggestionText},
+        #{transactionCount}, #{analysisPeriod},
+        #{analysisStart}, #{analysisEnd}
+        )    </insert>
 
     <insert id="insertChatBehaviorFeedbackTransaction">
         INSERT INTO chat_behavior_feedback_transaction (feedback_id, transaction_id)
