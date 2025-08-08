@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.trading.dto.TransactionDTO;
 import org.scoula.service.chatbot.intent.IntentResolver;
+import org.scoula.service.chatbot.message.MessageService;
 import org.scoula.service.chatbot.session.ChatSessionService;
 import org.scoula.service.trading.TradingService;
 import org.scoula.util.chatbot.*;
@@ -42,6 +43,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ObjectMapper objectMapper;
     private final TradingService tradingService;
     private final IntentResolver intentResolver;
+    private final MessageService messageService;
 
     // 세션
     private final ChatSessionService chatSessionService;
@@ -79,7 +81,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
-            saveChatMessage(userId, sessionId, "user", userMessage, intentType);
+            messageService.save(userId, sessionId, "user", userMessage, intentType);
             log.info("[MESSAGE] 사용자 메시지 저장 완료");
 
             // 에러 발생시 저장
@@ -101,6 +103,10 @@ public class ChatBotServiceImpl implements ChatBotService {
             String content = null;
             String gptAnalysisResponse = null;
             Integer requestedPeriod = null;
+
+            ChatMessageDto gptMessage = null;
+            boolean assistantSaved = false;
+
 
             switch (intentType) {
 
@@ -236,7 +242,8 @@ public class ChatBotServiceImpl implements ChatBotService {
                     content = openAiClient.getChatCompletion(prompt);
 
                     // 5. 메시지 저장
-                    ChatMessageDto saved = saveChatMessage(userId, sessionId, "assistant", content, intentType);
+                    gptMessage = messageService.save(userId, sessionId, "assistant", content, intentType);
+                    assistantSaved = true;
 
                     // 6. GPT 응답 요약 (1. 특징, 2. 리스크, 3. 제안)
                     String summary = null;
@@ -261,7 +268,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                     ChatBehaviorFeedbackDto feedback = ChatBehaviorFeedbackDto.builder()
                             .userId(userId)
                             .sessionId(sessionId)
-                            .messageId(saved.getId())
+                            .messageId(gptMessage.getId())
                             .summaryText(summary)
                             .riskText(risk)
                             .suggestionText(suggestion)
@@ -318,14 +325,24 @@ public class ChatBotServiceImpl implements ChatBotService {
             // chat_messages 테이블에 GPT 응답 저장
 
             String finalResponse = (gptAnalysisResponse != null && !gptAnalysisResponse.isBlank()) ? gptAnalysisResponse : openAiClient.getChatCompletion(prompt);
-            ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
+
+            // content가 비어있고 prompt만 있는 케이스 보완
+            if (finalResponse == null || finalResponse.isBlank()) {
+                finalResponse = openAiClient.getChatCompletion(prompt);
+            }
+
+            // 메세지 이미 저장했으면 또 저장하지 않음
+            if (!assistantSaved) {
+                gptMessage = messageService.save(userId, sessionId, "assistant", finalResponse, intentType);
+            }
+
 
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
                     .content(finalResponse.trim())
                     .intentType(intentType)
-                    .messageId(gptMessage.getId())
+                    .messageId(gptMessage != null ? gptMessage.getId() : null)
                     .sessionId(sessionId)
                     .analysisPeriod(stats != null ? stats.getAnalysisPeriod() : null)
                     .requestedPeriod(requestedPeriod)
@@ -376,19 +393,7 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .intentType(IntentType.ERROR)
                 .build();
     }
-    // 메세지 저장 함수
-    private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
-        ChatMessageDto message = ChatMessageDto.builder()
-                .userId(userId)
-                .sessionId(sessionId)
-                .role(role)
-                .content(content)
-                .intentType(intentType)
-                .build();
 
-        chatBotMapper.insertChatMessage(message); // insert 시 keyProperty="id"로 id 채워짐
-        return message; // ID 포함된 message 반환
-    }
 
     public List<RecommendationStock> getStocksByKeyword(String keyword) {
         try {
