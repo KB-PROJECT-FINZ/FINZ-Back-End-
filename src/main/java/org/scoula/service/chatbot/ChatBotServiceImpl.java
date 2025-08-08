@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.trading.dto.TransactionDTO;
+import org.scoula.service.chatbot.intent.IntentResolver;
 import org.scoula.service.chatbot.session.ChatSessionService;
 import org.scoula.service.trading.TradingService;
 import org.scoula.util.chatbot.*;
@@ -40,6 +41,7 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ChatBotMapper chatBotMapper;
     private final ObjectMapper objectMapper;
     private final TradingService tradingService;
+    private final IntentResolver intentResolver;
 
     // 세션
     private final ChatSessionService chatSessionService;
@@ -65,29 +67,9 @@ public class ChatBotServiceImpl implements ChatBotService {
             log.info("[INTENT] 초기 intentType: {}", intentType);
 
 
-            if (intentType == null || intentType == IntentType.MESSAGE) {
-                String prompt = promptBuilder.buildIntentClassificationPrompt(userMessage);
-
-                // GPT 호출
-                String intentText = openAiClient.getChatCompletion(prompt);
-                log.info("[INTENT] GPT 의도 분류 요청 프롬프트 생성 완료");
-
-                try {
-                    intentType = IntentType.valueOf(intentText); // enum 파싱
-                    log.info("[INTENT] GPT 의도 분류 결과 → intentType: {}", intentType);
-
-                } catch (IllegalArgumentException ex) {
-                    // GPT 응답이 enum에 해당하지 않음 → fallback 처리
-                    return handleError(
-                            new IllegalArgumentException("의도 분류 실패: GPT 응답 = " + intentText),
-                            userId,
-                            IntentType.UNKNOWN
-                    );
-                }
-                request.setIntentType(intentType); // 이후 로직을 위해 저장
-            } else {
-                log.info("✅ 프론트에서 intentType 명시 → GPT 분류 생략: {}", intentType);
-            }
+            // 의도 분류
+            intentType = intentResolver.resolve(userMessage, intentType);
+            request.setIntentType(intentType);
 
             // ========================2. 전처리======================
             // TODO: 민감 정보 마스킹 로직
