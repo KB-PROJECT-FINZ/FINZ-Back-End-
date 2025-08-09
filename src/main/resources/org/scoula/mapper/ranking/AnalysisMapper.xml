@@ -29,34 +29,9 @@
 
     </select>
 
-    <!-- (2) 내 수익률 분포 위치 (기존 유지) -->
-    <select id="findMyDistribution" resultMap="MyDistributionResultMap" parameterType="long">
-        SELECT
-        stock_code AS stockCode,
-        stock_name AS stockName,
-        gain,
-        position_index AS positionIndex,
-        position_label AS positionLabel,
-        distribution_bins AS distributionBins,  <!-- JSON 혹은 구분자 형태라면 별도 처리 필요 -->
-        color
-        FROM my_stock_distribution
-        WHERE user_id = #{userId}
-    </select>
 
-    <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
-        <result property="stockName" column="stock_name"/>
-        <result property="gainRate" column="gain_rate"/>
-        <result property="positionIndex" column="position_index"/>
-        <result property="positionLabel" column="position_label"/>
-        <collection property="distributionBins" ofType="int">
-            <result column="distribution_bin1"/>
-            <result column="distribution_bin2"/>
-            <result column="distribution_bin3"/>
-            <result column="distribution_bin4"/>
-            <result column="distribution_bin5"/>
-            <result column="distribution_bin6"/>
-        </collection>
-    </resultMap>
+
+
 
     <!-- (3) 성향별 인기 종목 -->
     <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
@@ -73,45 +48,118 @@
             LIMIT 50
     </select>
 
-    <!-- 내 수익률 분포 업데이트 -->
-    <update id="updateDistribution" parameterType="map">
-        UPDATE my_stock_distribution
-        SET
-            gain_rate = #{distribution.gainRate},
-            position_index = #{distribution.positionIndex},
-            position_label = #{distribution.positionLabel},
-            bin_0 = #{distribution.distributionBins[0]},
-            bin_1 = #{distribution.distributionBins[1]},
-            bin_2 = #{distribution.distributionBins[2]},
-            bin_3 = #{distribution.distributionBins[3]},
-            bin_4 = #{distribution.distributionBins[4]},
-            bin_5 = #{distribution.distributionBins[5]},
-            color = #{distribution.color},
-            updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = #{userId}
-          AND stock_code = #{distribution.stockCode}
-    </update>
+    <!-- 1) 보유 종목 평균 매입가 -->
+    <select id="findHoldingSummaries" resultType="org.scoula.domain.ranking.HoldingSummaryDto">
+        SELECT stock_code AS stockCode, stock_name AS stockName, average_price AS averagePrice
+        FROM holdings
+        WHERE quantity > 0
+    </select>
 
-    <!-- 내 수익률 분포 신규 저장 -->
-    <insert id="insertDistribution" parameterType="map">
+    <!-- 2) 종목별 수익률 upsert -->
+    <insert id="upsertStockProfitRate" parameterType="map">
+        INSERT INTO stock_profit_rates (stock_code, profit_rate, updated_at)
+        VALUES (#{stockCode}, #{profitRate}, CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE
+                                 profit_rate = VALUES(profit_rate),
+                                 updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 3) 전체 사용자 ID 조회 -->
+    <select id="findAllUserIds" resultType="int">
+        SELECT DISTINCT user_id FROM user_accounts
+    </select>
+
+    <!-- 4) 전체 종목 수익률 분포 집계 -->
+    <select id="aggregateAllStockDistributions" resultType="org.scoula.domain.ranking.StockDistributionSummaryDto">
+        SELECT
+            spr.stock_code AS stockCode,
+            s.name AS stockName,
+            SUM(CASE WHEN spr.profit_rate &lt; -20 THEN 1 ELSE 0 END) AS bin0,
+            SUM(CASE WHEN spr.profit_rate &gt;= -20 AND spr.profit_rate &lt; 0 THEN 1 ELSE 0 END) AS bin1,
+            SUM(CASE WHEN spr.profit_rate &gt;= 0 AND spr.profit_rate &lt; 10 THEN 1 ELSE 0 END) AS bin2,
+            SUM(CASE WHEN spr.profit_rate &gt;= 10 AND spr.profit_rate &lt; 20 THEN 1 ELSE 0 END) AS bin3,
+            SUM(CASE WHEN spr.profit_rate &gt;= 20 AND spr.profit_rate &lt; 50 THEN 1 ELSE 0 END) AS bin4,
+            SUM(CASE WHEN spr.profit_rate &gt;= 50 THEN 1 ELSE 0 END) AS bin5
+        FROM stock_profit_rates spr
+                 JOIN stocks s ON spr.stock_code = s.code
+        GROUP BY spr.stock_code, s.name
+    </select>
+
+<!--    사용자 별 보유종목 집계-->
+    <select id="aggregateUserStockDistributions" parameterType="long" resultType="org.scoula.domain.ranking.StockDistributionSummaryDto">
+        SELECT
+            h.stock_code AS stockCode,
+            s.name AS stockName,
+            SUM(CASE WHEN spr.profit_rate &lt; -20 THEN 1 ELSE 0 END) AS bin0,
+            SUM(CASE WHEN spr.profit_rate &gt;= -20 AND spr.profit_rate &lt; 0 THEN 1 ELSE 0 END) AS bin1,
+            SUM(CASE WHEN spr.profit_rate &gt;= 0 AND spr.profit_rate &lt; 10 THEN 1 ELSE 0 END) AS bin2,
+            SUM(CASE WHEN spr.profit_rate &gt;= 10 AND spr.profit_rate &lt; 20 THEN 1 ELSE 0 END) AS bin3,
+            SUM(CASE WHEN spr.profit_rate &gt;= 20 AND spr.profit_rate &lt; 50 THEN 1 ELSE 0 END) AS bin4,
+            SUM(CASE WHEN spr.profit_rate &gt;= 50 THEN 1 ELSE 0 END) AS bin5
+        FROM holdings h
+                 JOIN stock_profit_rates spr ON h.stock_code = spr.stock_code
+                 JOIN stocks s ON h.stock_code = s.code
+        WHERE h.account_id IN (
+            SELECT account_id FROM user_accounts WHERE user_id = #{userId}
+        )
+        GROUP BY h.stock_code, s.name
+    </select>
+
+    <!-- 5) 사용자별 보유 종목 조회 -->
+    <select id="findHoldingsByUserId" parameterType="int" resultType="org.scoula.domain.ranking.HoldingSummaryDto">
+        SELECT stock_code AS stockCode, stock_name AS stockName, average_price AS averagePrice
+        FROM holdings
+        WHERE account_id IN (
+            SELECT account_id FROM user_accounts WHERE user_id = #{userId}
+        ) AND quantity > 0
+    </select>
+
+    <!-- 6) 사용자별 수익률 분포 upsert -->
+    <insert id="upsertMyStockDistribution" parameterType="map">
         INSERT INTO my_stock_distribution
         (user_id, stock_code, stock_name, gain_rate, position_index, position_label,
-         bin_0, bin_1, bin_2, bin_3, bin_4, bin_5, color)
-        VALUES (
-                   #{userId},
-                   #{distribution.stockCode},
-                   #{distribution.stockName},
-                   #{distribution.gainRate},
-                   #{distribution.positionIndex},
-                   #{distribution.positionLabel},
-                   #{distribution.distributionBins[0]},
-                   #{distribution.distributionBins[1]},
-                   #{distribution.distributionBins[2]},
-                   #{distribution.distributionBins[3]},
-                   #{distribution.distributionBins[4]},
-                   #{distribution.distributionBins[5]},
-                   #{distribution.color}
-               )
+         bin_0, bin_1, bin_2, bin_3, bin_4, bin_5, color, updated_at)
+        VALUES
+            (#{userId}, #{distribution.stockCode}, #{distribution.stockName}, #{distribution.gainRate},
+             #{distribution.positionIndex}, #{distribution.positionLabel},
+             #{distribution.bin0}, #{distribution.bin1}, #{distribution.bin2},
+             #{distribution.bin3}, #{distribution.bin4}, #{distribution.bin5}, #{distribution.color},
+             CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE
+                                 gain_rate = VALUES(gain_rate),
+                                 position_index = VALUES(position_index),
+                                 position_label = VALUES(position_label),
+                                 bin_0 = VALUES(bin_0),
+                                 bin_1 = VALUES(bin_1),
+                                 bin_2 = VALUES(bin_2),
+                                 bin_3 = VALUES(bin_3),
+                                 bin_4 = VALUES(bin_4),
+                                 bin_5 = VALUES(bin_5),
+                                 color = VALUES(color),
+                                 updated_at = CURRENT_TIMESTAMP
+
     </insert>
+
+    <!-- 7) 사용자별 분포 조회 -->
+    <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="gainRate" column="gain_rate"/>
+        <result property="positionIndex" column="position_index"/>
+        <result property="positionLabel" column="position_label"/>
+        <result property="bin0" column="bin_0"/>
+        <result property="bin1" column="bin_1"/>
+        <result property="bin2" column="bin_2"/>
+        <result property="bin3" column="bin_3"/>
+        <result property="bin4" column="bin_4"/>
+        <result property="bin5" column="bin_5"/>
+        <result property="color" column="color"/>
+    </resultMap>
+
+    <select id="findMyDistribution" parameterType="long" resultMap="MyDistributionResultMap">
+        SELECT *
+        FROM my_stock_distribution
+        WHERE user_id = #{userId}
+    </select>
 
 </mapper>
