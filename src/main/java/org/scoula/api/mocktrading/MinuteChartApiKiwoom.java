@@ -68,6 +68,7 @@ public class MinuteChartApiKiwoom {
 
                 String today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.BASIC_ISO_DATE); // "yyyyMMdd"
                 ArrayNode processedArray = mapper.createArrayNode();
+                String usedDate = today; // 실제 데이터의 날짜 저장
 
                 for (JsonNode candle : chartArray) {
                     String cntrTm = candle.path("cntr_tm").asText(); // "20250805133700"
@@ -110,6 +111,7 @@ public class MinuteChartApiKiwoom {
                         }
                     }
                     if (latestDate != null) {
+                        usedDate = latestDate;
                         for (JsonNode candle : chartArray) {
                             String cntrTm = candle.path("cntr_tm").asText();
                             if (cntrTm.length() != 14) continue;
@@ -142,10 +144,14 @@ public class MinuteChartApiKiwoom {
                 if (wrapWithStockCode) {
                     ObjectNode wrapped = mapper.createObjectNode();
                     wrapped.put("stock_code", stockCode);
+                    wrapped.put("date", usedDate); // 실제 데이터 날짜 추가
                     wrapped.set("data", processedArray);
                     return wrapped;
                 } else {
-                    return processedArray;
+                    ObjectNode resultWithDate = mapper.createObjectNode();
+                    resultWithDate.put("date", usedDate); // 실제 데이터 날짜 추가
+                    resultWithDate.set("data", processedArray);
+                    return resultWithDate;
                 }
             }
         } catch (Exception e) {
