@@ -97,6 +97,48 @@ public class MinuteChartApiKiwoom {
                     processedArray.add(obj);
                 }
 
+                // 오늘 데이터가 없으면 가장 최근 날짜 데이터로 대체
+                if (processedArray.isEmpty()) {
+                    // chartArray에서 가장 최근 날짜 찾기
+                    String latestDate = null;
+                    for (JsonNode candle : chartArray) {
+                        String cntrTm = candle.path("cntr_tm").asText();
+                        if (cntrTm.length() != 14) continue;
+                        String datePart = cntrTm.substring(0, 8);
+                        if (latestDate == null || datePart.compareTo(latestDate) > 0) {
+                            latestDate = datePart;
+                        }
+                    }
+                    if (latestDate != null) {
+                        for (JsonNode candle : chartArray) {
+                            String cntrTm = candle.path("cntr_tm").asText();
+                            if (cntrTm.length() != 14) continue;
+                            String datePart = cntrTm.substring(0, 8);
+                            if (!datePart.equals(latestDate)) continue;
+
+                            String hour = cntrTm.substring(8, 10);
+                            String minute = cntrTm.substring(10, 12);
+                            String timeKey = hour + minute + "00";
+
+                            String stck_prpr = candle.path("cur_prc").asText().replaceAll("^[+-]", "");
+                            String stck_oprc = candle.path("open_pric").asText().replaceAll("^[+-]", "");
+                            String stck_hgpr = candle.path("high_pric").asText().replaceAll("^[+-]", "");
+                            String stck_lwpr = candle.path("low_pric").asText().replaceAll("^[+-]", "");
+                            String cntg_vol = candle.path("trde_qty").asText();
+
+                            ObjectNode obj = mapper.createObjectNode();
+                            obj.put("stck_cntg_hour", timeKey);
+                            obj.put("stck_prpr", stck_prpr);
+                            obj.put("stck_oprc", stck_oprc);
+                            obj.put("stck_hgpr", stck_hgpr);
+                            obj.put("stck_lwpr", stck_lwpr);
+                            obj.put("cntg_vol", cntg_vol);
+
+                            processedArray.add(obj);
+                        }
+                    }
+                }
+
                 if (wrapWithStockCode) {
                     ObjectNode wrapped = mapper.createObjectNode();
                     wrapped.put("stock_code", stockCode);
