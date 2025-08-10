@@ -55,16 +55,27 @@ public class RankingServiceImpl implements RankingService {
 
     @Override
     public List<PopularStockDto> getRealTimeOrFallbackPopularStocks() {
-        List<PopularStockDto> realTimeStocks =
-                rankingMapper.selectRealTimePopularStocks(LocalDate.now().toString());
-
-        if (realTimeStocks == null || realTimeStocks.isEmpty()) {
-            LocalDate lastWeekBase = LocalDate.now().with(DayOfWeek.SUNDAY).minusWeeks(1);
-            log.warn("실시간 인기 종목 없음 → 지난주 데이터 사용: {}", lastWeekBase);
-            return rankingMapper.selectPopularStocks(lastWeekBase.toString());
+        // 1) 오늘
+        LocalDate today = LocalDate.now();
+        List<PopularStockDto> todayList = rankingMapper.selectRealTimePopularStocks(today.toString());
+        if (todayList != null && !todayList.isEmpty()) {
+            log.info("인기 종목(오늘) {}건 반환", todayList.size());
+            return todayList;
         }
 
-        return realTimeStocks;
+        // 2) 어제
+        LocalDate yesterday = today.minusDays(1);
+        List<PopularStockDto> yesterdayList = rankingMapper.selectRealTimePopularStocks(yesterday.toString());
+        if (yesterdayList != null && !yesterdayList.isEmpty()) {
+            log.info("인기 종목(어제) {}건 반환", yesterdayList.size());
+            return yesterdayList;
+        }
+
+        // 3) 지난주(월~일)
+        LocalDate lastWeekMonday = today.with(DayOfWeek.MONDAY).minusWeeks(1);
+        log.warn("오늘/어제 데이터 없음 → 지난주({}) 주간 데이터 반환", lastWeekMonday);
+        List<PopularStockDto> lastWeekList = rankingMapper.selectPopularStocks(lastWeekMonday.toString());
+        return lastWeekList != null ? lastWeekList : List.of();
     }
 
     @Override
