@@ -34,11 +34,8 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     public List<PopularStockDto> getPopularStocksByTrait(String traitGroup) {
-        String normalizedGroup = traitGroup;
-        if ("ANALYTICAL".equalsIgnoreCase(traitGroup) || "EMOTIONAL".equalsIgnoreCase(traitGroup)) {
-            normalizedGroup = "SPECIAL";
-        }
-        return analysisMapper.findPopularStocksByTrait(normalizedGroup);
+
+        return analysisMapper.findPopularStocksByTrait(traitGroup);
     }
 
     @Override

@@ -64,16 +64,25 @@
     <!-- (3) 성향별 인기 종목 -->
     <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         SELECT
-            p.stock_code,
-            p.stock_name,
-            s.image_url,
-            p.investor_count AS transaction_count,
-            p.ranking
-        FROM popular_stocks_by_trait_group p
-                 LEFT JOIN stocks s ON p.stock_code = s.code
-        WHERE p.trait_group = #{traitGroup}
-        ORDER BY p.ranking
-            LIMIT 50
+        t.stock_code    AS stock_code,
+        s.name          AS stock_name,
+        s.image_url     AS image_url,
+        t.investor_count AS investor_count
+        FROM (
+        SELECT
+        h.stock_code,
+        COUNT(DISTINCT ua.user_id) AS investor_count
+        FROM holdings h
+        JOIN user_accounts ua ON h.account_id = ua.account_id
+        JOIN `user` u         ON ua.user_id   = u.id
+        JOIN investment_types it ON u.risk_type = it.risk_type
+        WHERE h.quantity > 0
+        AND it.group_code = #{traitGroup}  <!-- AGGRESSIVE/BALANCED/... -->
+        GROUP BY h.stock_code
+        ) t
+        JOIN stocks s ON t.stock_code = s.code
+        ORDER BY t.investor_count DESC, t.stock_code
+        LIMIT 50
     </select>
 
     <!-- 1) 보유 종목 평균 매입가 -->

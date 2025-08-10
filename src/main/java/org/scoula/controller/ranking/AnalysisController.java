@@ -55,7 +55,27 @@ public class AnalysisController {
     // (3) 유사 성향 투자자 인기 종목 조회
     @GetMapping("/popular-stocks")
     public List<PopularStockDto> getPopularStocks(@RequestParam String traitGroup) {
-        return analysisService.getPopularStocksByTrait(traitGroup);
+        String normalized = normalizeTraitGroup(traitGroup);
+        log.info("[popular-stocks] traitGroup={} -> normalized={}", traitGroup, normalized);
+        try {
+            return analysisService.getPopularStocksByTrait(normalized);
+        } catch (Exception e) {
+            log.error("popular-stocks error: {}", e.getMessage(), e);
+            return List.of(); // 500 대신 빈 배열
+        }
+    }
+
+    private String normalizeTraitGroup(String tg) {
+        if (tg == null) return "BALANCED";
+        String x = tg.trim().toUpperCase();
+        return switch (x) {
+            case "AGR", "DTA", "EXP", "THE" -> "AGGRESSIVE";
+            case "AID", "BGT", "BSS" -> "BALANCED";
+            case "CAG", "CSD", "IND", "VAL" -> "CONSERVATIVE";
+            case "INF", "SYS", "TEC" -> "ANALYTICAL";
+            case "SOC" -> "EMOTIONAL";
+            default -> x;
+        };
     }
 
     // (4) 수익률 분포 저장 API (옵션)
