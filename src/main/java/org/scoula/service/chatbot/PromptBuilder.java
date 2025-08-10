@@ -229,6 +229,7 @@ public class PromptBuilder {
         [주의사항]
         - 데이터가 적을 경우에도 의미 있는 조언을 해줘
         - 반복 표현(예: "더 많이 연구해야 한다")은 피하고, 구체적인 행동 중심으로 조언해줘
+        - strategySummary에 수익률이 들어가야돼.
         """.formatted(
                 stats.getRequestedPeriod(),
                 stats.getTransactionCount(), stats.getTotalReturn(),

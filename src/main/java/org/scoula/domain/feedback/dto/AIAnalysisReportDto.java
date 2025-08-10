@@ -1,5 +1,6 @@
 package org.scoula.domain.feedback.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,8 +26,14 @@ public class AIAnalysisReportDto {
     private String riskText;          // 리스크 요인 및 개선점
     private String suggestionText;    // 개인 맞춤 조언
     private Integer transactionCount; // 거래 건수
-    private Integer analysisPeriodDays; // 분석 기간 (일)
-    private LocalDate startDate;      // 분석 시작일
-    private LocalDate endDate;        // 분석 종료일
+    @JsonProperty("periodDays")
+    private Integer analysisPeriod;
+
+    @JsonProperty("startDate")
+    private LocalDate analysisStart;      // 분석 시작일
+
+    @JsonProperty("endDate")
+    private LocalDate analysisEnd;        // 분석 종료일
+
     private LocalDateTime generatedAt; // 생성일시
 }
