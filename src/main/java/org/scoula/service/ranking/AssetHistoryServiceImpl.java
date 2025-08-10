@@ -36,9 +36,8 @@ public class AssetHistoryServiceImpl implements AssetHistoryService {
 
     @Override
     public void saveWeeklyAssetHistory() {
-        // 테스트용 이번주 기준 날짜로 설정 (필요시 지난주로 변경 가능)
-        LocalDate baseDate = LocalDate.now().with(DayOfWeek.MONDAY);
-        log.info(">>> 기준 날짜 (이번주 월요일): {}", baseDate);
+        LocalDate baseDate = LocalDate.now().with(DayOfWeek.MONDAY).minusWeeks(1);
+        log.info(">>> 기준 날짜 (지난주 월요일): {}", baseDate);
 
         List<Integer> accountIds = userAccountsMapper.selectAllAccountIds();
         log.info(">>> 전체 계좌 수: {}", accountIds.size());
