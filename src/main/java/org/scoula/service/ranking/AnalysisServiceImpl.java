@@ -1,7 +1,6 @@
 package org.scoula.service.ranking;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.api.mocktrading.PriceApi;
@@ -10,7 +9,6 @@ import org.scoula.mapper.ranking.AnalysisMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,34 +26,23 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     public List<MyDistributionDto> getMyDistribution(Long userId) {
-        // DB에 저장된 분포 데이터를 빠르게 조회해서 리턴
         return analysisMapper.findMyDistribution(userId);
     }
 
     @Override
     public List<PopularStockDto> getPopularStocksByTrait(String traitGroup) {
-
         return analysisMapper.findPopularStocksByTrait(traitGroup);
     }
 
     @Override
     public void saveMyStockDistribution(Long userId, List<MyDistributionDto> distributions) {
-        log.info("✅ [saveMyStockDistribution] userId = {}", userId);
-
-        // 1️⃣ 전체 종목 분포 데이터 조회
         List<StockDistributionSummaryDto> overallDistributionsAll =
                 analysisMapper.aggregateAllStockDistributions();
 
-        log.info("📊 전체 종목 분포 사이즈: {}", overallDistributionsAll.size());
-
         for (MyDistributionDto dist : distributions) {
-            String stockCode = dist.getStockCode();
-            log.info("🔍 현재 처리 종목: {} ({})", stockCode, dist.getStockName());
-
-            // 2️⃣ bin 데이터 찾기 (공백/대소문자 무시)
             StockDistributionSummaryDto binCounts = overallDistributionsAll.stream()
-                    .filter(d -> d.getStockCode() != null &&
-                            d.getStockCode().trim().equalsIgnoreCase(stockCode.trim()))
+                    .filter(d -> d.getStockCode() != null
+                            && d.getStockCode().trim().equalsIgnoreCase(dist.getStockCode().trim()))
                     .findFirst()
                     .orElse(null);
 
@@ -66,51 +53,39 @@ public class AnalysisServiceImpl implements AnalysisService {
                 dist.setBin3(binCounts.getBin3());
                 dist.setBin4(binCounts.getBin4());
                 dist.setBin5(binCounts.getBin5());
-                log.info("✅ bin 데이터 매핑 완료: {}", binCounts);
-            } else {
-                log.warn("⚠️ bin 데이터 없음 - stockCode = {}", stockCode);
+                dist.setColor(binCounts.getColor());
             }
 
-            // 3️⃣ 저장
-            log.info("📦 최종 Distribution 저장: {}", dist);
             analysisMapper.upsertMyStockDistribution(userId, dist);
         }
     }
 
-
-    // 매일 새벽 1시에 실행되는 스케줄러 메서드 (전체 수익률 및 사용자 분포 집계)
+    // 매일 새벽 1시 실행 (cron은 기존 값 유지)
     @Scheduled(cron = "* 0 * * * ?")
     public void updateStockProfitRatesAndUserDistributions() {
-        log.info("[스케줄러] 수익률 및 사용자 분포 집계 시작");
-
         try {
             // 1) 전체 종목별 보유 종목 평균 매입가 조회
             List<HoldingSummaryDto> allHoldings = analysisMapper.findHoldingSummaries();
 
-            // 2) 종목별 실시간 가격 조회 및 수익률 계산 후 DB 저장
+            // 2) 종목별 실시간 가격 조회 및 수익률 저장
             for (HoldingSummaryDto holding : allHoldings) {
                 String stockCode = holding.getStockCode();
                 double avgPrice = holding.getAveragePrice();
 
                 JsonNode priceData = PriceApi.getPriceData(stockCode);
                 double currentPrice = priceData.path("output").path("stck_prpr").asDouble();
-
                 double profitRate = avgPrice > 0 ? ((currentPrice - avgPrice) / avgPrice) * 100.0 : 0;
 
                 analysisMapper.upsertStockProfitRate(stockCode, profitRate);
             }
 
-            // 3) 전체 사용자 리스트 조회
+            // 3) 전체 사용자별 분포 계산 및 저장
             List<Integer> allUserIds = analysisMapper.findAllUserIds();
+            List<StockDistributionSummaryDto> overallDistributionsAll =
+                    analysisMapper.aggregateAllStockDistributions();
 
-            // 4) 전체 분포 데이터 (bin별 카운트) 조회
-            List<StockDistributionSummaryDto> overallDistributionsAll = analysisMapper.aggregateAllStockDistributions();
-
-            // 5) 사용자별 분포 계산 및 DB 저장 반복
             for (int userId : allUserIds) {
-                // 사용자 보유 종목 조회
                 List<HoldingSummaryDto> userHoldings = analysisMapper.findHoldingsByUserId(userId);
-
                 List<MyDistributionDto> userDistributions = new ArrayList<>();
 
                 for (HoldingSummaryDto holding : userHoldings) {
@@ -127,15 +102,7 @@ public class AnalysisServiceImpl implements AnalysisService {
                     StockDistributionSummaryDto binCounts = overallDistributionsAll.stream()
                             .filter(d -> d.getStockCode().equals(stockCode))
                             .findFirst()
-                            .orElse(null);
-
-                    if (binCounts == null) {
-                        log.warn("[WARN] binCounts 없음 - stockCode: {}", stockCode);
-                        binCounts = new StockDistributionSummaryDto(); // 기본값
-                    }
-
-                    log.info("[DEBUG] userId={}, stockCode={}, gainRate={}, binIndex={}, label={}, binCounts={}",
-                            userId, stockCode, gainRate, binIndex, label, binCounts);
+                            .orElse(new StockDistributionSummaryDto());
 
                     MyDistributionDto dto = new MyDistributionDto();
                     dto.setStockCode(stockCode);
@@ -154,14 +121,10 @@ public class AnalysisServiceImpl implements AnalysisService {
                     userDistributions.add(dto);
                 }
 
-                // 사용자별 분포 DB에 upsert (저장)
                 saveMyStockDistribution((long) userId, userDistributions);
             }
-
-            log.info("[스케줄러] 수익률 및 사용자 분포 집계 완료");
-
         } catch (Exception e) {
-            log.error("[스케줄러] 집계 중 오류 발생: {}", e.getMessage(), e);
+            log.error("스케줄러 집계 오류", e);
         }
     }
 
