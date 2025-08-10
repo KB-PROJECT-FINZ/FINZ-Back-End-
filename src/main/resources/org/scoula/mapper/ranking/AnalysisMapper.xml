@@ -6,27 +6,55 @@
 
     <!-- (1) 성향별 보유 비중 -->
     <select id="findTraitStocks" resultType="org.scoula.domain.ranking.TraitStockDto" parameterType="long">
+
+        WITH user_stocks AS (
+            SELECT DISTINCT h.stock_code
+            FROM holdings h
+                     JOIN user_accounts ua ON h.account_id = ua.account_id
+            WHERE ua.user_id = #{userId} AND h.quantity > 0
+        ),
+             base AS (
+                 SELECT
+                     h.stock_code,
+                     s.name        AS name,
+                     s.image_url   AS logo,
+                     it.group_code AS group_code,
+                     SUM(h.quantity) AS qty
+                 FROM holdings h
+                          JOIN user_accounts ua ON h.account_id = ua.account_id
+                          JOIN user u ON ua.user_id = u.id
+                          JOIN investment_types it ON u.risk_type = it.risk_type
+                          JOIN stocks s ON h.stock_code = s.code
+                 WHERE h.stock_code IN (SELECT stock_code FROM user_stocks)
+                   AND h.quantity > 0
+                 GROUP BY h.stock_code, s.name, s.image_url, it.group_code
+             ),
+             spread AS (
+                 SELECT
+                     stock_code,
+                     name,
+                     logo,
+                     SUM(CASE WHEN group_code='CONSERVATIVE' THEN qty ELSE 0 END) AS conservative_qty,
+                     SUM(CASE WHEN group_code='BALANCED'     THEN qty ELSE 0 END) AS balanced_qty,
+                     SUM(CASE WHEN group_code='AGGRESSIVE'   THEN qty ELSE 0 END) AS aggressive_qty,
+                     SUM(CASE WHEN group_code='ANALYTICAL'   THEN qty ELSE 0 END) AS analytical_qty,
+                     SUM(CASE WHEN group_code='EMOTIONAL'    THEN qty ELSE 0 END) AS emotional_qty,
+                     SUM(qty) AS total_qty
+                 FROM base
+                 GROUP BY stock_code, name, logo
+             )
         SELECT
-            s.name AS name,
-            ROUND(SUM(h.quantity * h.average_price) / SUM(SUM(h.quantity * h.average_price)) OVER (), 4) * 100 AS gain,
-            s.image_url AS logo,
-
-            SUM(CASE WHEN it.group_code = 'CONSERVATIVE' THEN h.quantity ELSE 0 END) AS conservativeRatio,
-            SUM(CASE WHEN it.group_code = 'BALANCED' THEN h.quantity ELSE 0 END) AS balancedRatio,
-            SUM(CASE WHEN it.group_code = 'AGGRESSIVE' THEN h.quantity ELSE 0 END) AS aggressiveRatio,
-            SUM(CASE WHEN it.group_code IN ('ANALYTICAL', 'EMOTIONAL') THEN h.quantity ELSE 0 END) AS specialRatio
-
-        FROM holdings h
-                 JOIN user_accounts ua ON h.account_id = ua.account_id
-                 JOIN user u ON ua.user_id = u.id
-                 JOIN investment_types it ON u.risk_type = it.risk_type
-                 JOIN stocks s ON h.stock_code = s.code
-
-        WHERE ua.user_id = #{userId}
-
-        GROUP BY h.stock_code, s.name, s.image_url
-        ORDER BY gain DESC
-
+            name,
+            /* 비중(%) 정수로 표기. 필요시 ROUND 자릿수 조절 */
+            0 AS gain,                 -- (미사용시 0, 또는 필요값으로 대체)
+            logo,
+            ROUND(CASE WHEN total_qty>0 THEN conservative_qty*100.0/total_qty ELSE 0 END) AS conservativeRatio,
+            ROUND(CASE WHEN total_qty>0 THEN balanced_qty*100.0/total_qty ELSE 0 END)     AS balancedRatio,
+            ROUND(CASE WHEN total_qty>0 THEN aggressive_qty*100.0/total_qty ELSE 0 END)   AS aggressiveRatio,
+            ROUND(CASE WHEN total_qty>0 THEN analytical_qty*100.0/total_qty ELSE 0 END)   AS analyticalRatio,
+            ROUND(CASE WHEN total_qty>0 THEN emotional_qty*100.0/total_qty ELSE 0 END)    AS emotionalRatio
+        FROM spread
+        ORDER BY name
     </select>
 
 
