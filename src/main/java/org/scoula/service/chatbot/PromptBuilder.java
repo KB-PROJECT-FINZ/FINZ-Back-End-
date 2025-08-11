@@ -20,8 +20,8 @@ public class PromptBuilder {
     
                 톤앤매너 지시사항:
                 - 말투는 친근하고 부드럽게 해주세요.
-                - ‘~해요’, ‘~있어요’, ‘~보여요’ 등 **토스처럼 자연스럽고 신뢰감 있는 말투**를 사용해 주세요.
-                - “추천합니다”처럼 단정적인 표현은 피하고, “이런 분석이 가능해요”, “관심 가져볼 수 있어요”처럼 **제안형 어투**를 사용해 주세요.
+                - '~해요', '~있어요', '~보여요' 등 **토스처럼 자연스럽고 신뢰감 있는 말투**를 사용해 주세요.
+                - "추천합니다"처럼 단정적인 표현은 피하고, "이런 분석이 가능해요", "관심 가져볼 수 있어요"처럼 **제안형 어투**를 사용해 주세요.
 
     1. 종목별 핵심 투자 포인트
     2. 주목할 기술적/재무적 지표 해석
@@ -45,7 +45,56 @@ public class PromptBuilder {
     ```
 
     분석은 개인적 의견 형태로 작성하고, 투자 권유 표현은 지양하세요.
-    예: “추천합니다” 대신 “이런 분석이 가능합니다”, “진입 고려 가능성 있음” 등의 표현 사용.
+    예: "추천합니다" 대신 "이런 분석이 가능합니다", "진입 고려 가능성 있음" 등의 표현 사용.
+    """);
+
+        for (ChatAnalysisDto s : list) {
+            sb.append("- ").append(s.getName())
+                    .append(" (").append(s.getTicker()).append(")\n")
+                    .append("  • 현재가: ").append(s.getPrice()).append("원\n")
+                    .append("  • PER: ").append(s.getPer()).append(", ROE: ").append(s.getRoe()).append(", EPS: ").append(s.getEps()).append("\n")
+                    .append("  • PBR: ").append(s.getPbr()).append(", 가중평균가: ").append(s.getAvgPrice()).append("\n")
+                    .append("  • 시가/고가/저가: ").append(s.getOpen()).append(" / ").append(s.getHigh()).append(" / ").append(s.getLow()).append("\n")
+                    .append("  • 52주 고가/저가: ").append(s.getHigh52w()).append(" / ").append(s.getLow52w()).append("\n")
+                    .append("  • 거래량: ").append(s.getVolume()).append(", 회전율: ").append(s.getTurnRate()).append("%, 외국인 보유율: ").append(s.getForeignRate()).append("%\n\n");
+        }
+
+        return sb.toString();
+    }
+
+    // 종목 분석용 프롬프트 (STOCK_ANALYZE 전용)
+    public String buildForStockAnalysis(List<ChatAnalysisDto> list) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("""
+    다음은 사용자가 요청한 종목의 상세 데이터입니다.
+    아래 데이터를 참고하여 해당 종목에 대해 아래 항목을 포함한 투자 분석 의견을 작성하세요:
+    
+                톤앤매너 지시사항:
+                - 말투는 친근하고 부드럽게 해주세요.
+                - '~해요', '~있어요', '~보여요' 등 **토스처럼 자연스럽고 신뢰감 있는 말투**를 사용해 주세요.
+                - "추천합니다"처럼 단정적인 표현은 피하고, "이런 분석이 가능해요", "관심 가져볼 수 있어요"처럼 **제안형 어투**를 사용해 주세요.
+
+    1. 종목별 핵심 투자 포인트
+    2. 주목할 기술적/재무적 지표 해석
+    3. 리스크 수준 평가 (낮음 / 중간 / 높음)
+    4. 향후 3~6개월 간 긍정적/부정적 시나리오 요약
+    5. 매수 시점에 대한 참고 코멘트 (예: 지금은 관망, 조정 시 진입 고려 등)
+    6. 해당 종목의 산업/섹터 내 위치 및 경쟁력 요약
+    7. 투자 판단 시 유의해야 할 외부 요인 또는 리스크 요인
+
+    - 반드시 출력은 JSON 배열 형식으로 하며, 각 종목은 다음 구조를 따라야 하며 모든 필드 간 쉼표(,)를 포함하여 **정확한 JSON 문법**을 지켜야 합니다.. :
+    ```json
+    {
+      "ticker": "TSLA",
+      "reason": "테슬라는 전기차 시장에서 선두주자로 알려져 있고, 미래 성장 가능성이 높아 보여요. 기술적으로도 혁신적인 모습을 보여 관심 가져볼 수 있어요. 하지만 높은 가격 수준과 미래 수익에 대한 불확실성이 있어 고위험 고수익 종목이에요.",
+      "riskLevel": "높음",
+      "timingComment": "최근 주가 상승으로 매수시 적절한 타이밍이 아닐 수 있어요. 추가 하락 기회를 기다려보세요.",
+      "futureOutlook": "전기차 시장 성장에 따른 수요 증가가 기대되지만, 경쟁사와의 신차 출시로 인한 경쟁이 치열할 수 있어요."
+    }
+    ```
+
+    분석은 개인적 의견 형태로 작성하고, 투자 권유 표현은 지양하세요.
+    예: "추천합니다" 대신 "이런 분석이 가능합니다", "진입 고려 가능성 있음" 등의 표현 사용.
     """);
 
         for (ChatAnalysisDto s : list) {
