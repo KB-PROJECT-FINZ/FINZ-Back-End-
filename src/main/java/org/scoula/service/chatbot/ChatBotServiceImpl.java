@@ -8,19 +8,13 @@ import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.trading.dto.TransactionDTO;
 import org.scoula.service.trading.TradingService;
 import org.scoula.util.chatbot.*;
-import org.scoula.util.chatbot.*;
 import org.scoula.api.mocktrading.VolumeRankingApi;
 import org.scoula.domain.chatbot.dto.*;
 import org.scoula.domain.chatbot.enums.ErrorType;
-
 import org.scoula.domain.chatbot.enums.IntentType;
 import org.scoula.mapper.chatbot.ChatBotMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -67,7 +61,6 @@ public class ChatBotServiceImpl implements ChatBotService {
         return 30; // 기본값
     }
 
-
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
         try {
@@ -78,7 +71,6 @@ public class ChatBotServiceImpl implements ChatBotService {
             Integer sessionId = request.getSessionId();
 
             log.info("[INTENT] 초기 intentType: {}", intentType);
-
 
             if (intentType == null || intentType == IntentType.MESSAGE) {
                 String prompt = promptBuilder.buildIntentClassificationPrompt(userMessage);
@@ -170,6 +162,7 @@ public class ChatBotServiceImpl implements ChatBotService {
             String content = null;
             String gptAnalysisResponse = null;
             Integer requestedPeriod = null;
+            ChatMessageDto gptMessage = null;
 
             switch (intentType) {
 
@@ -198,10 +191,11 @@ public class ChatBotServiceImpl implements ChatBotService {
                     List<ChatRecommendationDto> recResults = parseRecommendationText(gptAnalysisResponse, analysisList, userId, riskType,intentType);
                     saveRecommendationsToDb(recResults);
 
-                    // 8. 사용자에게 보여줄 요약형 GPT 응답 프롬프트 구성
-//                    prompt = promptBuilder.buildSummaryFromRecommendations(summary, recResults, analysisList);
-//                    log.info("[GPT] 최종 GPT 요청 시작");
+                    // 8. 투자 성향 기반 추천 안내 메시지 추가
+                    gptAnalysisResponse = "🧠 투자 성향 기반 추천드릴게요!\n\n" + gptAnalysisResponse;
 
+                    // 9. GPT 응답 저장
+                    gptMessage = saveChatMessage(userId, sessionId, "assistant", gptAnalysisResponse, intentType);
 
                     break;
                 }
@@ -230,14 +224,14 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 6. 분석 결과 기반으로 요약 프롬프트 구성 → 기존 응답 프롬프트 재사용
                     gptAnalysisResponse = callAnalysisPrompt(analysisList);
                     log.info("🧠 GPT 분석 응답: {}", gptAnalysisResponse);
+                    
+                    // 7. 키워드 기반 추천 안내 메시지 추가
+                    gptAnalysisResponse = "🎯 키워드 기반 추천드릴게요!\n\n" + gptAnalysisResponse;
+                    
+                    // 8. GPT 응답 저장
+                    gptMessage = saveChatMessage(userId, sessionId, "assistant", gptAnalysisResponse, intentType);
 
-                    // 7. 최종 요약 결과를 사용자에게 전달
-//                    List<ChatRecommendationDto> recResults = parseRecommendationText(gptAnalysisResponse, analysisList, userId, riskType,intentType);
-//                    saveRecommendationsToDb(recResults);
-//                    log.info("📝 최종 추천 사유 개수: {}, 내용: {}", recResults.size(), recResults);
-//                    prompt = promptBuilder.buildSummaryFromRecommendations(keyword, recResults, analysisList);
                     break;
-
                 }
                 case STOCK_ANALYZE:
                     // 1. 종목명 추출 프롬프트 생성 및 GPT 호출
@@ -249,7 +243,7 @@ public class ChatBotServiceImpl implements ChatBotService {
 
                     // 3. 종목명 누락 시 예외 처리
                     if (result.getStockName() == null || result.getStockName().isBlank()) {
-                        log.info("❌ 종목명을 정확히 입력해주세요.");
+                        gptAnalysisResponse = "❌ 종목명을 정확히 입력해주세요.";
                         break;
                     }
 
@@ -262,15 +256,22 @@ public class ChatBotServiceImpl implements ChatBotService {
                     // 5. 상세 정보 API 조회 (PER, PBR 등)
                     List<RecommendationStock> detailed = getDetailedStocks(List.of(raw));
                     if (detailed.isEmpty()) {
-                        log.info("❌ 해당 종목의 상세 정보를 찾을 수 없습니다.");
+                        gptAnalysisResponse = "❌ 해당 종목의 상세 정보를 찾을 수 없습니다.";
                         break;
                     }
 
                     // 6. 분석용 DTO 변환
                     ChatAnalysisDto dto = ChatAnalysisMapper.toDto(detailed.get(0));
 
-                    // 7. GPT 분석 프롬프트 호출
-                    gptAnalysisResponse = callAnalysisPrompt(List.of(dto));
+                    // 7. GPT 분석 프롬프트 호출 (종목 분석 전용 프롬프트 사용)
+                    String stockAnalysisPrompt = promptBuilder.buildForStockAnalysis(List.of(dto));
+                    gptAnalysisResponse = openAiClient.getChatCompletion(stockAnalysisPrompt);
+                    
+                    // 8. 종목 분석 결과 안내 메시지 추가
+                    gptAnalysisResponse = "🔍 종목 분석 결과입니다.\n\n" + gptAnalysisResponse;
+                    
+                    // 9. GPT 응답 저장
+                    gptMessage = saveChatMessage(userId, sessionId, "assistant", gptAnalysisResponse, intentType);
 
                     break;
 
@@ -357,7 +358,6 @@ public class ChatBotServiceImpl implements ChatBotService {
                     break;
                 }
 
-
                 case TERM_EXPLAIN:
                     prompt = promptBuilder.buildForTermExplain(userMessage);
                     break;
@@ -381,14 +381,16 @@ public class ChatBotServiceImpl implements ChatBotService {
                     log.info("[GPT] 기본 대화 프롬프트 사용 → {}", prompt);
                     break;
             }
-//            content = openAiClient.getChatCompletion(prompt);
 
             // ====================== 8. GPT 응답 저장 ======================
             // chat_messages 테이블에 GPT 응답 저장
 
             String finalResponse = (gptAnalysisResponse != null && !gptAnalysisResponse.isBlank()) ? gptAnalysisResponse : openAiClient.getChatCompletion(prompt);
-            ChatMessageDto gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
 
+            // gptMessage가 아직 저장되지 않은 경우에만 저장
+            if (gptMessage == null) {
+                gptMessage = saveChatMessage(userId, sessionId, "assistant", finalResponse, intentType);
+            }
 
             // ====================== 9. 최종 응답 반환 ======================
             return ChatResponseDto.builder()
@@ -402,7 +404,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         } catch (Exception e) {
             return handleError(e, request.getUserId(), request.getIntentType() != null ? request.getIntentType() : IntentType.UNKNOWN);
-
         }
     }
 
@@ -444,11 +445,11 @@ public class ChatBotServiceImpl implements ChatBotService {
         chatBotMapper.insertChatError(errorDto);
 
         return ChatResponseDto.builder()
-
                 .content("⚠ 서버 오류가 발생했습니다. 다시 시도해주세요.")
                 .intentType(IntentType.ERROR)
                 .build();
     }
+
     // 메세지 저장 함수
     private ChatMessageDto saveChatMessage(Integer userId, Integer sessionId, String role, String content, IntentType intentType) {
         ChatMessageDto message = ChatMessageDto.builder()
@@ -479,7 +480,6 @@ public class ChatBotServiceImpl implements ChatBotService {
         }
     }
 
-
     // 키워드 추출 함수
     private String extractKeywordFromMessage(String userMessage) {
         try {
@@ -506,7 +506,6 @@ public class ChatBotServiceImpl implements ChatBotService {
 
         try {
             JsonNode root = objectMapper.readTree(gptResponse);
-
 
             for (JsonNode node : root) {
                 String ticker = node.get("ticker").asText();
@@ -621,6 +620,5 @@ public class ChatBotServiceImpl implements ChatBotService {
     private static boolean isValid(Double value) {
         return value != null && value > 0;
     }
-
 }
 
