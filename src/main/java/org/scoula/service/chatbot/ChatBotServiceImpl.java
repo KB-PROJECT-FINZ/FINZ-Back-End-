@@ -513,7 +513,7 @@ public class ChatBotServiceImpl implements ChatBotService {
         }
     }
 
-    // 분석 내용 프로롬프트 호출
+    // 분석 내용 프롬프트 호출
     private String callAnalysisPrompt(List<ChatAnalysisDto> analysisList) {
         String prompt = promptBuilder.buildForStockInsights(analysisList);
         log.info("[GPT] 분석용 프롬프트 내용 ↓↓↓↓↓↓↓\n{}", prompt);
