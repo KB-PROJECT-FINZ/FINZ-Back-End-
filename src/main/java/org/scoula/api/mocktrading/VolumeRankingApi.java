@@ -110,7 +110,7 @@ public class VolumeRankingApi {
     public Map<String, List<Map<String, Object>>> getAllMarketVolumeRanking(int limit, String blngClsCode) throws IOException {
         Map<String, List<Map<String, Object>>> result = new HashMap<>();
 
-            try {
+        try {
             result.put("kospi", getVolumeRanking("J", limit, blngClsCode));
             Thread.sleep(1000);  // API 호출 간격
             result.put("kosdaq", getVolumeRanking("J", limit, blngClsCode));

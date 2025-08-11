@@ -11,15 +11,16 @@ import java.util.*;
 @Log4j2
 public class PortfolioStatsUtil {
 
-    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions) {
+    public static BehaviorStatsDto calculate(List<TransactionDTO> transactions, int requestedPeriod) {
         if (transactions == null || transactions.isEmpty()) {
             return emptyStats();
         }
 
         List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
-        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));        LocalDate startDate = transactions.get(0).getExecutedAt().toLocalDate();
-        LocalDate endDate = transactions.get(transactions.size() - 1).getExecutedAt().toLocalDate();
-        int analysisPeriod = (int) Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
+        sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
+
+        LocalDate analysisEnd = LocalDate.now();
+        LocalDate analysisStart = analysisEnd.minusDays(requestedPeriod);
 
         int buyCount = 0;
         int sellCount = 0;
@@ -27,22 +28,29 @@ public class PortfolioStatsUtil {
         double sellTotal = 0.0;
 
         Map<String, Queue<Lot>> buyMap = new HashMap<>();
+        Set<String> soldStockCodes = new HashSet<>();
         long totalHoldDays = 0;
         int matchedQuantity = 0;
 
         for (TransactionDTO tx : sortedTx) {
             String code = tx.getStockCode();
             LocalDate date = tx.getExecutedAt().toLocalDate();
+
+            if (date.isBefore(analysisStart) || date.isAfter(analysisEnd)) {
+                continue;
+            }
+
             int qty = tx.getQuantity();
             double amount = tx.getPrice() * qty;
 
             if ("BUY".equalsIgnoreCase(tx.getTransactionType())) {
-                buyTotal += amount;
                 buyCount++;
-                buyMap.computeIfAbsent(code, k -> new LinkedList<>()).add(new Lot(date, qty));
+                buyMap.computeIfAbsent(code, k -> new LinkedList<>()).add(new Lot(date, qty, tx.getPrice()));
             } else if ("SELL".equalsIgnoreCase(tx.getTransactionType())) {
-                sellTotal += amount;
                 sellCount++;
+                soldStockCodes.add(code);
+                sellTotal += amount;
+
                 Queue<Lot> lots = buyMap.get(code);
                 if (lots != null) {
                     int remainingQty = qty;
@@ -50,9 +58,11 @@ public class PortfolioStatsUtil {
                         Lot lot = lots.peek();
                         int matchedQty = Math.min(remainingQty, lot.quantity);
                         long holdDays = ChronoUnit.DAYS.between(lot.buyDate, date);
+
                         if (holdDays >= 0) {
                             totalHoldDays += holdDays * matchedQty;
                             matchedQuantity += matchedQty;
+                            buyTotal += lot.price * matchedQty; // ✅ 매도된 수량만큼 매수 금액 합산
                         } else {
                             log.warn("⛔️ 음수 보유일 발생: BUY={}, SELL={}", lot.buyDate, date);
                         }
@@ -73,22 +83,19 @@ public class PortfolioStatsUtil {
 
         return BehaviorStatsDto.builder()
                 .transactionCount(transactions.size())
-                .analysisPeriod(analysisPeriod)
-                .startDate(startDate)
-                .endDate(endDate)
                 .totalReturn(Math.round(totalReturn * 100.0) / 100.0)
                 .buyCount(buyCount)
                 .sellCount(sellCount)
                 .avgHoldDays(Math.round(avgHoldDays * 10.0) / 10.0)
+                .requestedPeriod(requestedPeriod)
+                .analysisStart(analysisStart)
+                .analysisEnd(analysisEnd)
                 .build();
     }
 
     private static BehaviorStatsDto emptyStats() {
         return BehaviorStatsDto.builder()
                 .transactionCount(0)
-                .analysisPeriod(0)
-                .startDate(null)
-                .endDate(null)
                 .totalReturn(0.0)
                 .buyCount(0)
                 .sellCount(0)
@@ -99,10 +106,13 @@ public class PortfolioStatsUtil {
     private static class Lot {
         LocalDate buyDate;
         int quantity;
+        double price;
 
-        Lot(LocalDate buyDate, int quantity) {
+        Lot(LocalDate buyDate, int quantity, double price) {
             this.buyDate = buyDate;
             this.quantity = quantity;
+            this.price = price;
         }
     }
+
 }

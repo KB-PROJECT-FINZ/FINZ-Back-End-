@@ -812,6 +812,10 @@ public class StockController {
         // stockChartMap까지 생성 확인 완료
 
         // 5. 각 주문별 체결 여부 판별 및 처리
+
+        // 체결된 거래내역을 담을 리스트
+        List<Map<String, Object>> executedTransactions = new ArrayList<>();
+
         try (Connection conn = DriverManager.getConnection(
                 ConfigManager.get("jdbc.url"),
                 ConfigManager.get("jdbc.username"),
@@ -959,9 +963,24 @@ public class StockController {
                     }
                 }
 
+                if (!executed) continue;
+
+                // 거래내역 정보 객체 생성 (insert 전에 만들어둠)
+                Map<String, Object> transInfo = new LinkedHashMap<>();
+                transInfo.put("accountId", order.getAccountId());
+                transInfo.put("stockCode", order.getStockCode());
+                transInfo.put("stockName", order.getStockName());
+                transInfo.put("transactionType", order.getOrderType());
+                transInfo.put("orderType", "LIMIT");
+                transInfo.put("quantity", order.getQuantity());
+                transInfo.put("price", order.getTargetPrice());
+                transInfo.put("totalAmount", (long) order.getQuantity() * order.getTargetPrice());
+                transInfo.put("orderCreatedAt", order.getCreatedAt());
+                transInfo.put("orderPrice", order.getTargetPrice());
+
                 // transactions insert
                 String insertTransSql = "INSERT INTO transactions (account_id, stock_code, stock_name, transaction_type, order_type, quantity, price, total_amount, executed_at, order_created_at, order_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
-                try (PreparedStatement pstmt = conn.prepareStatement(insertTransSql)) {
+                try (PreparedStatement pstmt = conn.prepareStatement(insertTransSql, java.sql.Statement.RETURN_GENERATED_KEYS)) { // ← 여기!
                     pstmt.setInt(1, order.getAccountId());
                     pstmt.setString(2, order.getStockCode());
                     pstmt.setString(3, order.getStockName());
@@ -973,6 +992,12 @@ public class StockController {
                     pstmt.setTimestamp(9, order.getCreatedAt());
                     pstmt.setInt(10, order.getTargetPrice());
                     pstmt.executeUpdate();
+
+                    try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                        if (generatedKeys.next()) {
+                            transInfo.put("transactionId", generatedKeys.getInt(1));
+                        }
+                    }
                 }
 
                 // pending_orders delete
@@ -981,6 +1006,9 @@ public class StockController {
                     deleteStmt.setInt(1, order.getOrderId());
                     deleteStmt.executeUpdate();
                 }
+
+                // 리스트에 추가
+                executedTransactions.add(transInfo);
             }
             conn.commit();
         } catch (Exception e) {
@@ -989,7 +1017,10 @@ public class StockController {
                     .body("거래 체결 처리 중 오류가 발생했습니다: " + e.getMessage());
         }
 
-        return ResponseEntity.ok("거래 대기 주문 체결 처리가 완료되었습니다.");
+        if (executedTransactions.isEmpty()) {
+            return ResponseEntity.ok("체결된 주문이 없습니다.");
+        }
+        return ResponseEntity.ok(executedTransactions);
     }
 
     @PostMapping("/order/market")
