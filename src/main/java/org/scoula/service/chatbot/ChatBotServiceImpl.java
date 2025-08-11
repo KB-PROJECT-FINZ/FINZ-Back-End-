@@ -125,8 +125,6 @@ public class ChatBotServiceImpl implements ChatBotService {
             String gptAnalysisResponse = null;
             Integer requestedPeriod = null;
             ChatMessageDto gptMessage = null;
-
-            ChatMessageDto gptMessage = null;
             boolean assistantSaved = false;
 
 
@@ -421,7 +419,9 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .content(content)
                 .intentType(intentType)
                 .build();
-
+        
+        return messageService.save(userId, sessionId, role, content, intentType);
+    }
 
     public List<RecommendationStock> getStocksByKeyword(String keyword) {
         try {
