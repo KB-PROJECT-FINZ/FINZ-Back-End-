@@ -14,4 +14,5 @@ public class PopularStockDto {
     private String imageUrl;         //회사이미지
     private Integer transactionCount;// 총 거래 수 (매수+매도)
     private Integer ranking;         // 순위
+    private Integer investorCount;// investor_count
 }

@@ -30,17 +30,17 @@
     <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         <![CDATA[
         SELECT
-            t.stock_code AS stock_code,
-            s.name AS stock_name,
-            COUNT(*) AS transaction_count,
-            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking,
-                s.image_url AS image_url
+            t.stock_code AS stockCode,
+            s.name       AS stockName,
+            s.image_url  AS imageUrl,
+            COUNT(*)     AS transactionCount,
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking
         FROM transactions t
                  JOIN stocks s ON t.stock_code = s.code
         WHERE t.executed_at >= #{baseDate}
           AND t.executed_at < DATE_ADD(#{baseDate}, INTERVAL 7 DAY)
         GROUP BY t.stock_code, s.name, s.image_url
-        ORDER BY transaction_count DESC
+        ORDER BY transactionCount DESC
             LIMIT 10
         ]]>
     </select>
@@ -49,16 +49,16 @@
     <select id="selectRealTimePopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
         <![CDATA[
         SELECT
-            t.stock_code AS stock_code,
-            s.name AS stock_name,
-            COUNT(*) AS transaction_count,
-            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking,
-                s.image_url AS image_url
+            t.stock_code AS stockCode,
+            s.name       AS stockName,
+            s.image_url  AS imageUrl,
+            COUNT(*)     AS transactionCount,
+            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking
         FROM transactions t
                  JOIN stocks s ON t.stock_code = s.code
         WHERE DATE(t.executed_at) = #{baseDate}
         GROUP BY t.stock_code, s.name, s.image_url
-        ORDER BY transaction_count DESC
+        ORDER BY transactionCount DESC
             LIMIT 10
         ]]>
     </select>

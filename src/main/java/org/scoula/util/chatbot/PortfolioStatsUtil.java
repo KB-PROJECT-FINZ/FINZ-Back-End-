@@ -19,8 +19,8 @@ public class PortfolioStatsUtil {
         List<TransactionDTO> sortedTx = new ArrayList<>(transactions);
         sortedTx.sort(Comparator.comparing(TransactionDTO::getExecutedAt));
 
-        LocalDate startDate = sortedTx.get(0).getExecutedAt().toLocalDate();  //  분석 시작일
-        LocalDate endDate = sortedTx.get(sortedTx.size() - 1).getExecutedAt().toLocalDate();  //  분석 종료일
+        LocalDate analysisEnd = LocalDate.now();
+        LocalDate analysisStart = analysisEnd.minusDays(requestedPeriod);
 
         int buyCount = 0;
         int sellCount = 0;
@@ -28,18 +28,14 @@ public class PortfolioStatsUtil {
         double sellTotal = 0.0;
 
         Map<String, Queue<Lot>> buyMap = new HashMap<>();
+        Set<String> soldStockCodes = new HashSet<>();
         long totalHoldDays = 0;
         int matchedQuantity = 0;
-
-        // ✅ 분석 기간 기준 날짜 설정
-        LocalDate analysisEnd = LocalDate.now();
-        LocalDate analysisStart = analysisEnd.minusDays(requestedPeriod);
 
         for (TransactionDTO tx : sortedTx) {
             String code = tx.getStockCode();
             LocalDate date = tx.getExecutedAt().toLocalDate();
 
-            // ✅ 요청한 기간 이외의 거래는 건너뜀
             if (date.isBefore(analysisStart) || date.isAfter(analysisEnd)) {
                 continue;
             }
@@ -48,12 +44,13 @@ public class PortfolioStatsUtil {
             double amount = tx.getPrice() * qty;
 
             if ("BUY".equalsIgnoreCase(tx.getTransactionType())) {
-                buyTotal += amount;
                 buyCount++;
-                buyMap.computeIfAbsent(code, k -> new LinkedList<>()).add(new Lot(date, qty));
+                buyMap.computeIfAbsent(code, k -> new LinkedList<>()).add(new Lot(date, qty, tx.getPrice()));
             } else if ("SELL".equalsIgnoreCase(tx.getTransactionType())) {
-                sellTotal += amount;
                 sellCount++;
+                soldStockCodes.add(code);
+                sellTotal += amount;
+
                 Queue<Lot> lots = buyMap.get(code);
                 if (lots != null) {
                     int remainingQty = qty;
@@ -61,9 +58,11 @@ public class PortfolioStatsUtil {
                         Lot lot = lots.peek();
                         int matchedQty = Math.min(remainingQty, lot.quantity);
                         long holdDays = ChronoUnit.DAYS.between(lot.buyDate, date);
+
                         if (holdDays >= 0) {
                             totalHoldDays += holdDays * matchedQty;
                             matchedQuantity += matchedQty;
+                            buyTotal += lot.price * matchedQty; // ✅ 매도된 수량만큼 매수 금액 합산
                         } else {
                             log.warn("⛔️ 음수 보유일 발생: BUY={}, SELL={}", lot.buyDate, date);
                         }
@@ -88,12 +87,11 @@ public class PortfolioStatsUtil {
                 .buyCount(buyCount)
                 .sellCount(sellCount)
                 .avgHoldDays(Math.round(avgHoldDays * 10.0) / 10.0)
-                .requestedPeriod(requestedPeriod) //  사용자 요청 기간
-                .analysisStart(analysisStart)     //  분석 시작일
-                .analysisEnd(analysisEnd)         //  분석 종료일
+                .requestedPeriod(requestedPeriod)
+                .analysisStart(analysisStart)
+                .analysisEnd(analysisEnd)
                 .build();
     }
-
 
     private static BehaviorStatsDto emptyStats() {
         return BehaviorStatsDto.builder()
@@ -108,10 +106,13 @@ public class PortfolioStatsUtil {
     private static class Lot {
         LocalDate buyDate;
         int quantity;
+        double price;
 
-        Lot(LocalDate buyDate, int quantity) {
+        Lot(LocalDate buyDate, int quantity, double price) {
             this.buyDate = buyDate;
             this.quantity = quantity;
+            this.price = price;
         }
     }
+
 }
