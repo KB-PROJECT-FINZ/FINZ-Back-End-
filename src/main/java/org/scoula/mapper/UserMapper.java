@@ -19,4 +19,6 @@ public interface UserMapper {
 
     int updateProfileImage(@Param("userId") Integer userId, @Param("profileImage") String profileImage);
     UserVo findById(@Param("userId") Integer userId);
+
+    int updateNickname(@Param("userId") Integer userId, @Param("nickname") String nickname);
 }

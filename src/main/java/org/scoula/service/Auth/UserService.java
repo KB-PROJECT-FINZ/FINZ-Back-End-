@@ -21,4 +21,6 @@ public interface UserService {
 
     UserVo findById(Integer userId);
     void updateProfileImage(Integer userId, String imageUrl);
+
+    boolean updateNickname(Integer userId, String nickname);
 }

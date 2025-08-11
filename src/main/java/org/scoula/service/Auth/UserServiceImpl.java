@@ -68,4 +68,10 @@ public class UserServiceImpl implements UserService {
         }
         return user;
     }
+
+    @Override
+    public boolean updateNickname(Integer userId, String nickname) {
+        int result = userMapper.updateNickname(userId, nickname);
+        return result > 0;
+    }
 }

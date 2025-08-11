@@ -174,4 +174,127 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
+    @PostMapping("/reset-profile-image")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> resetProfileImage(HttpServletRequest request) {
+
+        try {
+            // 세션에서 사용자 정보 가져오기
+            HttpSession session = request.getSession();
+            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
+
+            if (loginUser == null || loginUser.getId() == null) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "로그인이 필요합니다");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+
+            // 현재 사용자 정보 가져오기
+            UserVo currentUser = userService.findById(loginUser.getId());
+
+            // 기존 프로필 이미지 파일 삭제
+            if (currentUser.getProfileImage() != null && !currentUser.getProfileImage().isEmpty()) {
+                try {
+                    String oldImagePath = currentUser.getProfileImage();
+                    if (oldImagePath.startsWith("/uploads/")) {
+                        String oldFileName = oldImagePath.substring("/uploads/".length());
+                        Path oldFilePath = Paths.get("uploads/" + oldFileName);
+                        Files.deleteIfExists(oldFilePath);
+                        log.info("기존 프로필 이미지 삭제: " + oldFilePath);
+                    }
+                } catch (Exception e) {
+                    log.warn("기존 프로필 이미지 삭제 실패: " + e.getMessage());
+                }
+            }
+
+            // 🔥 중요: 매개변수 이름을 profileImage로 맞춤
+            userService.updateProfileImage(loginUser.getId(), null);
+
+            // 세션의 사용자 정보도 업데이트
+            loginUser.setProfileImage(null);
+            session.setAttribute("loginUser", loginUser);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "프로필 이미지가 기본 이미지로 변경되었습니다");
+            response.put("imageUrl", null);
+
+            log.info("프로필 이미지 초기화 완료 - 사용자 ID: " + loginUser.getId());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("프로필 이미지 초기화 실패", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "프로필 이미지 초기화 중 오류가 발생했습니다");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    @PostMapping("/update-nickname")
+    public ResponseEntity<Map<String, Object>> updateNickname(
+            @RequestBody Map<String, String> requestBody,
+            HttpSession session) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // 세션에서 사용자 정보 가져오기
+            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
+
+            if (loginUser == null) {
+                response.put("error", "로그인이 필요합니다");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+            }
+
+            String newNickname = requestBody.get("nickname");
+
+            // 닉네임 유효성 검사
+            if (newNickname == null || newNickname.trim().isEmpty()) {
+                response.put("error", "닉네임을 입력해주세요");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 닉네임 길이 검사 (2-10자)
+            if (newNickname.trim().length() < 2 || newNickname.trim().length() > 10) {
+                response.put("error", "닉네임은 2-10자로 입력해주세요");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 현재 닉네임과 동일한지 확인
+            if (newNickname.trim().equals(loginUser.getNickname())) {
+                response.put("error", "현재 닉네임과 동일합니다");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 닉네임 중복 검사
+            if (!userService.isNicknameAvailable(newNickname.trim())) {
+                response.put("error", "이미 사용 중인 닉네임입니다");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            // 닉네임 업데이트
+            boolean success = userService.updateNickname(loginUser.getId(), newNickname.trim());
+
+            if (success) {
+                // 세션의 사용자 정보 갱신
+                UserVo refreshedUser = userService.findById(loginUser.getId());
+                session.setAttribute("loginUser", refreshedUser);
+
+                response.put("message", "닉네임이 성공적으로 변경되었습니다");
+                response.put("nickname", newNickname.trim());
+
+                log.info("닉네임 변경 성공 - 사용자 ID: {}, 새 닉네임: {}", loginUser.getId(), newNickname.trim());
+
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("error", "닉네임 변경에 실패했습니다");
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            }
+
+        } catch (Exception e) {
+            log.error("닉네임 변경 중 오류 발생", e);
+            response.put("error", "닉네임 변경 중 오류가 발생했습니다");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }
