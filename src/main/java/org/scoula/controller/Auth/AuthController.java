@@ -109,6 +109,7 @@ public class AuthController {
         result.put("name", loginUser.getName());
         result.put("riskType", loginUser.getRiskType());
         result.put("groupCode", groupCode);
+        result.put("profileImage", loginUser.getProfileImage());
         return ResponseEntity.ok(result);
     }
     @PostMapping("/find-username")

@@ -18,4 +18,7 @@ public interface UserService {
     String getRiskTypeByUserId(Integer userId);
     RiskTypeDto findRiskTypeByRiskType(String riskType);
     boolean isEmailAvailable(String email);
+
+    UserVo findById(Integer userId);
+    void updateProfileImage(Integer userId, String imageUrl);
 }

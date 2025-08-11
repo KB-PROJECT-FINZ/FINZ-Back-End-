@@ -16,4 +16,7 @@ public interface UserMapper {
     String findRiskTypeByUserId(@Param("userId") Integer userId);
     int countByEmail(@Param("email") String email);
     RiskTypeDto findRiskTypeByRiskType(@Param("riskType") String riskType);
+
+    int updateProfileImage(@Param("userId") Integer userId, @Param("profileImage") String profileImage);
+    UserVo findById(@Param("userId") Integer userId);
 }

@@ -51,4 +51,21 @@ public class UserServiceImpl implements UserService {
     public boolean isEmailAvailable(String email) {
         return userMapper.countByEmail(email) == 0;
     }
+
+    @Override
+    public void updateProfileImage(Integer userId, String imageUrl) {
+        int result = userMapper.updateProfileImage(userId, imageUrl);
+        if (result == 0) {
+            throw new RuntimeException("프로필 이미지 업데이트에 실패했습니다. 사용자를 찾을 수 없습니다.");
+        }
+    }
+
+    @Override
+    public UserVo findById(Integer userId) {
+        UserVo user = userMapper.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다. ID: " + userId);
+        }
+        return user;
+    }
 }
