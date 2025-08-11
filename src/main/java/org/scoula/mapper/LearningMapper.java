@@ -2,9 +2,7 @@ package org.scoula.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.scoula.domain.learning.dto.LearningContentDTO;
-import org.scoula.domain.learning.dto.LearningHistoryDto;
-import org.scoula.domain.learning.dto.QuizResultDTO;
+import org.scoula.domain.learning.dto.*;
 import org.scoula.domain.learning.dto.QuizResultDTO;
 import org.scoula.domain.learning.vo.LearningContentVO;
 import org.scoula.domain.learning.vo.LearningHistoryVO;
@@ -42,5 +40,6 @@ public interface LearningMapper {
     int getTotalEarnedCredit(int userId);
     int getUserReadCount(@Param("userId") int userId);
     boolean existsQuizByContentId(int contentId);
+
 }
 

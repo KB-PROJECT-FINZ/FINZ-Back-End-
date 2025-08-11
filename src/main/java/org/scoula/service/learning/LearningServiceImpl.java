@@ -1,10 +1,7 @@
 package org.scoula.service.learning;
 
 import lombok.RequiredArgsConstructor;
-import org.scoula.domain.learning.dto.LearningContentDTO;
-import org.scoula.domain.learning.dto.LearningHistoryDto;
-import org.scoula.domain.learning.dto.LearningQuizDTO;
-import org.scoula.domain.learning.dto.QuizResultDTO;
+import org.scoula.domain.learning.dto.*;
 
 import org.scoula.domain.learning.vo.LearningQuizVO;
 import org.scoula.mapper.LearningMapper;
@@ -119,4 +116,5 @@ public class LearningServiceImpl implements LearningService {
         return learningMapper.getUserReadCount(userId);
 
     }
+
 }
