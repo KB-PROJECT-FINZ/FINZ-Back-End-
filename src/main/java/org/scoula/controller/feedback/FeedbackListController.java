@@ -42,7 +42,7 @@ public class FeedbackListController {
 
         try {
             // 정규표현식으로 수익률 패턴 매칭
-            Pattern pattern = Pattern.compile("총?\\s*수익률[이가]?\\s*([+-]?\\d+\\.?\\d*)%");
+            Pattern pattern = Pattern.compile("총?\\s*수익률[이가은]?\\s*([+-]?\\d+\\.?\\d*)%");
             Matcher matcher = pattern.matcher(summaryText);
 
             if (matcher.find()) {
