@@ -20,7 +20,7 @@ public interface UserService {
     boolean isEmailAvailable(String email);
 
     UserVo findById(Integer userId);
-    void updateProfileImage(Integer userId, String imageUrl);
+    boolean updateProfileImage(Integer userId, Integer profileImage);
 
     boolean updateNickname(Integer userId, String nickname);
 }

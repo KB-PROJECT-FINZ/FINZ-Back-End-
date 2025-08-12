@@ -53,10 +53,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void updateProfileImage(Integer userId, String imageUrl) {
-        int result = userMapper.updateProfileImage(userId, imageUrl);
-        if (result == 0) {
-            throw new RuntimeException("프로필 이미지 업데이트에 실패했습니다. 사용자를 찾을 수 없습니다.");
+    public boolean updateProfileImage(Integer userId, Integer profileImage) {
+        try {
+            int result = userMapper.updateProfileImage(userId, profileImage);
+            return result > 0;
+        } catch (Exception e) {
+            return false;
         }
     }
 
