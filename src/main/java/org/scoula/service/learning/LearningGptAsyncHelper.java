@@ -17,6 +17,7 @@ public class LearningGptAsyncHelper {
 
     private final LearningMapper learningMapper;
     private final GptContentService gptContentService;
+    private final LearningSaveService learningSaveService;
 
     @Async
     public void asyncGenerateAndSaveContents(String groupCode, int count) {
@@ -31,19 +32,18 @@ public class LearningGptAsyncHelper {
                 // 필터: body 유효성 체크
                 if (gptDto.getBody() == null || gptDto.getBody().trim().isEmpty()) continue;
                 if (gptDto.getQuizQuestion() == null || gptDto.getQuizAnswer() == null) continue;
+                if (gptDto.getQuizQuestion().contains("?")) continue;
 
                 // 콘텐츠 저장
                 LearningContentVO newContent = convertGptResponseToVO(gptDto, groupCode);
-                learningMapper.insertContent(newContent);
-
-                // 퀴즈 저장
                 LearningQuizVO quiz = new LearningQuizVO();
-                quiz.setQuizId(newContent.getContentId());
                 quiz.setQuestion(gptDto.getQuizQuestion());
-                quiz.setAnswer(gptDto.getQuizAnswer());
+                quiz.setAnswer(gptDto.getQuizAnswer().toUpperCase());
                 quiz.setComment(gptDto.getQuizComment());
                 quiz.setCreditReward(gptDto.getCreditReward());
-                learningMapper.insertQuiz(quiz);
+
+                // 트랜잭션 저장: 둘 중 하나라도 실패하면 둘 다 롤백됨
+                learningSaveService.saveContentAndQuiz(newContent, quiz);
 
                 existingTitles.add(newContent.getTitle());
                 validCount++;
