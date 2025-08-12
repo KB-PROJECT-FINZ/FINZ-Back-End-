@@ -10,19 +10,24 @@ import java.util.Map;
 
 @Mapper
 public interface RankingMapper {
-    //실시간 인기 종목
-    List<PopularStockDto> selectRealTimePopularStocks(@Param("baseDate") String baseDate);
-    //주간인기종목
-    List<PopularStockDto> selectPopularStocks(@Param("baseDate") String baseDate);
-    //특정 날짜에  자산이력 조회
-    int existsAssetHistoryByDate(@Param("baseDate") LocalDate baseDate);
-    //사용자의 주간 수익률
-    MyRankingDto selectMyRanking(Map<String, Object> params);
-    //전체 사용자 주간 랭킹
-    List<RankingByTraitGroupDto> selectTopRankingWithTraitGroup(@Param("baseDate") String baseDate);
-    // 성향별 랭킹
-    List<RankingByTraitGroupDto> selectTopRankingByTraitGroup(@Param("traitGroup") String traitGroup, @Param("baseDate") String baseDate);
 
+    String selectLatestWeekBaseDate(); // 최신 base_date (WEEK)
+    int existsWeekCacheByDate(@Param("baseDate") String baseDate);
+    // 인기 종목 (캐시)
+    List<PopularStockDto> selectPopularStocksCachedDay(@Param("baseDate") String baseDate);
+    List<PopularStockDto> selectPopularStocksCachedWeek(@Param("baseDate") String baseDate);
+    // ✅ popular_stocks에서 최신 WEEK base_date 찾기
+    String selectLatestWeekBaseDateFromPopular();
 
+    // 주간 랭킹 (캐시)
+    List<RankingByTraitGroupDto> selectWeeklyRankingCached(@Param("baseDate") String baseDate);
+    List<RankingByTraitGroupDto> selectGroupedWeeklyRankingCached(@Param("baseDate") String baseDate,
+                                                                  @Param("traitGroup") String traitGroup);
 
+    // 내 랭킹 (캐시)
+    MyRankingDto selectMyRankingCached(@Param("userId") Long userId,
+                                       @Param("baseDate") String baseDate);
+
+    // 해당 주차 캐시 존재 검사
+    int existsRankingCacheByDate(@Param("baseDate") java.time.LocalDate baseDate);
 }
