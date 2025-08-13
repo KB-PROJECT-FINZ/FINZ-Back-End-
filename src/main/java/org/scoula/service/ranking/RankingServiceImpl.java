@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Log4j2
@@ -17,95 +18,70 @@ public class RankingServiceImpl implements RankingService {
 
     private final RankingMapper rankingMapper;
 
-    // baseDate 검증 및 fallback 처리
-    private String getValidBaseDate(String baseDate) {
+    // ✅ baseDate 파라미터가 오면 그대로 쓰되, 없으면 "가장 최근 주간 캐시"를 자동 선택
+    private String resolveLatestWeekBaseDate(String baseDate) {
         if (baseDate != null && !baseDate.isBlank()) {
-            return baseDate;
+            // 전달된 baseDate에도 캐시가 있는지 확인
+            if (rankingMapper.existsWeekCacheByDate(baseDate) == 1) return baseDate;
+            log.warn("요청 baseDate={} 에 대한 주간 캐시가 없습니다. 최신 캐시로 대체합니다.", baseDate);
         }
-
-        LocalDate today = LocalDate.now();
-        LocalDate thisWeekSunday = today.with(DayOfWeek.SUNDAY);
-        LocalDate baseSunday = today.isBefore(thisWeekSunday)
-                ? thisWeekSunday.minusWeeks(1)
-                : thisWeekSunday;
-
-        if (rankingMapper.existsAssetHistoryByDate(baseSunday) > 0) {
-            return baseSunday.toString();
+        String latest = rankingMapper.selectLatestWeekBaseDate();
+        if (latest == null) {
+            log.error("주간 캐시가 하나도 없습니다. 배치 적재를 먼저 수행하세요.");
+            // 비상시: 지난주 일요일로 시도(없으면 빈값 반환될 수 있음)
+            LocalDate fallback = LocalDate.now().with(DayOfWeek.SUNDAY).minusWeeks(1);
+            return fallback.toString();
         }
-
-        LocalDate fallbackDate = baseSunday.minusWeeks(1);
-        log.warn("데이터 없음 → fallback baseDate: {}", fallbackDate);
-        return fallbackDate.toString();
+        return latest;
     }
 
     @Override
     public MyRankingDto getMyRanking(Long userId, String baseDate) {
-        String validBaseDate = getValidBaseDate(baseDate);
-        Map<String, Object> params = Map.of(
-                "userId", userId,
-                "baseDate", validBaseDate
-        );
-
-        MyRankingDto dto = rankingMapper.selectMyRanking(params);
-        if (dto != null) {
-            dto.setBaseDate(validBaseDate);
-        }
-        return dto;
-    }
-
-    @Override
-    public List<PopularStockDto> getRealTimeOrFallbackPopularStocks() {
-        // 1) 오늘
-        LocalDate today = LocalDate.now();
-        List<PopularStockDto> todayList = rankingMapper.selectRealTimePopularStocks(today.toString());
-        if (todayList != null && !todayList.isEmpty()) {
-            log.info("인기 종목(오늘) {}건 반환", todayList.size());
-            return todayList;
-        }
-
-        // 2) 어제
-        LocalDate yesterday = today.minusDays(1);
-        List<PopularStockDto> yesterdayList = rankingMapper.selectRealTimePopularStocks(yesterday.toString());
-        if (yesterdayList != null && !yesterdayList.isEmpty()) {
-            log.info("인기 종목(어제) {}건 반환", yesterdayList.size());
-            return yesterdayList;
-        }
-
-        // 3) 지난주(월~일)
-        LocalDate lastWeekMonday = today.with(DayOfWeek.MONDAY).minusWeeks(1);
-        log.warn("오늘/어제 데이터 없음 → 지난주({}) 주간 데이터 반환", lastWeekMonday);
-        List<PopularStockDto> lastWeekList = rankingMapper.selectPopularStocks(lastWeekMonday.toString());
-        return lastWeekList != null ? lastWeekList : List.of();
+        String bd = resolveLatestWeekBaseDate(baseDate);
+        MyRankingDto dto = rankingMapper.selectMyRankingCached(userId, bd);
+        if (dto != null) dto.setBaseDate(bd);
+        return dto; // dto가 null이면 프론트에서 "데이터 없음" 처리
     }
 
     @Override
     public List<RankingByTraitGroupDto> getWeeklyRanking(String baseDate) {
-        String validBaseDate = getValidBaseDate(baseDate);
-        return rankingMapper.selectTopRankingWithTraitGroup(validBaseDate);
+        String bd = resolveLatestWeekBaseDate(baseDate);
+        return rankingMapper.selectWeeklyRankingCached(bd);
     }
 
     @Override
     public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking(String baseDate) {
-        String validBaseDate = getValidBaseDate(baseDate);
+        String bd = resolveLatestWeekBaseDate(baseDate);
+        Map<String, List<RankingByTraitGroupDto>> res = new LinkedHashMap<>();
+        for (String g : List.of("CONSERVATIVE","BALANCED","AGGRESSIVE","ANALYTICAL","EMOTIONAL")) {
+            res.put(g, rankingMapper.selectGroupedWeeklyRankingCached(bd, g));
+        }
+        return res;
+    }
 
-        List<String> groups = List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "ANALYTICAL", "EMOTIONAL");
-        Map<String, List<RankingByTraitGroupDto>> result = new LinkedHashMap<>();
+    // "오늘 DAY 없으면 지난주 WEEK"는 그대로 유지
+    @Override
+    public List<PopularStockDto> getRealTimeOrFallbackPopularStocks() {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        String today = LocalDate.now(KST).toString();
+        String yesterday = LocalDate.now(KST).minusDays(1).toString();
 
-        Map<String, String> traitMap = Map.ofEntries(
-                Map.entry("CAG", "보수형"), Map.entry("CSD", "보수형"), Map.entry("IND", "보수형"), Map.entry("VAL", "보수형"),
-                Map.entry("BGT", "균형형"), Map.entry("BSS", "균형형"), Map.entry("AID", "균형형"),
-                Map.entry("AGR", "공격형"), Map.entry("DTA", "공격형"), Map.entry("EXP", "공격형"), Map.entry("THE", "공격형"),
-                Map.entry("INF", "특수형"), Map.entry("SYS", "특수형"), Map.entry("TEC", "특수형"), Map.entry("SOC", "특수형")
-        );
+        // 1) 오늘 DAY
+        List<PopularStockDto> day = rankingMapper.selectPopularStocksCachedDay(today);
+        if (day != null && !day.isEmpty()) return day;
 
-        for (String group : groups) {
-            List<RankingByTraitGroupDto> list = rankingMapper.selectTopRankingByTraitGroup(group, validBaseDate);
-            for (RankingByTraitGroupDto dto : list) {
-                dto.setTraitGroup(traitMap.getOrDefault(dto.getOriginalTrait(), "기타"));
-            }
-            result.put(group, list);
+        // 2) 어제 DAY
+        List<PopularStockDto> dayPrev = rankingMapper.selectPopularStocksCachedDay(yesterday);
+        if (dayPrev != null && !dayPrev.isEmpty()) return dayPrev;
+
+        // 3) ✅ popular_stocks에서 최신 WEEK 기준일로 폴백
+        String latestWeek = rankingMapper.selectLatestWeekBaseDateFromPopular();
+        if (latestWeek != null) {
+            List<PopularStockDto> week = rankingMapper.selectPopularStocksCachedWeek(latestWeek);
+            if (week != null && !week.isEmpty()) return week;
         }
 
-        return result;
+        // 4) 정말 없으면 빈 배열
+        return List.of();
     }
 }
