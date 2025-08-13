@@ -15,7 +15,7 @@ public class UserVo {
     private String password;
     private String name;
     private String nickname;
-    private String profileImage;
+    private Integer profileImage;
     private String createdAt;
     private String updatedAt;
     private String riskType;
