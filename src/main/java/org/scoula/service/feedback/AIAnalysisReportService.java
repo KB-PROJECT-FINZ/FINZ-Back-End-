@@ -24,8 +24,6 @@ public class AIAnalysisReportService {
      * @return 최신 AI 분석 리포트 (없으면 null)
      */
     public AIAnalysisReportDto getLatestByUserId(Integer userId) {
-        log.info("사용자 {}의 최신 AI 분석 리포트 조회", userId);
-
         try {
             AIAnalysisReportDto report = aiAnalysisReportMapper.selectLatestByUserId(userId);
 
