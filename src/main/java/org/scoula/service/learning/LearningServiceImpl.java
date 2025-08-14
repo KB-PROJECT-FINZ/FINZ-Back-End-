@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.*;
 
 import org.scoula.domain.learning.vo.LearningQuizVO;
-import org.scoula.mapper.LearningMapper;
+import org.scoula.mapper.learning.LearningMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

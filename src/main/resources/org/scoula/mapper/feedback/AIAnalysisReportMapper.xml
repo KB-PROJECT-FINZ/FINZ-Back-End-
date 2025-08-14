@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.AIAnalysisReportMapper">
+<mapper namespace="org.scoula.mapper.feedback.AIAnalysisReportMapper">
 
     <!-- ResultMap 정의 -->
     <resultMap id="aiAnalysisReportResultMap" type="org.scoula.domain.feedback.dto.AIAnalysisReportDto">

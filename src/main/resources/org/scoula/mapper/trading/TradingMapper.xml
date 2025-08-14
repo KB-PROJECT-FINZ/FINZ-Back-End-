@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.TradingMapper">
+<mapper namespace="org.scoula.mapper.trading.TradingMapper">
     <!-- userId → accountIds -->
     <select id="getAccountIdsByUser" resultType="int">
         SELECT account_id

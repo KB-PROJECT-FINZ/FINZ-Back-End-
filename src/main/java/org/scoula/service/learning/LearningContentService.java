@@ -1,7 +1,7 @@
 package org.scoula.service.learning;
 
 import org.scoula.domain.learning.dto.ContentDto;
-import org.scoula.mapper.LearningContentMapper;
+import org.scoula.mapper.learning.LearningContentMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

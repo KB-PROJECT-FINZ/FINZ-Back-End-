@@ -7,15 +7,12 @@ import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.dto.LearningHistoryDto;
 import org.scoula.domain.learning.dto.LearningQuizDTO;
 import org.scoula.domain.learning.dto.QuizResultDTO;
-import org.scoula.mapper.LearningMapper;
 import org.scoula.service.learning.LearningGptService;
 import org.scoula.service.learning.LearningService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
