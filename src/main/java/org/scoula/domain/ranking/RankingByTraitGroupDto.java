@@ -14,5 +14,6 @@ public class RankingByTraitGroupDto {
     private BigDecimal gainRate;     // 수익률
     private Integer ranking;         // 순위
     private String nickname;         //닉네임
+    private Integer profileImage;
 
 }
