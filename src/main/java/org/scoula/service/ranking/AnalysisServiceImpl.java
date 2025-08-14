@@ -36,41 +36,23 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Override
     public void saveMyStockDistribution(Long userId, List<MyDistributionDto> distributions) {
-        List<StockDistributionSummaryDto> overallDistributionsAll =
-                analysisMapper.aggregateAllStockDistributions();
-
+        // ✅ bin 합계는 조회 시 집계하므로, 여기서는 개인 스냅샷(수익률/포지션/색상)만 저장
         for (MyDistributionDto dist : distributions) {
-            StockDistributionSummaryDto binCounts = overallDistributionsAll.stream()
-                    .filter(d -> d.getStockCode() != null
-                            && d.getStockCode().trim().equalsIgnoreCase(dist.getStockCode().trim()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (binCounts != null) {
-                dist.setBin0(binCounts.getBin0());
-                dist.setBin1(binCounts.getBin1());
-                dist.setBin2(binCounts.getBin2());
-                dist.setBin3(binCounts.getBin3());
-                dist.setBin4(binCounts.getBin4());
-                dist.setBin5(binCounts.getBin5());
-                dist.setColor(binCounts.getColor());
-            }
-
             analysisMapper.upsertMyStockDistribution(userId, dist);
         }
     }
 
-    // 매일 새벽 1시 실행 (cron은 기존 값 유지)
-    @Scheduled(cron = "* 0 * * * ?")
+    /** 매일 새벽 1시 실행 */
+    @Scheduled(cron = "0 0 1 * * ?")
     public void updateStockProfitRatesAndUserDistributions() {
         try {
-            // 1) 전체 종목별 보유 종목 평균 매입가 조회
+            // 1) 전체 종목 평균 매입가
             List<HoldingSummaryDto> allHoldings = analysisMapper.findHoldingSummaries();
 
-            // 2) 종목별 실시간 가격 조회 및 수익률 저장
+            // 2) 종목별 실시간 가격 → 수익률 저장
             for (HoldingSummaryDto holding : allHoldings) {
                 String stockCode = holding.getStockCode();
-                double avgPrice = holding.getAveragePrice();
+                double avgPrice  = holding.getAveragePrice();
 
                 JsonNode priceData = PriceApi.getPriceData(stockCode);
                 double currentPrice = priceData.path("output").path("stck_prpr").asDouble();
@@ -79,10 +61,8 @@ public class AnalysisServiceImpl implements AnalysisService {
                 analysisMapper.upsertStockProfitRate(stockCode, profitRate);
             }
 
-            // 3) 전체 사용자별 분포 계산 및 저장
+            // 3) 사용자별 분포 스냅샷 저장 (bin은 저장하지 않아도 OK)
             List<Integer> allUserIds = analysisMapper.findAllUserIds();
-            List<StockDistributionSummaryDto> overallDistributionsAll =
-                    analysisMapper.aggregateAllStockDistributions();
 
             for (int userId : allUserIds) {
                 List<HoldingSummaryDto> userHoldings = analysisMapper.findHoldingsByUserId(userId);
@@ -90,7 +70,7 @@ public class AnalysisServiceImpl implements AnalysisService {
 
                 for (HoldingSummaryDto holding : userHoldings) {
                     String stockCode = holding.getStockCode();
-                    double avgPrice = holding.getAveragePrice();
+                    double avgPrice  = holding.getAveragePrice();
 
                     JsonNode priceData = PriceApi.getPriceData(stockCode);
                     double currentPrice = priceData.path("output").path("stck_prpr").asDouble();
@@ -99,25 +79,13 @@ public class AnalysisServiceImpl implements AnalysisService {
                     int binIndex = getBinIndex(gainRate);
                     String label = getBinLabel(binIndex);
 
-                    StockDistributionSummaryDto binCounts = overallDistributionsAll.stream()
-                            .filter(d -> d.getStockCode().equals(stockCode))
-                            .findFirst()
-                            .orElse(new StockDistributionSummaryDto());
-
                     MyDistributionDto dto = new MyDistributionDto();
                     dto.setStockCode(stockCode);
-                    dto.setStockName(holding.getStockName());
+                    dto.setStockName(holding.getStockName()); // null이어도 조회 시 COALESCE 처리
                     dto.setGainRate(gainRate);
                     dto.setPositionIndex(binIndex);
                     dto.setPositionLabel(label);
-                    dto.setBin0(binCounts.getBin0());
-                    dto.setBin1(binCounts.getBin1());
-                    dto.setBin2(binCounts.getBin2());
-                    dto.setBin3(binCounts.getBin3());
-                    dto.setBin4(binCounts.getBin4());
-                    dto.setBin5(binCounts.getBin5());
-                    dto.setColor(binCounts.getColor());
-
+                    // bin0~5는 저장하지 않음 (집계 쿼리에서 최신 스냅샷 기준 합계)
                     userDistributions.add(dto);
                 }
 
