@@ -3,10 +3,8 @@ package org.scoula.service.feedback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.feedback.dto.AIAnalysisReportDto;
-import org.scoula.mapper.AIAnalysisReportMapper;
+import org.scoula.mapper.feedback.AIAnalysisReportMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * AI 분석 리포트 서비스

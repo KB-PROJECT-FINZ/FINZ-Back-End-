@@ -1,4 +1,4 @@
-package org.scoula.mapper;
+package org.scoula.mapper.trading;
 
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.mocktrading.vo.UserAccount;

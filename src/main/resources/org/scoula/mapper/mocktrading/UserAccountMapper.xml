@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.UserAccountMapper">
+<mapper namespace="org.scoula.mapper.trading.UserAccountMapper">
 
     <!-- 결과 매핑 -->
     <resultMap id="userAccountResultMap" type="org.scoula.domain.mocktrading.vo.UserAccount">

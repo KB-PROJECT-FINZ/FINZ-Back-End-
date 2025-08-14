@@ -1,4 +1,4 @@
-package org.scoula.mapper;
+package org.scoula.mapper.journal;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.scoula.domain.journal.vo.InvestmentJournalVO;

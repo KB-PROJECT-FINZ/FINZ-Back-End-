@@ -7,14 +7,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.scoula.domain.mocktrading.vo.UserAccount;
-import org.scoula.domain.mocktrading.vo.Holding;
-import org.scoula.mapper.UserAccountMapper;
+import org.scoula.mapper.trading.UserAccountMapper;
 import org.scoula.util.mocktrading.AccountNumberGenerator;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor

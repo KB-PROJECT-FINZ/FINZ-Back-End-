@@ -1,4 +1,4 @@
-package org.scoula.mapper;
+package org.scoula.mapper.trading;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
