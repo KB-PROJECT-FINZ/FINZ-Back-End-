@@ -53,7 +53,7 @@ public class MarketService {
             String tabDescription = getTabDescription(blngClsCode);
 
             List<Map<String, Object>> result = volumeRankingApi.getVolumeRanking("J", limit, blngClsCode);
-            log.info("✅ {} 순위 조회 성공: {} 건", tabDescription, result != null ? result.size() : 0);
+            log.info("{} 순위 조회 성공: {} 건", tabDescription, result != null ? result.size() : 0);
 
             return result;
         } catch (Exception e) {
