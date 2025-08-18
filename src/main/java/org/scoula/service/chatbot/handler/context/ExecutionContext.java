@@ -10,5 +10,6 @@ public class ExecutionContext {
     private final Integer userId;
     private final Integer sessionId;
     private final String userMessage;
+    private Integer messageId;
     private final IntentType intentType;
 }

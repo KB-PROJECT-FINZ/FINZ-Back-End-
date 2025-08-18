@@ -76,14 +76,17 @@ public class ChatBotServiceImpl implements ChatBotService {
 
             // ====================== 4. 사용자 메시지 저장 ======================
             // chat_messages 테이블에 사용자 메시지 저장
-            messageService.save(userId, sessionId, "user", userMessage, intentType);
-            log.info("[MESSAGE] 사용자 메시지 저장 완료");
-
+            ChatMessageDto userMsg = messageService.save(userId, sessionId, "user", userMessage, intentType);
+            Integer messageId = (userMsg != null ? userMsg.getId() : null);
+            log.info("[MESSAGE] 사용자 메시지 저장 완료 → id={}", messageId);
             // 핸들러 실행
             ExecutionContext ctx = ExecutionContext.builder()
-                    .userId(userId).sessionId(sessionId)
-                    .userMessage(userMessage).intentType(intentType).build();
-
+                    .userId(userId)
+                    .sessionId(sessionId)
+                    .messageId(messageId)
+                    .userMessage(userMessage)
+                    .intentType(intentType)
+                    .build();
             IntentType route = switch (intentType) {
                 case RECOMMEND_PROFILE, RECOMMEND_KEYWORD, STOCK_ANALYZE, PORTFOLIO_ANALYZE,
                      TERM_EXPLAIN, SESSION_END, UNKNOWN, MESSAGE, ERROR -> intentType;
@@ -151,4 +154,3 @@ public class ChatBotServiceImpl implements ChatBotService {
     }
 
 }
-

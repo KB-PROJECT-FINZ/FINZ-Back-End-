@@ -12,7 +12,6 @@ public class ExecutionResult {
     private final String finalContent;
     private final Integer requestedPeriod;   // 없으면 null
     private final Map<String, Object> extras;
-
     public Optional<Integer> requestedPeriodOpt() {
         return Optional.ofNullable(requestedPeriod);
     }
