@@ -32,11 +32,8 @@ public class MarketController {
      */
     @GetMapping("/indices")
     public ResponseEntity<Map<String, Object>> getMarketIndices() {
-        log.info("=== 시장 지수 조회 요청 ===");
-
         try {
             Map<String, Object> indices = marketService.getMarketIndices();
-            log.info("시장 지수 조회 성공: {}", indices);
             return ResponseEntity.ok(indices);
 
         } catch (Exception e) {
@@ -58,9 +55,7 @@ public class MarketController {
             @RequestParam(defaultValue = "3") String blngClsCode) {
 
         try {
-            log.info("🔍 거래량 순위 조회 요청 - limit: {}, blngClsCode: {}", limit, blngClsCode);
 
-            // 입력값 검증
             if (limit < 1 || limit > 100) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "limit은 1~100 사이의 값이어야 합니다", "limit", limit));
@@ -81,7 +76,6 @@ public class MarketController {
             response.put("description", getTabDescription(blngClsCode));
             response.put("timestamp", System.currentTimeMillis());
 
-            log.info("✅ 거래량 순위 조회 성공 - {} 건 반환", ranking.size());
             return ResponseEntity.ok(ranking); // 기존 호환성을 위해 직접 리스트 반환
 
         } catch (Exception e) {
@@ -100,8 +94,6 @@ public class MarketController {
     @GetMapping("/overview")
     public ResponseEntity<Map<String, Object>> getMarketOverview(
             @RequestParam(defaultValue = "3") String blngClsCode) {
-
-        log.info("=== 시장 전체 현황 조회 요청 - blngClsCode: {} ===", blngClsCode);
 
         try {
             if (!isValidBlngClsCode(blngClsCode)) {
@@ -141,8 +133,6 @@ public class MarketController {
             @RequestParam(defaultValue = "3") String blngClsCode) {
 
         try {
-            log.info("🔍 통합 거래량 순위 조회 요청 - limit: {}, blngClsCode: {}", limit, blngClsCode);
-
             if (limit < 1 || limit > 100) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "limit은 1~100 사이의 값이어야 합니다"));
@@ -182,8 +172,6 @@ public class MarketController {
             @RequestParam(defaultValue = "3") String blngClsCode) {
 
         try {
-            log.info("🔍 통합 거래량 순위(단일) 조회 요청 - limit: {}, blngClsCode: {}", limit, blngClsCode);
-
             if (limit < 1 || limit > 100) {
                 return ResponseEntity.badRequest()
                         .body(Map.of("error", "limit은 1~100 사이의 값이어야 합니다"));
@@ -242,11 +230,8 @@ public class MarketController {
             @RequestParam String query,
             @RequestParam(defaultValue = "10") int limit) {
 
-        log.info("=== 종목 검색 요청: '{}', limit: {} ===", query, limit);
-
         try {
             List<Map<String, Object>> stocks = searchStocksFromDB(query, limit);
-            log.info("종목 검색 성공: {} 건", stocks.size());
             return ResponseEntity.ok(stocks);
 
         } catch (Exception e) {
@@ -260,8 +245,7 @@ public class MarketController {
      */
     private boolean isValidBlngClsCode(String blngClsCode) {
         return blngClsCode != null &&
-                (blngClsCode.equals("0") || blngClsCode.equals("1") ||
-                        blngClsCode.equals("2") || blngClsCode.equals("3") || blngClsCode.equals("4"));
+                (blngClsCode.equals("0") || blngClsCode.equals("3"));
     }
 
     /**
@@ -270,11 +254,8 @@ public class MarketController {
     private String getTabDescription(String blngClsCode) {
         switch (blngClsCode) {
             case "0": return "평균거래량";
-            case "1": return "거래증가율";
-            case "2": return "평균거래회전율";
             case "3": return "거래금액순";
-            case "4": return "평균거래금액회전율";
-            default: return "거래대금순위";
+            default: return "평균거래량";
         }
     }
 
@@ -324,8 +305,6 @@ public class MarketController {
                 stock.put("imageUrl", rs.getString("image_url"));
                 results.add(stock);
             }
-
-            log.info("DB 종목 검색 결과: '{}' -> {} 건", query, results.size());
 
         } catch (Exception e) {
             log.error("DB 종목 검색 실패: {}", e.getMessage(), e);

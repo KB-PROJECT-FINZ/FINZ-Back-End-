@@ -1,8 +1,7 @@
 package org.scoula.service.Auth;
 
 import org.scoula.domain.Auth.vo.UserVo;
-import org.scoula.mapper.UserMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.scoula.domain.type.dto.RiskTypeDto;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,4 +13,11 @@ public interface UserService {
     boolean isNicknameAvailable(String nickname);
     UserVo findByUsername(String username);
     String getRiskTypeByUserId(Integer userId);
+    RiskTypeDto findRiskTypeByRiskType(String riskType);
+    boolean isEmailAvailable(String email);
+
+    UserVo findById(Integer userId);
+    boolean updateProfileImage(Integer userId, Integer profileImage);
+
+    boolean updateNickname(Integer userId, String nickname);
 }

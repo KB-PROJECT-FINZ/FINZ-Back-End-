@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.feedback.AIAnalysisReportMapper">
+
+    <!-- ResultMap 정의 -->
+    <resultMap id="aiAnalysisReportResultMap" type="org.scoula.domain.feedback.dto.AIAnalysisReportDto">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="sessionId" column="session_id"/>
+        <result property="messageId" column="message_id"/>
+        <result property="summaryText" column="summary_text"/>
+        <result property="riskText" column="risk_text"/>
+        <result property="suggestionText" column="suggestion_text"/>
+        <result property="transactionCount" column="transaction_count"/>
+        <result property="analysisPeriod" column="analysis_period"/>
+        <result property="analysisStart" column="analysis_start"/>
+        <result property="analysisEnd" column="analysis_end"/>
+        <result property="generatedAt" column="generated_at"/>
+    </resultMap>
+
+    <!-- 사용자 ID로 최신 AI 분석 리포트 조회 -->
+    <select id="selectLatestByUserId" resultMap="aiAnalysisReportResultMap">
+        SELECT
+            id,
+            user_id,
+            session_id,
+            message_id,
+            summary_text,
+            risk_text,
+            suggestion_text,
+            transaction_count,
+            analysis_period,
+            analysis_Start,
+            analysis_End,
+            generated_at
+        FROM chat_behavior_feedback
+        WHERE user_id = #{userId}
+        ORDER BY generated_at DESC
+            LIMIT 1
+    </select>
+</mapper>

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.LearningMapper">
+<mapper namespace="org.scoula.mapper.learning.LearningMapper">
 
     <!--콘텐츠 전체 조회-->
     <select id="getAllContents" resultType="org.scoula.domain.learning.vo.LearningContentVO">
@@ -36,10 +36,9 @@
 
     <!--투자 성향별 콘텐츠 필터링-->
     <select id="getContentsByGroupCode" parameterType="String" resultMap="LearningContentMap">
-        SELECT lc.*
-        FROM learning_contents lc
-                 JOIN learning_contents_tags tag ON lc.content_id = tag.content_id
-        WHERE tag.group_code = #{groupCode}
+        SELECT *
+        FROM learning_contents
+        WHERE group_code = #{groupCode}
     </select>
 
     <insert id="insertLearningHistory" parameterType="org.scoula.domain.learning.dto.LearningHistoryDto">
@@ -57,7 +56,7 @@
         WHERE user_id = #{userId}
     </select>
 
-    <select id="findGroupCodeByUserId" parameterType="Long" resultType="String">
+    <select id="findGroupCodeByUserId" parameterType="int" resultType="String">
         SELECT it.group_code
         FROM user u
                  JOIN investment_types it ON u.risk_type = it.risk_type
@@ -73,6 +72,7 @@
         WHERE lc.group_code = #{groupCode}
           AND ulh.content_id IS NULL
     </select>
+
 
     <select id="findTitlesByGroupCode" resultType="string">
         SELECT title FROM learning_contents WHERE group_code = #{groupCode}
@@ -140,4 +140,29 @@
         WHERE user_id = #{userId} AND quiz_id = #{quizId}
     </select>
 
+    <!-- 누적 획득 크레딧 업데이트 -->
+    <update id="updateTotalEarnedCredit" parameterType="map">
+        UPDATE user
+        SET total_earned_credit = total_earned_credit + #{creditAmount}
+        WHERE id = #{userId}
+    </update>
+
+    <!-- 누적 획득 크레딧 조회 -->
+    <select id="getTotalEarnedCredit" parameterType="int" resultType="int">
+        SELECT total_earned_credit FROM user WHERE id = #{userId}
+    </select>
+
+    <select id="getUserReadCount" parameterType="int" resultType="int">
+        SELECT COUNT(DISTINCT content_id)
+        FROM user_learning_history
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="existsQuizByContentId" parameterType="int" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM learning_quiz
+            WHERE quiz_id = #{contentId}
+        )
+    </select>
 </mapper>

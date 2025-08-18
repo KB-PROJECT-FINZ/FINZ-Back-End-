@@ -3,7 +3,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.AuthMapper">
+<mapper namespace="org.scoula.mapper.auth.AuthMapper">
 
     <insert id="insertUser" parameterType="org.scoula.domain.Auth.vo.UserVo">
         INSERT INTO user (

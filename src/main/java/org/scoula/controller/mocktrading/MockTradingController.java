@@ -1,7 +1,12 @@
 package org.scoula.controller.mocktrading;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.scoula.api.mocktrading.ConditionSearchApi;
 import org.scoula.domain.Auth.vo.UserVo;
 import org.scoula.domain.mocktrading.vo.UserAccount;
 import org.scoula.domain.mocktrading.vo.Holding;
@@ -9,101 +14,36 @@ import org.scoula.domain.mocktrading.vo.Transaction;
 import org.scoula.service.mocktrading.UserAccountService;
 import org.scoula.service.mocktrading.HoldingService;
 import org.scoula.service.mocktrading.TransactionService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpSession;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RestController
-@RequestMapping("/api/mocktrading")
-@RequiredArgsConstructor
 @Log4j2
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/mocktrading")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:8080"})
 public class MockTradingController {
+
+    @Autowired
+    private TransactionService transactionService;
+
+    @Autowired
+    private DataSource dataSource;
 
     private final UserAccountService userAccountService;
     private final HoldingService holdingService;
-    private final TransactionService transactionService;
-
-    /**
-     * 로그인한 사용자의 자산 현황 대시보드 조회
-     * GET /api/mocktrading/dashboard
-     */
-    @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard(HttpSession session) {
-        try {
-            // 세션에서 로그인한 사용자 정보 가져오기
-            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
-
-            if (loginUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("error", "로그인이 필요합니다."));
-            }
-
-            Integer userId = loginUser.getId();
-            log.info("자산 현황 대시보드 조회 - 로그인 사용자 ID: {}", userId);
-
-            // 계좌 정보 조회 또는 생성
-            UserAccount account = userAccountService.getUserAccount(userId);
-            if (account == null) {
-                account = userAccountService.createAccountForNewUser(userId);
-                if (account == null) {
-                    return ResponseEntity.badRequest()
-                            .body(Map.of("error", "계좌 생성에 실패했습니다."));
-                }
-            }
-
-            // 보유 종목 정보 (비중 포함)
-            List<Holding> holdings = holdingService.getHoldingsWithPercentage(userId, account.getTotalAssetValue());
-
-            // 최근 거래 내역 (최대 5개)
-            List<Transaction> recentTransactions = transactionService.getUserTransactions(userId, 5, 0);
-
-            // 거래 통계 (최근 30일)
-            TransactionService.TransactionSummary transactionSummary =
-                    transactionService.getRecentTransactionSummary(userId, 30);
-
-            // 대시보드 응답 구성
-            Map<String, Object> dashboard = new HashMap<>();
-            dashboard.put("account", account);
-            dashboard.put("holdings", holdings);
-            dashboard.put("recentTransactions", recentTransactions);
-            dashboard.put("transactionSummary", transactionSummary);
-
-            // 포트폴리오 통계 계산
-            Map<String, Object> statistics = new HashMap<>();
-            long totalStockValue = holdings.stream()
-                    .mapToLong(h -> h.getCurrentValue() != null ? h.getCurrentValue() : 0L)
-                    .sum();
-
-            statistics.put("totalStockValue", totalStockValue);
-            statistics.put("holdingCount", holdings.size());
-
-            // 비율 계산
-            if (account.getTotalAssetValue() > 0) {
-                double cashPercentage = (account.getCurrentBalance() * 100.0) / account.getTotalAssetValue();
-                double stockPercentage = (totalStockValue * 100.0) / account.getTotalAssetValue();
-
-                statistics.put("cashPercentage", Math.round(cashPercentage * 100) / 100.0);
-                statistics.put("stockPercentage", Math.round(stockPercentage * 100) / 100.0);
-            } else {
-                statistics.put("cashPercentage", 100.0);
-                statistics.put("stockPercentage", 0.0);
-            }
-
-            dashboard.put("statistics", statistics);
-
-            return ResponseEntity.ok(dashboard);
-
-        } catch (Exception e) {
-            log.error("대시보드 조회 실패", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "대시보드 정보 조회 중 오류가 발생했습니다."));
-        }
-    }
 
     /**
      * 로그인한 사용자의 계좌 정보 조회
@@ -173,7 +113,7 @@ public class MockTradingController {
      */
     @GetMapping("/transactions")
     public ResponseEntity<?> getUserTransactions(HttpSession session,
-                                                 @RequestParam(defaultValue = "50") int limit,
+                                                 @RequestParam(defaultValue = "1000") int limit,
                                                  @RequestParam(defaultValue = "0") int offset) {
         try {
             UserVo loginUser = (UserVo) session.getAttribute("loginUser");
@@ -193,6 +133,30 @@ public class MockTradingController {
             log.error("거래 내역 조회 실패", e);
             return ResponseEntity.internalServerError()
                     .body(Map.of("error", "거래 내역 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * 사용자 크레딧 조회
+     * GET /api/mocktrading/user/credit
+     */
+    @GetMapping("/user/credit")
+    public ResponseEntity<?> getUserCredit(HttpSession session) {
+        try {
+            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
+            if (loginUser == null) {
+                return ResponseEntity.status(401)
+                        .body(Map.of("error", "로그인이 필요합니다."));
+            }
+
+            Integer userId = loginUser.getId();
+            Integer totalCredit = userAccountService.getUserCredit(userId);
+
+            return ResponseEntity.ok(Map.of("totalCredit", totalCredit));
+        } catch (Exception e) {
+            log.error("크레딧 조회 실패", e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("error", "크레딧 정보 조회 중 오류가 발생했습니다."));
         }
     }
 
@@ -287,5 +251,135 @@ public class MockTradingController {
             return ResponseEntity.internalServerError()
                     .body(Map.of("success", false, "error", "주문 처리 중 오류가 발생했습니다."));
         }
+    }
+
+    /**
+     * 종목조건검색 목록조회 테스트 - GET 방식
+     * 이미지 URL 추가 로직 포함
+     *
+     * @param userId 사용자 ID (선택, 기본값: "tls12251")
+     * @param seq 시퀀스 번호 (선택, 기본값: "0")
+     * @return 조회 결과 (이미지 URL 포함)
+     */
+    @GetMapping("/condition-search")
+    public ResponseEntity<Map<String, Object>> getConditionSearchResult(
+            @RequestParam(value = "user_id", defaultValue = "tls12251") String userId,
+            @RequestParam(value = "seq", defaultValue = "0") String seq) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            // API 호출
+            JsonNode result = ConditionSearchApi.getConditionSearchResult(userId, seq);
+
+            // 이미지 URL 추가 처리
+            JsonNode enhancedResult = addImageUrlsToConditionSearchResult(result);
+
+            response.put("success", true);
+            response.put("message", "종목조건검색 목록조회 성공");
+            response.put("data", enhancedResult);
+            response.put("userId", userId);
+            response.put("seq", seq);
+
+            return ResponseEntity.ok(response);
+
+        } catch (IOException e) {
+            response.put("success", false);
+            response.put("message", "API 호출 실패: " + e.getMessage());
+            response.put("userId", userId);
+            response.put("seq", seq);
+            response.put("error", e.getClass().getSimpleName());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "예상치 못한 오류: " + e.getMessage());
+            response.put("userId", userId);
+            response.put("seq", seq);
+            response.put("error", e.getClass().getSimpleName());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    /**
+     * Condition Search 결과에 이미지 URL 추가
+     * VolumeRankingApi와 동일한 로직 적용
+     */
+    private JsonNode addImageUrlsToConditionSearchResult(JsonNode originalResult) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            // Jackson에서 깊은 복사를 위한 정확한 방법
+            JsonNode result = mapper.readTree(mapper.writeValueAsString(originalResult));
+
+            // output2 배열에서 각 종목에 이미지 URL 추가
+            JsonNode output2 = result.path("output2");
+            if (output2.isArray()) {
+                ArrayNode output2Array = (ArrayNode) output2;
+
+                for (int i = 0; i < output2Array.size(); i++) {
+                    JsonNode stock = output2Array.get(i);
+                    if (stock.isObject()) {
+                        ObjectNode stockObj = (ObjectNode) stock;
+
+                        // 종목 코드 추출 (여러 필드명 시도)
+                        String stockCode = getFieldValue(stock, "mksc_shrn_iscd", "stck_shrn_iscd", "code");
+
+                        if (!stockCode.isEmpty()) {
+                            // DB에서 이미지 URL 조회
+                            String imageUrl = getStockImageUrl(stockCode);
+                            if (imageUrl != null && !imageUrl.isEmpty()) {
+                                stockObj.put("imageUrl", imageUrl);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("이미지 URL 추가 중 오류 발생", e);
+            return originalResult; // 오류 시 원본 반환
+        }
+    }
+
+    /**
+     * DB에서 종목 코드로 이미지 URL 조회
+     * VolumeRankingApi의 getStockImageUrl 메서드와 동일
+     */
+    private String getStockImageUrl(String stockCode) {
+        String sql = "SELECT image_url FROM stocks WHERE code = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, stockCode);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getString("image_url");
+            }
+
+        } catch (Exception e) {
+            log.error("이미지 URL 조회 실패: {} - {}", stockCode, e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * 여러 필드명을 시도해서 값을 가져오는 헬퍼 메서드
+     * VolumeRankingApi의 getFieldValue 메서드와 동일
+     */
+    private String getFieldValue(JsonNode node, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            JsonNode field = node.path(fieldName);
+            if (!field.isMissingNode() && !field.asText().isEmpty() && !"0".equals(field.asText())) {
+                return field.asText();
+            }
+        }
+        return "";
     }
 }

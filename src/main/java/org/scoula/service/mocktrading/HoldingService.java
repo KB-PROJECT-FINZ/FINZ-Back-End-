@@ -3,7 +3,7 @@ package org.scoula.service.mocktrading;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.mocktrading.vo.Holding;
-import org.scoula.mapper.HoldingMapper;
+import org.scoula.mapper.trading.HoldingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,26 +56,6 @@ public class HoldingService {
 
         } catch (Exception e) {
             log.error("특정 보유 종목 조회 실패 - 사용자 ID: {}, 종목코드: {}", userId, stockCode, e);
-            throw new RuntimeException("보유 종목 조회 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     * 계좌 ID와 종목코드로 보유 종목 조회
-     */
-    public Holding getHoldingByAccountAndStock(Integer accountId, String stockCode) {
-        try {
-            log.debug("계좌별 보유 종목 조회 - 계좌 ID: {}, 종목코드: {}", accountId, stockCode);
-
-            Holding holding = holdingMapper.selectByAccountAndStock(accountId, stockCode);
-            if (holding != null) {
-                updateHoldingProfitLoss(holding);
-            }
-
-            return holding;
-
-        } catch (Exception e) {
-            log.error("계좌별 보유 종목 조회 실패 - 계좌 ID: {}, 종목코드: {}", accountId, stockCode, e);
             throw new RuntimeException("보유 종목 조회 중 오류가 발생했습니다.", e);
         }
     }
@@ -230,68 +210,6 @@ public class HoldingService {
         }
     }
 
-    /**
-     * 사용자의 총 주식 평가금액 계산
-     */
-    public long calculateTotalStockValue(Integer userId) {
-        try {
-            List<Holding> holdings = getUserHoldings(userId);
-            return holdings.stream()
-                    .mapToLong(h -> h.getCurrentValue() != null ? h.getCurrentValue() : 0L)
-                    .sum();
-
-        } catch (Exception e) {
-            log.error("총 주식 평가금액 계산 실패 - 사용자 ID: {}", userId, e);
-            return 0L;
-        }
-    }
-
-    /**
-     * 계좌의 총 주식 평가금액 계산
-     */
-    public long calculateTotalStockValueByAccount(Integer accountId) {
-        try {
-            List<Holding> holdings = holdingMapper.selectByAccountId(accountId);
-            return holdings.stream()
-                    .mapToLong(h -> {
-                        updateHoldingProfitLoss(h);
-                        return h.getCurrentValue() != null ? h.getCurrentValue() : 0L;
-                    })
-                    .sum();
-
-        } catch (Exception e) {
-            log.error("계좌별 총 주식 평가금액 계산 실패 - 계좌 ID: {}", accountId, e);
-            return 0L;
-        }
-    }
-
-    /**
-     * 계좌 초기화 시 모든 보유 종목 삭제
-     */
-    @Transactional
-    public void deleteAllHoldingsByAccount(Integer accountId) {
-        try {
-            log.info("계좌 초기화 - 모든 보유 종목 삭제, 계좌 ID: {}", accountId);
-            int result = holdingMapper.deleteAllByAccount(accountId);
-            log.info("삭제된 보유 종목 수: {}", result);
-
-        } catch (Exception e) {
-            log.error("보유 종목 일괄 삭제 실패 - 계좌 ID: {}", accountId, e);
-            throw new RuntimeException("보유 종목 삭제 중 오류가 발생했습니다.", e);
-        }
-    }
-
-    /**
-     * 보유 종목 수 조회
-     */
-    public int getHoldingCount(Integer userId) {
-        try {
-            return holdingMapper.countByUserId(userId);
-        } catch (Exception e) {
-            log.error("보유 종목 수 조회 실패 - 사용자 ID: {}", userId, e);
-            return 0;
-        }
-    }
 
     /**
      * 특정 종목의 보유 수량 조회

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.scoula.mapper.learning.LearningContentMapper">
+
+    <select id="selectByRiskType" parameterType="string" resultType="org.scoula.domain.learning.dto.ContentDto">
+        SELECT
+            risk_id AS id,
+            risk_type,
+            title,
+            body AS content,
+            label
+        FROM group_info
+        WHERE risk_type = #{riskType}
+    </select>
+
+    <select id="findAllContents" resultType="org.scoula.domain.learning.dto.ContentDto">
+        SELECT
+        risk_id AS id,
+        risk_type AS riskType,
+        title,
+        body AS content,
+        label
+        FROM group_info
+    </select>
+
+    <select id="findById" parameterType="long" resultType="org.scoula.domain.learning.dto.ContentDto">
+        SELECT
+            risk_id AS id,
+            risk_type,
+            title,
+            body AS content,
+            label
+        FROM group_info
+        WHERE risk_id = #{id}
+    </select>
+</mapper>

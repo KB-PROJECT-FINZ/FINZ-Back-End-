@@ -5,75 +5,180 @@
 
 <mapper namespace="org.scoula.mapper.ranking.RankingMapper">
 
-    <!-- (1) 내 수익률 및 전체 순위 -->
-    <select id="selectMyRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="map">
-       <![CDATA[
+    <!-- ✅ popular_stocks: DAY (오늘/어제) -->
+    <select id="selectPopularStocksCachedDay" resultType="org.scoula.domain.ranking.PopularStockDto">
+        <![CDATA[
         SELECT
-            ah.account_id AS user_id,
-            ah.profit_rate AS gain_rate,
-            u.risk_type AS risk_type,
-            (
-                SELECT COUNT(*) + 1
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate > ah.profit_rate
-            ) AS ranking,
-            (
-                SELECT ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM asset_history WHERE record_date = #{baseDate}), 2)
-                FROM asset_history sub
-                WHERE sub.record_date = #{baseDate}
-                  AND sub.profit_rate <= ah.profit_rate
-            ) AS top_percent
-        FROM asset_history ah
-                 JOIN user u ON ah.account_id = u.id
-        WHERE ah.account_id = #{userId}
-          AND ah.record_date = #{baseDate}
+            ps.stock_code        AS stockCode,
+            ps.stock_name        AS stockName,
+            ps.transaction_count AS transactionCount,
+            ps.ranking           AS ranking,
+            s.image_url          AS imageUrl
+        FROM popular_stocks ps
+                 LEFT JOIN stocks s ON s.code = ps.stock_code
+        WHERE ps.date_type = 'DAY'
+          AND ps.base_date = #{baseDate}
+        ORDER BY ps.ranking ASC
+            LIMIT 10
         ]]>
     </select>
 
-    <!-- (2) 전체 인기 종목 Top5 -->
-    <select id="selectPopularStocks" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
+    <!-- ✅ popular_stocks: WEEK (특정 주차) -->
+    <select id="selectPopularStocksCachedWeek" resultType="org.scoula.domain.ranking.PopularStockDto">
+        <![CDATA[
         SELECT
-            t.stock_code AS stock_code,
-            s.name AS stock_name,
-            COUNT(*) AS transaction_count,
-            ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC) AS ranking,
-                s.image_url AS image_url
-        FROM transactions t
-                 JOIN stocks s ON t.stock_code = s.code
-        WHERE DATE(t.executed_at) = #{baseDate}
-        GROUP BY t.stock_code, s.name, s.image_url
-        ORDER BY transaction_count DESC
-            LIMIT 5
+            ps.stock_code        AS stockCode,
+            ps.stock_name        AS stockName,
+            ps.transaction_count AS transactionCount,
+            ps.ranking           AS ranking,
+            s.image_url          AS imageUrl
+        FROM popular_stocks ps
+                 LEFT JOIN stocks s ON s.code = ps.stock_code
+        WHERE ps.date_type = 'WEEK'
+          AND ps.base_date = #{baseDate}
+        ORDER BY ps.ranking ASC
+            LIMIT 10
+        ]]>
     </select>
 
-    <!-- (3) 전체 상위 수익률 TOP 100 -->
-    <select id="selectTopRanking" resultType="org.scoula.domain.ranking.MyRankingDto" parameterType="string">
-        SELECT account_id AS user_id, profit_rate AS gain_rate, ranking,
-               NULL AS top_percent,
-               NULL AS risk_type
-        FROM (
-                 SELECT account_id, profit_rate,
-                        RANK() OVER (ORDER BY profit_rate DESC) AS ranking
-                 FROM asset_history
-                 WHERE record_date = #{baseDate}
-             ) ranked
-            LIMIT 100
+    <!-- ✅ popular_stocks에서 최신 WEEK 기준일 -->
+    <select id="selectLatestWeekBaseDateFromPopular" resultType="string">
+        <![CDATA[
+        SELECT DATE_FORMAT(MAX(base_date), '%Y-%m-%d')
+        FROM popular_stocks
+        WHERE date_type = 'WEEK'
+        ]]>
     </select>
 
-    <!-- (4) 성향 그룹별 상위 수익률 TOP 100 -->
-    <select id="selectTopRankingByTraitGroup" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto" parameterType="map">
-        SELECT ah.account_id AS user_id, tt.group_code AS trait_group, ah.profit_rate AS gain_rate, ranking
-        FROM (
-                 SELECT account_id, profit_rate,
-                        RANK() OVER (ORDER BY profit_rate DESC) AS ranking
-                 FROM asset_history
-                 WHERE record_date = #{baseDate}
-             ) ah
-                 JOIN user u ON ah.account_id = u.id
-                 JOIN risk_types tt ON u.risk_type = tt.code
-        WHERE tt.group_code = #{traitGroup}
-            LIMIT 100
+    <!-- ✅ ranking_by_trait_group: 최신 WEEK 기준일 -->
+    <select id="selectLatestWeekBaseDate" resultType="string">
+        <![CDATA[
+        SELECT DATE_FORMAT(MAX(base_date), '%Y-%m-%d')
+        FROM ranking_by_trait_group
+        WHERE date_type = 'WEEK'
+          AND base_date <= CURDATE()
+        ]]>
     </select>
+
+    <!-- ✅ 해당 WEEK 기준일 존재 여부 -->
+    <select id="existsWeekCacheByDate" parameterType="string" resultType="int">
+        <![CDATA[
+        SELECT EXISTS(
+            SELECT 1
+            FROM ranking_by_trait_group
+            WHERE date_type = 'WEEK'
+              AND base_date = #{baseDate}
+        )
+        ]]>
+    </select>
+
+    <!-- ✅ 주간 전체 랭킹 (평면) -->
+    <select id="selectWeeklyRankingCached" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto">
+        <![CDATA[
+        SELECT
+            s.user_id                   AS userId,
+            IFNULL(u.nickname,'익명')   AS nickname,
+            it.group_code               AS traitGroup,     -- 영문 그룹코드
+            u.risk_type                 AS originalTrait,  -- 세부코드
+            s.gain_rate                 AS gainRate,
+            (@rownum := @rownum + 1)    AS ranking,
+            IFNULL(u.profile_image, 1)  AS profileImage
+        FROM
+            (
+                /* 전체 기준 정렬 고정: 수익률 DESC, 동률이면 user_id ASC */
+                SELECT r.user_id, r.gain_rate
+                FROM ranking_by_trait_group r
+                WHERE r.date_type = 'WEEK'
+                  AND r.base_date = #{baseDate}
+                ORDER BY r.gain_rate DESC, r.user_id ASC
+            ) s
+                JOIN `user` u            ON u.id = s.user_id
+                JOIN investment_types it ON it.risk_type = u.risk_type
+                /* 세션 변수 초기화 (5.7 안전 패턴) */
+                JOIN (SELECT @rownum := 0) vars
+            LIMIT 100
+        ]]>
+    </select>
+
+    <!-- ✅ 주간 성향별 랭킹 (그룹 필터 필수) -->
+    <select id="selectGroupedWeeklyRankingCached" resultType="org.scoula.domain.ranking.RankingByTraitGroupDto">
+        <![CDATA[
+        SELECT
+            r.user_id                  AS userId,
+            IFNULL(u.nickname,'익명')  AS nickname,
+            it.group_code              AS traitGroup,     -- 영문 그룹코드
+            u.risk_type                AS originalTrait,  -- 세부코드
+            r.gain_rate                AS gainRate,
+            r.ranking                  AS ranking,
+            IFNULL(u.profile_image, 1) AS profileImage    -- 프로필 번호
+        FROM ranking_by_trait_group r
+                 JOIN `user` u            ON u.id = r.user_id
+                 JOIN investment_types it ON it.risk_type = u.risk_type
+        WHERE r.date_type = 'WEEK'
+          AND r.base_date = #{baseDate}
+          AND it.group_code = #{traitGroup}              -- 🔥 여기 필터가 핵심
+        ORDER BY r.ranking ASC
+            LIMIT 100
+        ]]>
+    </select>
+
+    <!-- ✅ 내 랭킹 -->
+    <select id="selectMyRankingCached" resultType="org.scoula.domain.ranking.MyRankingDto">
+        <![CDATA[
+        SELECT
+            me.user_id                                   AS userId,
+            /* 전체 기준 순위: 나보다 우선순위 높은 사람 수 + 1 */
+            (
+                SELECT 1 + COUNT(*)
+                FROM ranking_by_trait_group r2
+                WHERE r2.date_type = 'WEEK'
+                  AND r2.base_date = me.base_date
+                  AND (
+                    r2.gain_rate > me.gain_rate
+                        OR (r2.gain_rate = me.gain_rate AND r2.user_id < me.user_id)
+                    )
+            )                                            AS ranking,
+            me.gain_rate                                 AS gainRate,
+            /* 전체 인원 대비 상위 퍼센트: (상위인원/전체)*100 */
+            ROUND(
+                    100 * (
+                        SELECT COUNT(*)
+                        FROM ranking_by_trait_group r2
+                        WHERE r2.date_type = 'WEEK'
+                          AND r2.base_date = me.base_date
+                          AND (
+                            r2.gain_rate > me.gain_rate
+                                OR (r2.gain_rate = me.gain_rate AND r2.user_id < me.user_id)
+                            )
+                    ) / NULLIF(t.total_cnt, 0), 2
+            )                                            AS topPercent,
+            it.group_code                                AS riskType,      -- 그룹(영문)
+            u.risk_type                                  AS originalTrait, -- 세부코드
+            DATE_FORMAT(me.base_date, '%Y-%m-%d')        AS baseDate
+        FROM ranking_by_trait_group me
+                 JOIN `user` u            ON u.id = me.user_id
+                 JOIN investment_types it ON it.risk_type = u.risk_type
+                 JOIN (
+            SELECT COUNT(*) AS total_cnt
+            FROM ranking_by_trait_group
+            WHERE date_type = 'WEEK' AND base_date = #{baseDate}
+        ) t ON 1=1
+        WHERE me.date_type = 'WEEK'
+          AND me.base_date = #{baseDate}
+          AND me.user_id   = #{userId}
+            LIMIT 1
+        ]]>
+    </select>
+    <!-- anchor(YYYY-MM-DD) 이하에서 가장 최신 WEEK base_date -->
+    <select id="selectLatestWeekBaseDateLTE" parameterType="string" resultType="string">
+  <![CDATA[
+        SELECT DATE_FORMAT(MAX(base_date), '%Y-%m-%d')
+        FROM ranking_by_trait_group
+        WHERE date_type = 'WEEK'
+          AND base_date <= #{anchor}
+        ]]>
+</select>
+
+
 
 </mapper>

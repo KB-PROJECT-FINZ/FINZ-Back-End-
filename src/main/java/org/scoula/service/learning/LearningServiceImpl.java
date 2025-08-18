@@ -1,13 +1,10 @@
 package org.scoula.service.learning;
 
 import lombok.RequiredArgsConstructor;
-import org.scoula.domain.learning.dto.LearningContentDTO;
-import org.scoula.domain.learning.dto.LearningHistoryDto;
-import org.scoula.domain.learning.dto.LearningQuizDTO;
-import org.scoula.domain.learning.dto.QuizResultDTO;
+import org.scoula.domain.learning.dto.*;
 
 import org.scoula.domain.learning.vo.LearningQuizVO;
-import org.scoula.mapper.LearningMapper;
+import org.scoula.mapper.learning.LearningMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,6 +50,10 @@ public class LearningServiceImpl implements LearningService {
     }
 
     @Override
+    public void giveCreditOnce(int userId){
+        learningMapper.updateUserCredit(userId,8000);
+    }
+    @Override
     @Transactional
     public int giveCredit(int userId, int quizId) {
         try {
@@ -69,6 +70,8 @@ public class LearningServiceImpl implements LearningService {
 
             // 퀴즈 결과 저장 (정답으로 처리)
             learningMapper.saveQuizResult(userId, quizId, true, "O", creditAmount);
+            // 누적 획득 크레딧 업데이트
+            learningMapper.updateTotalEarnedCredit(userId, creditAmount);
 
             return creditAmount;
         } catch (Exception e) {
@@ -81,15 +84,7 @@ public class LearningServiceImpl implements LearningService {
         return learningMapper.isUserIdAndContentId(userId,contentId)>0;
     }
 
-    /*@Override
-    public List<LearningHistoryDto> getLearningHistoryList(int userId) {
-        return learningMapper.getLearningHistoryList(userId)
-                .stream()
-                .map(vo -> new LearningHistoryDto(vo))
-                .collect(Collectors.toList());
-    }*/
-
-    public List<LearningContentDTO> getCompletedContents(Long userId) {
+    public List<LearningContentDTO> getCompletedContents(int userId) {
         return learningMapper.findCompletedContentByUserId(userId)
                 .stream()
                 .map(LearningContentDTO::new)
@@ -114,4 +109,16 @@ public class LearningServiceImpl implements LearningService {
     public QuizResultDTO getQuizResult(int userId, int quizId) {
         return learningMapper.getQuizResult(userId, quizId);
     }
+
+    @Override
+    public int getTotalEarnedCredit(int userId) {
+        return learningMapper.getTotalEarnedCredit(userId);
+    }
+  
+    @Override
+    public int getUserReadCount(int userId) {
+        return learningMapper.getUserReadCount(userId);
+
+    }
+
 }

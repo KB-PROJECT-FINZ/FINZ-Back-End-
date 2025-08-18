@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.JournalFeedbackMapper">
+<mapper namespace="org.scoula.mapper.feedback.JournalFeedbackMapper">
 
     <resultMap id="journalResultMap" type="org.scoula.domain.journal.vo.InvestmentJournalVO">
         <id property="id" column="id"/>
@@ -44,12 +44,9 @@
           AND week_end = #{end}
     </select>
 
-
     <select id="findAllFeedbacks" resultMap="feedbackResultMap">
-        SELECT * FROM journal_feedback
+        SELECT * FROM journal_feedback WHERE user_id = #{userId} ORDER BY week_start DESC
     </select>
-
-
 
 
 

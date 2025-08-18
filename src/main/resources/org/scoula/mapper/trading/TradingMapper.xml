@@ -1,21 +1,33 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.TradingMapper">
+<mapper namespace="org.scoula.mapper.trading.TradingMapper">
+    <!-- userId → accountIds -->
+    <select id="getAccountIdsByUser" resultType="int">
+        SELECT account_id
+        FROM user_accounts
+        WHERE user_id = #{userId}
+    </select>
 
-    <select id="getUserTransactions" resultType="org.scoula.domain.trading.dto.TransactionDTO">
+    <select id="getTransactionsByAccountIds" resultType="org.scoula.domain.trading.dto.TransactionDTO">
         SELECT
-            t.stock_code as stockCode,
-            t.stock_name as stockName,
-            t.quantity,
-            t.total_amount as totalAmount,
-            t.transaction_type as transactionType
+        t.transaction_id       AS transactionId,
+        t.account_id           AS accountId,
+        t.stock_code           AS stockCode,
+        t.stock_name           AS stockName,
+        t.transaction_type     AS transactionType,
+        t.quantity,
+        t.price,
+        t.total_amount         AS totalAmount,
+        t.executed_at          AS executedAt
         FROM transactions t
-                 JOIN user_accounts ua ON t.account_id = ua.account_id
-        WHERE ua.user_id = #{userId}
+        WHERE t.account_id IN
+        <foreach item="id" collection="accountIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
         ORDER BY t.executed_at DESC
-        LIMIT 10
     </select>
 
 </mapper>

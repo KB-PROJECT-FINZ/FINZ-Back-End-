@@ -5,61 +5,239 @@
 <mapper namespace="org.scoula.mapper.ranking.AnalysisMapper">
 
     <!-- (1) 성향별 보유 비중 -->
-    <select id="findTraitStocks" parameterType="long" resultType="org.scoula.domain.ranking.TraitStockDto">
+    <select id="findTraitStocks" resultType="org.scoula.domain.ranking.TraitStockDto" parameterType="long">
+        WITH user_stocks AS (
+            SELECT DISTINCT h.stock_code
+            FROM holdings h
+                     JOIN user_accounts ua ON h.account_id = ua.account_id
+            WHERE ua.user_id = #{userId} AND h.quantity > 0
+        ),
+             base AS (
+                 SELECT
+                     h.stock_code,
+                     s.name        AS name,
+                     s.image_url   AS logo,
+                     it.group_code AS group_code,
+                     SUM(h.quantity) AS qty
+                 FROM holdings h
+                          JOIN user_accounts ua ON h.account_id = ua.account_id
+                          JOIN user u ON ua.user_id = u.id
+                          JOIN investment_types it ON u.risk_type = it.risk_type
+                          JOIN stocks s ON h.stock_code = s.code
+                 WHERE h.stock_code IN (SELECT stock_code FROM user_stocks)
+                   AND h.quantity > 0
+                 GROUP BY h.stock_code, s.name, s.image_url, it.group_code
+             ),
+             spread AS (
+                 SELECT
+                     stock_code,
+                     name,
+                     logo,
+                     SUM(CASE WHEN group_code='CONSERVATIVE' THEN qty ELSE 0 END) AS conservative_qty,
+                     SUM(CASE WHEN group_code='BALANCED'     THEN qty ELSE 0 END) AS balanced_qty,
+                     SUM(CASE WHEN group_code='AGGRESSIVE'   THEN qty ELSE 0 END) AS aggressive_qty,
+                     SUM(CASE WHEN group_code='ANALYTICAL'   THEN qty ELSE 0 END) AS analytical_qty,
+                     SUM(CASE WHEN group_code='EMOTIONAL'    THEN qty ELSE 0 END) AS emotional_qty,
+                     SUM(qty) AS total_qty
+                 FROM base
+                 GROUP BY stock_code, name, logo
+             )
         SELECT
-            s.name AS stock_name,
-            tsd.gain_rate,
-            s.logo,
-            tsd.conservative_ratio,
-            tsd.balanced_ratio,
-            tsd.aggressive_ratio,
-            (tsd.analytical_ratio + tsd.emotional_ratio) AS special_ratio
-        FROM stock_trait_distribution tsd
-                 JOIN stocks s ON tsd.stock_code = s.code
-        WHERE tsd.user_id = #{userId}
-        ORDER BY s.name
-            LIMIT 5
+            name,
+            0 AS gain,
+            logo,
+            ROUND(CASE WHEN total_qty>0 THEN conservative_qty*100.0/total_qty ELSE 0 END) AS conservativeRatio,
+            ROUND(CASE WHEN total_qty>0 THEN balanced_qty*100.0/total_qty ELSE 0 END)     AS balancedRatio,
+            ROUND(CASE WHEN total_qty>0 THEN aggressive_qty*100.0/total_qty ELSE 0 END)   AS aggressiveRatio,
+            ROUND(CASE WHEN total_qty>0 THEN analytical_qty*100.0/total_qty ELSE 0 END)   AS analyticalRatio,
+            ROUND(CASE WHEN total_qty>0 THEN emotional_qty*100.0/total_qty ELSE 0 END)    AS emotionalRatio
+        FROM spread
+        ORDER BY name
     </select>
 
-    <!-- (2) 내 수익률 분포 위치 -->
-    <select id="findMyDistribution" resultMap="MyDistributionResultMap" parameterType="long">
-        SELECT
-            s.name AS stock_name,
-            hd.gain_rate,
-            hd.position_index,
-            hd.position_label,
-            hd.distribution_bin1,
-            hd.distribution_bin2,
-            hd.distribution_bin3,
-            hd.distribution_bin4,
-            hd.distribution_bin5,
-            hd.distribution_bin6
-        FROM holdings_distribution hd
-                 JOIN stocks s ON hd.stock_code = s.code
-        WHERE hd.user_id = #{userId}
-    </select>
-
-    <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
-        <result property="stockName" column="stock_name" />
-        <result property="gainRate" column="gain_rate" />
-        <result property="positionIndex" column="position_index" />
-        <result property="positionLabel" column="position_label" />
-        <collection property="distributionBins" ofType="int">
-            <result column="distribution_bin1" />
-            <result column="distribution_bin2" />
-            <result column="distribution_bin3" />
-            <result column="distribution_bin4" />
-            <result column="distribution_bin5" />
-            <result column="distribution_bin6" />
-        </collection>
-    </resultMap>
-
-    <!-- (3) 유사 성향 투자자 인기 종목 -->
+    <!-- (3) 성향별 인기 종목 -->
     <select id="findPopularStocksByTrait" resultType="org.scoula.domain.ranking.PopularStockDto" parameterType="string">
-        SELECT stock_code, stock_name, transaction_count, ranking
-        FROM popular_stocks_by_trait_group
-        WHERE trait_group = #{traitGroup}
-        ORDER BY ranking ASC
+        SELECT
+            t.stock_code     AS stock_code,
+            s.name           AS stock_name,
+            s.image_url      AS image_url,
+            t.investor_count AS investor_count
+        FROM (
+                 SELECT
+                     h.stock_code,
+                     COUNT(DISTINCT ua.user_id) AS investor_count
+                 FROM holdings h
+                          JOIN user_accounts ua ON h.account_id = ua.account_id
+                          JOIN `user` u         ON ua.user_id   = u.id
+                          JOIN investment_types it ON u.risk_type = it.risk_type
+                 WHERE h.quantity > 0
+                   AND it.group_code = #{traitGroup}
+                 GROUP BY h.stock_code
+             ) t
+                 JOIN stocks s ON t.stock_code = s.code
+        ORDER BY t.investor_count DESC, t.stock_code
             LIMIT 50
     </select>
+
+    <!-- 1) 보유 종목 평균 매입가 -->
+    <select id="findHoldingSummaries" resultType="org.scoula.domain.ranking.HoldingSummaryDto">
+        SELECT stock_code AS stockCode, stock_name AS stockName, average_price AS averagePrice
+        FROM holdings
+        WHERE quantity > 0
+    </select>
+
+    <!-- 2) 종목별 수익률 upsert -->
+    <insert id="upsertStockProfitRate" parameterType="map">
+        INSERT INTO stock_profit_rates (stock_code, profit_rate, updated_at)
+        VALUES (#{stockCode}, #{profitRate}, CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE
+                                 profit_rate = VALUES(profit_rate),
+                                 updated_at  = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 3) 전체 사용자 ID -->
+    <select id="findAllUserIds" resultType="int">
+        SELECT DISTINCT user_id FROM user_accounts
+    </select>
+
+    <!-- ✅ 4) 종목 분포 집계 (유저별 최신 1건 기준) -->
+    <select id="aggregateAllStockDistributions" resultType="org.scoula.domain.ranking.StockDistributionSummaryDto">
+        <![CDATA[
+        WITH latest AS (
+            SELECT msd.*
+            FROM my_stock_distribution msd
+                     JOIN (
+                SELECT user_id, stock_code, MAX(updated_at) AS max_u
+                FROM my_stock_distribution
+                GROUP BY user_id, stock_code
+            ) t ON t.user_id = msd.user_id
+                AND t.stock_code = msd.stock_code
+                AND t.max_u = msd.updated_at
+            WHERE msd.stock_code IS NOT NULL AND msd.stock_code <> ''
+        )
+        SELECT
+            l.stock_code AS stockCode,
+            COALESCE(NULLIF(TRIM(MAX(l.stock_name)),''), MAX(l.stock_code)) AS stockName,
+            SUM(CASE WHEN l.position_index = 0 THEN 1 ELSE 0 END) AS bin0,
+            SUM(CASE WHEN l.position_index = 1 THEN 1 ELSE 0 END) AS bin1,
+            SUM(CASE WHEN l.position_index = 2 THEN 1 ELSE 0 END) AS bin2,
+            SUM(CASE WHEN l.position_index = 3 THEN 1 ELSE 0 END) AS bin3,
+            SUM(CASE WHEN l.position_index = 4 THEN 1 ELSE 0 END) AS bin4,
+            SUM(CASE WHEN l.position_index = 5 THEN 1 ELSE 0 END) AS bin5
+        FROM latest l
+        GROUP BY l.stock_code
+        ]]>
+    </select>
+
+    <!-- 5) 사용자별 보유 종목 -->
+    <select id="findHoldingsByUserId" parameterType="int" resultType="org.scoula.domain.ranking.HoldingSummaryDto">
+        SELECT stock_code AS stockCode, stock_name AS stockName, average_price AS averagePrice
+        FROM holdings
+        WHERE account_id IN (SELECT account_id FROM user_accounts WHERE user_id = #{userId})
+          AND quantity > 0
+    </select>
+
+    <!-- 6) 사용자별 수익률 분포 upsert (개인 스냅샷: bin은 저장해도 되지만 안 채워도 됨) -->
+    <insert id="upsertMyStockDistribution" parameterType="map">
+        INSERT INTO my_stock_distribution
+        (user_id, stock_code, stock_name, gain_rate, position_index, position_label,
+         bin_0, bin_1, bin_2, bin_3, bin_4, bin_5, color, updated_at)
+        VALUES
+            (#{userId}, #{distribution.stockCode}, #{distribution.stockName}, #{distribution.gainRate},
+             #{distribution.positionIndex}, #{distribution.positionLabel},
+             #{distribution.bin0}, #{distribution.bin1}, #{distribution.bin2},
+             #{distribution.bin3}, #{distribution.bin4}, #{distribution.bin5}, #{distribution.color},
+             CURRENT_TIMESTAMP)
+            ON DUPLICATE KEY UPDATE
+                                 gain_rate      = VALUES(gain_rate),
+                                 position_index = VALUES(position_index),
+                                 position_label = VALUES(position_label),
+                                 /* bin_0~5는 값이 왔을 때만 덮어씀(널이면 유지되도록 COALESCE) */
+                                 bin_0 = COALESCE(VALUES(bin_0), bin_0),
+                                 bin_1 = COALESCE(VALUES(bin_1), bin_1),
+                                 bin_2 = COALESCE(VALUES(bin_2), bin_2),
+                                 bin_3 = COALESCE(VALUES(bin_3), bin_3),
+                                 bin_4 = COALESCE(VALUES(bin_4), bin_4),
+                                 bin_5 = COALESCE(VALUES(bin_5), bin_5),
+                                 color = COALESCE(VALUES(color), color),
+                                 updated_at = CURRENT_TIMESTAMP
+    </insert>
+
+    <!-- 7) 내 분포(최신 스냅샷 + 종합 합계 조인) -->
+    <resultMap id="MyDistributionResultMap" type="org.scoula.domain.ranking.MyDistributionDto">
+        <result property="stockCode" column="stock_code"/>
+        <result property="stockName" column="stock_name"/>
+        <result property="gainRate" column="gain_rate"/>
+        <result property="positionIndex" column="position_index"/>
+        <result property="positionLabel" column="position_label"/>
+        <result property="bin0" column="bin_0"/>
+        <result property="bin1" column="bin_1"/>
+        <result property="bin2" column="bin_2"/>
+        <result property="bin3" column="bin_3"/>
+        <result property="bin4" column="bin_4"/>
+        <result property="bin5" column="bin_5"/>
+        <result property="color" column="color"/>
+    </resultMap>
+
+    <select id="findMyDistribution" parameterType="long" resultMap="MyDistributionResultMap">
+        <![CDATA[
+        WITH latest AS (
+            SELECT msd.*
+            FROM my_stock_distribution msd
+                     JOIN (
+                SELECT user_id, stock_code, MAX(updated_at) AS max_u
+                FROM my_stock_distribution
+                WHERE user_id = #{userId}
+                GROUP BY user_id, stock_code
+            ) t ON t.user_id = msd.user_id
+                AND t.stock_code = msd.stock_code
+                AND t.max_u = msd.updated_at
+            WHERE msd.user_id = #{userId}
+              AND msd.stock_code IS NOT NULL AND msd.stock_code <> ''
+        ),
+             agg AS (
+                 -- 모든 유저의 최신 스냅샷을 position_index로 원-핫 집계
+                 WITH latest_all AS (
+                     SELECT msd.*
+                     FROM my_stock_distribution msd
+                              JOIN (
+                         SELECT user_id, stock_code, MAX(updated_at) AS max_u
+                         FROM my_stock_distribution
+                         GROUP BY user_id, stock_code
+                     ) t ON t.user_id = msd.user_id
+                         AND t.stock_code = msd.stock_code
+                         AND t.max_u = msd.updated_at
+                     WHERE msd.stock_code IS NOT NULL AND msd.stock_code <> ''
+                 )
+                 SELECT
+                     stock_code,
+                     COALESCE(NULLIF(TRIM(MAX(stock_name)),''), MAX(stock_code)) AS stock_name,
+                     SUM(CASE WHEN position_index = 0 THEN 1 ELSE 0 END) AS bin_0,
+                     SUM(CASE WHEN position_index = 1 THEN 1 ELSE 0 END) AS bin_1,
+                     SUM(CASE WHEN position_index = 2 THEN 1 ELSE 0 END) AS bin_2,
+                     SUM(CASE WHEN position_index = 3 THEN 1 ELSE 0 END) AS bin_3,
+                     SUM(CASE WHEN position_index = 4 THEN 1 ELSE 0 END) AS bin_4,
+                     SUM(CASE WHEN position_index = 5 THEN 1 ELSE 0 END) AS bin_5
+                 FROM latest_all
+                 GROUP BY stock_code
+             )
+        SELECT
+            l.stock_code,
+            COALESCE(NULLIF(TRIM(l.stock_name),''), NULLIF(TRIM(agg.stock_name),''), l.stock_code) AS stock_name,
+            l.gain_rate,
+            l.position_index,
+            l.position_label,
+            agg.bin_0,
+            agg.bin_1,
+            agg.bin_2,
+            agg.bin_3,
+            agg.bin_4,
+            agg.bin_5,
+            l.color
+        FROM latest l
+                 LEFT JOIN agg ON agg.stock_code = l.stock_code
+        ORDER BY l.updated_at DESC
+        ]]>
+    </select>
+
 </mapper>

@@ -7,14 +7,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.scoula.domain.mocktrading.vo.UserAccount;
-import org.scoula.domain.mocktrading.vo.Holding;
-import org.scoula.mapper.UserAccountMapper;
+import org.scoula.mapper.trading.UserAccountMapper;
 import org.scoula.util.mocktrading.AccountNumberGenerator;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +19,6 @@ public class UserAccountService {
 
     private final UserAccountMapper userAccountMapper;
 
-    // 순환 참조 방지를 위한 지연 로딩
     @Autowired
     @Lazy
     private HoldingService holdingService;
@@ -82,23 +77,97 @@ public class UserAccountService {
             return null;
         }
     }
-
     /**
-     * 사용자 ID로 계좌 조회
+     * 사용자 크레딧 조회
+     */
+    public Integer getUserCredit(Integer userId) {
+        try {
+            log.debug("사용자 크레딧 조회 - 사용자 ID: {}", userId);
+            Integer credit = userAccountMapper.getUserCredit(userId);
+            return credit != null ? credit : 0;
+        } catch (Exception e) {
+            log.error("사용자 크레딧 조회 실패 - 사용자 ID: {}", userId, e);
+            return 0;
+        }
+    }
+    /**
+     * 사용자 ID로 계좌 조회 (실시간 자산 정보 포함)
      */
     public UserAccount getUserAccount(Integer userId) {
-        log.debug("사용자 계좌 조회 - 사용자 ID: {}", userId);
-        return userAccountMapper.selectByUserId(userId);
-    }
+        try {
+            log.debug("사용자 계좌 조회 (실시간 계산) - 사용자 ID: {}", userId);
 
+            // 1. 기본 계좌 정보 조회
+            UserAccount account = userAccountMapper.selectByUserId(userId);
+            if (account == null) {
+                log.warn("계좌 정보를 찾을 수 없습니다 - 사용자 ID: {}", userId);
+                return null;
+            }
+
+            // 2. 실시간 자산 정보 계산 및 업데이트
+            updateAccountWithRealtimeData(account);
+
+            return account;
+
+        } catch (Exception e) {
+            log.error("사용자 계좌 조회 실패 - 사용자 ID: {}", userId, e);
+            return null;
+        }
+    }
     /**
-     * 계좌번호로 계좌 조회
+     * 계좌 정보에 실시간 자산 데이터 반영
      */
-    public UserAccount getAccountByNumber(String accountNumber) {
-        log.debug("계좌번호로 계좌 조회 - 계좌번호: {}", accountNumber);
-        return userAccountMapper.selectByAccountNumber(accountNumber);
-    }
+    private void updateAccountWithRealtimeData(UserAccount account) {
+        try {
+            Integer accountId = account.getAccountId();
 
+            // 1. 현재 주식 평가금액 계산 (실시간 가격 반영)
+            Long stockValue = userAccountMapper.calculateStockValue(accountId);
+            if (stockValue == null) {
+                stockValue = 0L;
+            }
+
+            // 2. 총 자산 = 현금 잔고 + 주식 평가금액
+            Long totalAssetValue = account.getCurrentBalance() + stockValue;
+
+            // 3. 실제 투자한 원금 계산 (holdings의 total_cost 합계)
+            Long totalInvestedAmount = userAccountMapper.calculateTotalInvestedAmount(accountId);
+            if (totalInvestedAmount == null) {
+                totalInvestedAmount = 0L;
+            }
+
+            // 4. 손익 및 수익률 계산
+            Long totalProfitLoss;
+            BigDecimal profitRate = BigDecimal.ZERO;
+
+            if (totalInvestedAmount > 0) {
+                // 투자한 주식이 있는 경우만 손익 계산
+                totalProfitLoss = stockValue - totalInvestedAmount;
+
+                // 수익률 = (주식 평가손익 / 실제 투자금액) * 100
+                profitRate = BigDecimal.valueOf(totalProfitLoss)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(totalInvestedAmount), 2, BigDecimal.ROUND_HALF_UP);
+            } else {
+                // 투자하지 않은 경우: 손익 0, 수익률 0
+                totalProfitLoss = 0L;
+                profitRate = BigDecimal.ZERO;
+            }
+
+            // 5. 계좌 객체에 실시간 계산된 값 설정
+            account.setTotalAssetValue(totalAssetValue);
+            account.setTotalProfitLoss(totalProfitLoss);
+            account.setProfitRate(profitRate);
+
+            log.debug("실시간 자산 정보 계산 완료 - 계좌 ID: {}", accountId);
+            log.debug("- 총자산: {} (현금: {} + 주식: {})", totalAssetValue, account.getCurrentBalance(), stockValue);
+            log.debug("- 실제투자금: {}, 투자손익: {}, 수익률: {}%", totalInvestedAmount, totalProfitLoss, profitRate);
+
+        } catch (Exception e) {
+            log.error("실시간 자산 정보 계산 실패 - 계좌 ID: {}", account.getAccountId(), e);
+            // 실패 시 기존 DB 값 유지
+        }
+    }
     /**
      * 계좌 ID로 계좌 정보 조회
      */
@@ -194,7 +263,7 @@ public class UserAccountService {
     }
 
     /**
-     * 총 자산가치 업데이트 (현금 + 주식평가금액)
+     * 총 자산가치 업데이트
      */
     @Transactional
     public void updateTotalAssetValue(Integer accountId) {
@@ -207,75 +276,47 @@ public class UserAccountService {
                 return;
             }
 
+            // 1. 주식 현재 평가금액 계산
             Long stockValue = userAccountMapper.calculateStockValue(accountId);
             if (stockValue == null) {
                 stockValue = 0L;
             }
 
+            // 2. 총 자산 = 현금 잔고 + 주식 평가금액
             Long totalAssetValue = account.getCurrentBalance() + stockValue;
-            Long totalProfitLoss = totalAssetValue - INITIAL_BALANCE;
 
+            // 3. ✅ 실제 투자한 원금만 계산 (holdings의 total_cost 합계)
+            Long totalInvestedAmount = userAccountMapper.calculateTotalInvestedAmount(accountId);
+            if (totalInvestedAmount == null) {
+                totalInvestedAmount = 0L;
+            }
+
+            // 4. ✅ 올바른 손익 및 수익률 계산
+            Long totalProfitLoss;
             BigDecimal profitRate = BigDecimal.ZERO;
-            if (INITIAL_BALANCE > 0) {
+
+            if (totalInvestedAmount > 0) {
+                // 투자한 주식이 있는 경우만 손익 계산
+                totalProfitLoss = stockValue - totalInvestedAmount;
+
+                // 수익률 = (주식 평가손익 / 실제 투자금액) * 100
                 profitRate = BigDecimal.valueOf(totalProfitLoss)
                         .multiply(BigDecimal.valueOf(100))
-                        .divide(BigDecimal.valueOf(INITIAL_BALANCE), 2, BigDecimal.ROUND_HALF_UP);
+                        .divide(BigDecimal.valueOf(totalInvestedAmount), 2, BigDecimal.ROUND_HALF_UP);
+            } else {
+                // 투자하지 않은 경우: 손익 0, 수익률 0
+                totalProfitLoss = 0L;
+                profitRate = BigDecimal.ZERO;
             }
 
             userAccountMapper.updateAssetInfo(accountId, totalAssetValue, totalProfitLoss, profitRate);
 
-            log.debug("자산가치 업데이트 완료 - 계좌 ID: {}, 총자산: {}, 손익: {}, 수익률: {}%",
-                    accountId, totalAssetValue, totalProfitLoss, profitRate);
+            log.info("자산가치 업데이트 완료 - 계좌 ID: {}", accountId);
+            log.info("- 총자산: {} (현금: {} + 주식: {})", totalAssetValue, account.getCurrentBalance(), stockValue);
+            log.info("- 실제투자금: {}, 투자손익: {}, 수익률: {}%", totalInvestedAmount, totalProfitLoss, profitRate);
 
         } catch (Exception e) {
             log.error("총 자산가치 업데이트 실패 - 계좌 ID: {}", accountId, e);
-        }
-    }
-
-    /**
-     * 계좌 초기화 (시드머니로 리셋)
-     */
-    @Transactional
-    public boolean resetAccount(Integer userId) {
-        try {
-            log.info("계좌 초기화 시작 - 사용자 ID: {}", userId);
-
-            UserAccount account = getUserAccount(userId);
-            if (account == null) {
-                log.warn("계좌 정보를 찾을 수 없습니다 - 사용자 ID: {}", userId);
-                return false;
-            }
-
-            // 1. 모든 보유 종목 삭제
-            if (holdingService != null) {
-                holdingService.deleteAllHoldingsByAccount(account.getAccountId());
-            }
-
-            // 2. 모든 거래 내역 삭제
-            if (transactionService != null) {
-                transactionService.deleteAllTransactionsByAccount(account.getAccountId());
-            }
-
-            // 3. 계좌 정보 초기화
-            account.setCurrentBalance(INITIAL_BALANCE);
-            account.setTotalAssetValue(INITIAL_BALANCE);
-            account.setTotalProfitLoss(0L);
-            account.setProfitRate(BigDecimal.ZERO);
-            account.setResetCount(account.getResetCount() + 1);
-
-            int result = userAccountMapper.resetAccount(account);
-
-            if (result > 0) {
-                log.info("계좌 초기화 완료 - 사용자 ID: {}, 초기화 횟수: {}",
-                        userId, account.getResetCount());
-                return true;
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            log.error("계좌 초기화 실패 - 사용자 ID: {}", userId, e);
-            throw new RuntimeException("계좌 초기화 중 오류가 발생했습니다.", e);
         }
     }
 
@@ -298,99 +339,5 @@ public class UserAccountService {
         } while (userAccountMapper.existsByAccountNumber(accountNumber));
 
         return accountNumber;
-    }
-
-    /**
-     * 매수/매도 가능 여부 확인
-     */
-    public boolean canAffordOrder(Integer userId, String orderType, String stockCode, Integer quantity, Integer price) {
-        try {
-            UserAccount account = getUserAccount(userId);
-            if (account == null) {
-                return false;
-            }
-
-            if ("BUY".equals(orderType)) {
-                long totalCost = (long) quantity * price;
-                return account.getCurrentBalance() >= totalCost;
-            } else if ("SELL".equals(orderType)) {
-                if (holdingService != null) {
-                    Holding holding = holdingService.getHoldingByUserAndStock(userId, stockCode);
-                    return holding != null && holding.getQuantity() >= quantity;
-                }
-                return false;
-            }
-
-            return false;
-
-        } catch (Exception e) {
-            log.error("주문 가능 여부 확인 실패 - 사용자 ID: {}", userId, e);
-            return false;
-        }
-    }
-
-    /**
-     * 사용자의 투자 성과 요약 정보
-     */
-    public Map<String, Object> getInvestmentSummary(Integer userId) {
-        try {
-            UserAccount account = getUserAccount(userId);
-            if (account == null) {
-                return new HashMap<>();
-            }
-
-            Map<String, Object> summary = new HashMap<>();
-            summary.put("totalAssetValue", account.getTotalAssetValue());
-            summary.put("currentBalance", account.getCurrentBalance());
-            summary.put("totalProfitLoss", account.getTotalProfitLoss());
-            summary.put("profitRate", account.getProfitRate());
-            summary.put("resetCount", account.getResetCount());
-
-            if (holdingService != null) {
-                List<Holding> holdings = holdingService.getUserHoldings(userId);
-                summary.put("holdingCount", holdings.size());
-
-                long stockValue = holdings.stream()
-                        .mapToLong(h -> h.getCurrentValue() != null ? h.getCurrentValue() : 0L)
-                        .sum();
-                summary.put("stockValue", stockValue);
-            } else {
-                summary.put("holdingCount", 0);
-                summary.put("stockValue", 0L);
-            }
-
-            double cashRatio = account.getTotalAssetValue() > 0 ?
-                    (account.getCurrentBalance() * 100.0 / account.getTotalAssetValue()) : 100.0;
-            summary.put("cashRatio", Math.round(cashRatio * 100) / 100.0);
-
-            return summary;
-
-        } catch (Exception e) {
-            log.error("투자 성과 요약 조회 실패 - 사용자 ID: {}", userId, e);
-            return new HashMap<>();
-        }
-    }
-
-    /**
-     * 랭킹 관련 메서드들
-     */
-    public List<UserAccount> getAssetRanking(int limit) {
-        return userAccountMapper.getAssetRanking(limit);
-    }
-
-    public List<UserAccount> getProfitRateRanking(int limit) {
-        return userAccountMapper.getProfitRateRanking(limit);
-    }
-
-    public int getUserAssetRank(Integer userId) {
-        return userAccountMapper.getUserAssetRank(userId);
-    }
-
-    public int getUserProfitRateRank(Integer userId) {
-        return userAccountMapper.getUserProfitRateRank(userId);
-    }
-
-    public int getTotalUserCount() {
-        return userAccountMapper.getTotalUserCount();
     }
 }

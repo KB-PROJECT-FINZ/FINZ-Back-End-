@@ -13,6 +13,14 @@ public class WebSocketInitializer implements ServletContainerInitializer {
 
     @Override
     public void onStartup(Set<Class<?>> c, ServletContext servletContext) throws ServletException {
+
+        // sout 한글 깨짐 방지 설정
+        try {
+            System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         ServerContainer serverContainer =
                 (ServerContainer) servletContext.getAttribute("javax.websocket.server.ServerContainer");
 
