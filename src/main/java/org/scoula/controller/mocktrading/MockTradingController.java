@@ -201,59 +201,6 @@ public class MockTradingController {
     }
 
     /**
-     * 주식 주문 (매수/매도)
-     * POST /api/mocktrading/order
-     */
-    @PostMapping("/order")
-    public ResponseEntity<?> createOrder(@RequestBody Map<String, Object> orderRequest, HttpSession session) {
-        try {
-            UserVo loginUser = (UserVo) session.getAttribute("loginUser");
-
-            if (loginUser == null) {
-                return ResponseEntity.status(401)
-                        .body(Map.of("success", false, "error", "로그인이 필요합니다."));
-            }
-
-            Integer userId = loginUser.getId();
-            String stockCode = (String) orderRequest.get("stockCode");
-            String stockName = (String) orderRequest.get("stockName");
-            String transactionType = (String) orderRequest.get("transactionType"); // BUY, SELL
-            String orderType = (String) orderRequest.get("orderType"); // MARKET, LIMIT
-            Integer quantity = (Integer) orderRequest.get("quantity");
-            Integer price = (Integer) orderRequest.get("price");
-            Integer orderPrice = (Integer) orderRequest.get("orderPrice");
-
-            log.info("주문 요청 - 로그인 사용자 ID: {}, 종목: {}, 타입: {}, 수량: {}",
-                    userId, stockCode, transactionType, quantity);
-
-            // 필수 파라미터 검증
-            if (stockCode == null || stockName == null ||
-                    transactionType == null || orderType == null ||
-                    quantity == null || quantity <= 0 || price == null || price <= 0) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "error", "필수 파라미터가 누락되었습니다."));
-            }
-
-            // 주문 처리
-            boolean success = transactionService.processOrder(
-                    userId, stockCode, stockName, transactionType,
-                    orderType, quantity, price, orderPrice);
-
-            if (success) {
-                return ResponseEntity.ok(Map.of("success", true, "message", "주문이 완료되었습니다."));
-            } else {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("success", false, "error", "주문 처리에 실패했습니다."));
-            }
-
-        } catch (Exception e) {
-            log.error("주문 처리 실패", e);
-            return ResponseEntity.internalServerError()
-                    .body(Map.of("success", false, "error", "주문 처리 중 오류가 발생했습니다."));
-        }
-    }
-
-    /**
      * 종목조건검색 목록조회 테스트 - GET 방식
      * 이미지 URL 추가 로직 포함
      *
@@ -305,15 +252,12 @@ public class MockTradingController {
 
     /**
      * Condition Search 결과에 이미지 URL 추가
-     * VolumeRankingApi와 동일한 로직 적용
      */
     private JsonNode addImageUrlsToConditionSearchResult(JsonNode originalResult) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            // Jackson에서 깊은 복사를 위한 정확한 방법
             JsonNode result = mapper.readTree(mapper.writeValueAsString(originalResult));
 
-            // output2 배열에서 각 종목에 이미지 URL 추가
             JsonNode output2 = result.path("output2");
             if (output2.isArray()) {
                 ArrayNode output2Array = (ArrayNode) output2;
