@@ -70,7 +70,10 @@ public class LearningController {
             return ResponseEntity.status(500).body(0);
         }
     }
-
+    @PostMapping("/quiz/credit/once")
+    public void giveCreditOnce(@LoginUser UserVo user){
+        learningService.giveCreditOnce(user.getId());
+    }
     // 퀴즈 정답 시 크레딧 지급
     @PostMapping("/quiz/credit")
     public ResponseEntity<String> giveCredit(@LoginUser UserVo user, @RequestParam int quizId,

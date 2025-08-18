@@ -50,6 +50,10 @@ public class LearningServiceImpl implements LearningService {
     }
 
     @Override
+    public void giveCreditOnce(int userId){
+        learningMapper.updateUserCredit(userId,8000);
+    }
+    @Override
     @Transactional
     public int giveCredit(int userId, int quizId) {
         try {
