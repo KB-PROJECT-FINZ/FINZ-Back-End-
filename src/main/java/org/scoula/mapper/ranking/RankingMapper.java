@@ -11,11 +11,16 @@ import java.util.Map;
 @Mapper
 public interface RankingMapper {
 
-    String selectLatestWeekBaseDate(); // 최신 base_date (WEEK)
+    // 최신 base_date (WEEK)
+    String selectLatestWeekBaseDate();
+
+    // ✅ 캐시 존재 여부 (주차)
     int existsWeekCacheByDate(@Param("baseDate") String baseDate);
+
     // 인기 종목 (캐시)
     List<PopularStockDto> selectPopularStocksCachedDay(@Param("baseDate") String baseDate);
     List<PopularStockDto> selectPopularStocksCachedWeek(@Param("baseDate") String baseDate);
+
     // ✅ popular_stocks에서 최신 WEEK base_date 찾기
     String selectLatestWeekBaseDateFromPopular();
 
@@ -28,6 +33,9 @@ public interface RankingMapper {
     MyRankingDto selectMyRankingCached(@Param("userId") Long userId,
                                        @Param("baseDate") String baseDate);
 
-    // 해당 주차 캐시 존재 검사
-    int existsRankingCacheByDate(@Param("baseDate") java.time.LocalDate baseDate);
+    // 🔽 필요 없으면 제거
+    // int existsRankingCacheByDate(@Param("baseDate") java.time.LocalDate baseDate);
+
+    // 최신 주차를 anchor 이하(<=)에서만 찾는 쿼리
+    String selectLatestWeekBaseDateLTE(@Param("anchor") String anchor);
 }
