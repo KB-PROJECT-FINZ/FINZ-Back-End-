@@ -2,7 +2,7 @@ package org.scoula.service.Auth;
 
 import org.scoula.domain.Auth.dto.KakaoUser;
 import org.scoula.domain.Auth.vo.UserVo;
-import org.scoula.mapper.AuthMapper;
+import org.scoula.mapper.auth.AuthMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;

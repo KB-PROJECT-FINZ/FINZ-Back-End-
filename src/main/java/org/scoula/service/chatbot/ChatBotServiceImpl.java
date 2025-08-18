@@ -136,13 +136,23 @@ public class ChatBotServiceImpl implements ChatBotService {
                     String riskType = userProfileService.getRiskTypeByUserId(userId);
 
                     // 2. 거래량 기준 상위 종목 조회 (중복 제거 포함)
-                    List<RecommendationStock> topVolumeStocks = getTopVolumeStocks(10);
+                    List<RecommendationStock> topVolumeStocks = getTopVolumeStocks(50);
 
                     // 3. 종목 상세 정보 조회 (가격, 지표 등)
                     List<RecommendationStock> detailedStocks = getDetailedStocks(topVolumeStocks);
 
-                    // 4. 사용자 성향(riskType)에 따라 종목 필터링 (조건 미충족 시 fallback 3개)
-                    List<RecommendationStock> filteredStocks = filterStocksByRiskType(riskType, detailedStocks);
+
+                    // 유효성 필터 적용 (0/음수/null 제거)
+                    List<RecommendationStock> cleanedStocks = filterByDefault(detailedStocks);
+                    if (cleanedStocks.isEmpty()) {
+                        log.warn("유효성 필터 통과 0개 → fallback");
+                        cleanedStocks = topVolumeStocks.stream().limit(3).toList();
+                    }
+
+                    // 4. 성향 필터는 유효값만 대상으로
+                    List<RecommendationStock> filteredStocks = filterStocksByRiskType(riskType, cleanedStocks);
+
+
 
                     // 5. 필터링된 종목들을 분석용 DTO로 변환하고 DB 저장
                     List<ChatAnalysisDto> analysisList = convertToAnalysisDtos(filteredStocks);
@@ -548,7 +558,7 @@ public class ChatBotServiceImpl implements ChatBotService {
         }
     }
 
-    // 분석 내용 프로롬프트 호출
+    // 분석 내용 프롬프트 호출
     private String callAnalysisPrompt(List<ChatAnalysisDto> analysisList) {
         String prompt = promptBuilder.buildForStockInsights(analysisList);
         log.info("[GPT] 분석용 프롬프트 내용 ↓↓↓↓↓↓↓\n{}", prompt);

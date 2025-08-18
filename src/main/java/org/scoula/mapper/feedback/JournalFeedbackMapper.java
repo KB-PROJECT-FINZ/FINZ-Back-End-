@@ -1,10 +1,9 @@
-package org.scoula.mapper;
+package org.scoula.mapper.feedback;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.journal.vo.InvestmentJournalVO;
 import org.scoula.domain.feedback.vo.JournalFeedback;
-import org.springframework.security.core.parameters.P;
 
 import java.util.Date;
 import java.util.List;

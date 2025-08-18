@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.chatbot.dto.BehaviorStatsDto;
 import org.scoula.domain.trading.dto.TransactionDTO;
-import org.scoula.mapper.TradingMapper;
+import org.scoula.mapper.trading.TradingMapper;
 import org.scoula.util.chatbot.PortfolioStatsUtil;
 import org.springframework.stereotype.Service;
 

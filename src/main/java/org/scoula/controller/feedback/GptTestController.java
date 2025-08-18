@@ -7,7 +7,7 @@ import org.scoula.domain.feedback.dto.FeedbackResponseDto;
 import org.scoula.domain.feedback.dto.GptRequestDto;
 import org.scoula.domain.feedback.vo.JournalFeedback;
 import org.scoula.domain.journal.vo.InvestmentJournalVO;
-import org.scoula.mapper.JournalFeedbackMapper;
+import org.scoula.mapper.feedback.JournalFeedbackMapper;
 import org.scoula.service.feedback.GptService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

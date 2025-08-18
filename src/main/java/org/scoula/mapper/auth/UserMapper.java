@@ -1,4 +1,4 @@
-package org.scoula.mapper;
+package org.scoula.mapper.auth;
 
 import org.apache.ibatis.annotations.Param;
 import org.scoula.domain.Auth.vo.UserVo;

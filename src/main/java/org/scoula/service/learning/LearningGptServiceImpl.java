@@ -1,15 +1,11 @@
 package org.scoula.service.learning;
 
 import lombok.RequiredArgsConstructor;
-import org.scoula.domain.learning.dto.GptLearningContentResponseDto;
 import org.scoula.domain.learning.dto.LearningContentDTO;
 import org.scoula.domain.learning.vo.LearningContentVO;
-import org.scoula.domain.learning.vo.LearningQuizVO;
-import org.scoula.mapper.LearningMapper;
-import org.springframework.scheduling.annotation.Async;
+import org.scoula.mapper.learning.LearningMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service

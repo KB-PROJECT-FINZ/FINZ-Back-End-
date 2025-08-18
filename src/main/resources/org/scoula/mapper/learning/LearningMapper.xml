@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="org.scoula.mapper.LearningMapper">
+<mapper namespace="org.scoula.mapper.learning.LearningMapper">
 
     <!--콘텐츠 전체 조회-->
     <select id="getAllContents" resultType="org.scoula.domain.learning.vo.LearningContentVO">

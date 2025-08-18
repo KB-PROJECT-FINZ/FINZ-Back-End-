@@ -33,7 +33,7 @@ public class FeedbackListController {
 
     /**
      * summary_text에서 수익률을 추출하는 메서드
-     * 예시 텍스트: "총 수익률이 -71.73%로 음수인 것으로 보아..."
+     * %를 기준으로 역방향 탐색하여 숫자를 찾는 방식
      */
     private Double extractReturnRate(String summaryText) {
         if (summaryText == null || summaryText.trim().isEmpty()) {
@@ -41,32 +41,34 @@ public class FeedbackListController {
         }
 
         try {
-            // 정규표현식으로 수익률 패턴 매칭
-            Pattern pattern = Pattern.compile("총?\\s*수익률[이가은]?\\s*([+-]?\\d+\\.?\\d*)%");
+            // % 기호를 찾아서 역방향으로 숫자 추출
+            Pattern pattern = Pattern.compile("([+-]?\\d+(?:\\.\\d+)?)%");
             Matcher matcher = pattern.matcher(summaryText);
 
-            if (matcher.find()) {
+            Double lastFoundRate = null;
+
+            // 모든 매칭되는 수익률을 찾아서 마지막 것을 사용 (보통 총 수익률이 마지막에 나옴)
+            while (matcher.find()) {
                 String returnRateStr = matcher.group(1);
-                Double returnRate = Double.parseDouble(returnRateStr);
-                log.info("추출된 수익률: {}%", returnRate);
-                return returnRate;
+                try {
+                    lastFoundRate = Double.parseDouble(returnRateStr);
+                    log.debug("발견된 수익률: {}%", lastFoundRate);
+                } catch (NumberFormatException e) {
+                    log.warn("수익률 파싱 실패: {}", returnRateStr);
+                    continue;
+                }
             }
 
-            Pattern alternativePattern = Pattern.compile("수익률:?\\s*([+-]?\\d+\\.?\\d*)%");
-            Matcher alternativeMatcher = alternativePattern.matcher(summaryText);
-
-            if (alternativeMatcher.find()) {
-                String returnRateStr = alternativeMatcher.group(1);
-                Double returnRate = Double.parseDouble(returnRateStr);
-                log.info("추출된 수익률 (대안 패턴): {}%", returnRate);
-                return returnRate;
+            if (lastFoundRate != null) {
+                log.info("추출된 수익률: {}%", lastFoundRate);
+                return lastFoundRate;
             }
 
             log.warn("수익률 정보를 찾을 수 없습니다. 텍스트: {}", summaryText);
             return 0.0;
 
-        } catch (NumberFormatException e) {
-            log.error("수익률 파싱 오류: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("수익률 추출 중 오류 발생: {}", e.getMessage());
             return 0.0;
         }
     }
@@ -87,7 +89,6 @@ public class FeedbackListController {
             }
 
             Integer userId = user.getId();
-            log.info("사용자 {}의 최신 AI 분석 리포트 조회 요청", userId);
 
             // AI 분석 리포트 서비스를 통해 최신 리포트 조회
             AIAnalysisReportDto latestReport = aiAnalysisReportService.getLatestByUserId(userId);
@@ -122,9 +123,6 @@ public class FeedbackListController {
                             "advice", latestReport.getSuggestionText() != null ? latestReport.getSuggestionText() : ""
                     )
             );
-
-            log.info("사용자 {}의 AI 분석 리포트 조회 성공 - 리포트 ID: {}, 수익률: {}%",
-                    userId, latestReport.getId(), totalReturn);
             return ResponseEntity.ok(Map.of(
                     "message", "분석 결과 조회 성공",
                     "data", responseData
