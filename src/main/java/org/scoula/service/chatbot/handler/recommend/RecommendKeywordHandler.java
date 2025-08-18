@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Log4j2
@@ -45,6 +46,16 @@ public class RecommendKeywordHandler implements IntentHandler {
 
         var detailed = getDetailedStocks(seeds);
         var valid = filterByDefault(detailed);
+
+        if (valid.isEmpty()) {
+            valid = detailed.stream()
+                    .filter(s -> positive(s.getPer()) && positive(s.getPbr())
+                            && positive(s.getRoe()) && positive(s.getEps())
+                            && positive(s.getVolume()) && positive(s.getPrice()))
+                    .sorted(Comparator.comparingDouble(RecommendationStock::getVolume).reversed())
+                    .limit(5)
+                    .toList();
+        }
 
         var analysisList = valid.stream().map(ChatAnalysisMapper::toDto).toList();
         analysisList.forEach(chatBotMapper::insertAnalysis);
@@ -87,13 +98,28 @@ public class RecommendKeywordHandler implements IntentHandler {
         var names = stocks.stream().map(RecommendationStock::getName).toList();
         return profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
     }
-    private static List<RecommendationStock> filterByDefault(List<RecommendationStock> list) {
-        return list.stream().filter(s ->
-                valid(s.getPer()) && valid(s.getPbr()) && valid(s.getRoe())
-                        && valid(s.getVolume()) && valid(s.getPrice())
-        ).toList();
+
+    private static boolean positive(Double v) {
+        return v != null && !v.isNaN() && !v.isInfinite() && v > 0.0;
     }
-    private static boolean valid(Double v) { return v != null && v > 0; }
+
+    private static boolean inRange(Double v, double minIncl, double maxIncl) {
+        return v != null && !v.isNaN() && !v.isInfinite() && v >= minIncl && v <= maxIncl;
+    }
+
+    private static List<RecommendationStock> filterByDefault(List<RecommendationStock> list) {
+        return list.stream()
+                .filter(s -> positive(s.getPer()))
+                .filter(s -> positive(s.getPbr()))
+                .filter(s -> positive(s.getRoe()))
+                .filter(s -> positive(s.getEps()))          // ← EPS 0/음수/NaN/Inf 제외
+                .filter(s -> positive(s.getVolume()))
+                .filter(s -> positive(s.getPrice()))
+                .filter(s -> inRange(s.getPer(), 0.0, 80.0))
+                .filter(s -> inRange(s.getPbr(), 0.0, 20.0))
+                .filter(s -> inRange(s.getRoe(), 0.0, 60.0))
+                .toList();
+    }
     private void parseAndSaveRecommendations(String gptJson, List<ChatAnalysisDto> stockList,
                                              Integer userId, String riskType) {
         try {

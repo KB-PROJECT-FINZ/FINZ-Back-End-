@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,9 +52,18 @@ public class RecommendProfileHandler implements IntentHandler {
         var top = getTopVolumeStocks(50);
         var detailed = getDetailedStocks(top);
         var valid = filterByDefault(detailed);
-        if (valid.isEmpty()) valid = top.stream().limit(3).toList();
 
-        var filtered = filterByRiskType(riskType, valid);
+        if (valid.isEmpty()) {
+            valid = detailed.stream()
+                    .filter(s -> positive(s.getPer()) && positive(s.getPbr())
+                            && positive(s.getRoe()) && positive(s.getEps())
+                            && positive(s.getVolume()) && positive(s.getPrice()))
+                    .sorted(Comparator.comparingDouble(RecommendationStock::getVolume).reversed())
+                    .limit(50)
+                    .toList();
+        }
+
+        var filtered = ProfileStockFilter.selectByRiskType(riskType, valid, 5);
 
         var analysisList = filtered.stream().map(ChatAnalysisMapper::toDto).toList();
         analysisList.forEach(chatBotMapper::insertAnalysis);
@@ -75,22 +85,27 @@ public class RecommendProfileHandler implements IntentHandler {
                         Collectors.toMap(RecommendationStock::getCode, s -> s, (a, b) -> a),
                         m -> new ArrayList<>(m.values())));
     }
+
     private List<RecommendationStock> getDetailedStocks(List<RecommendationStock> stocks) {
         var tickers = stocks.stream().map(RecommendationStock::getCode).toList();
         var names = stocks.stream().map(RecommendationStock::getName).toList();
         return profileStockRecommender.getRecommendedStocksByProfile(tickers, names);
     }
+
+    private static boolean positive(Double v) {
+        return v != null && !v.isNaN() && !v.isInfinite() && v > 0.0;
+    }
     private static List<RecommendationStock> filterByDefault(List<RecommendationStock> list) {
-        return list.stream().filter(s ->
-                valid(s.getPer()) && valid(s.getPbr()) && valid(s.getRoe())
-                        && valid(s.getVolume()) && valid(s.getPrice())
-        ).toList();
+        return list.stream()
+                .filter(s -> positive(s.getPer()))
+                .filter(s -> positive(s.getPbr()))
+                .filter(s -> positive(s.getRoe()))
+                .filter(s -> positive(s.getEps()))
+                .filter(s -> positive(s.getVolume()))
+                .filter(s -> positive(s.getPrice()))
+                .toList();
     }
-    private static boolean valid(Double v) { return v != null && v > 0; }
-    private List<RecommendationStock> filterByRiskType(String risk, List<RecommendationStock> list) {
-        var res = ProfileStockFilter.filterByRiskType(risk, list);
-        return res.isEmpty() ? list.subList(0, Math.min(3, list.size())) : res;
-    }
+
     private void parseAndSaveRecommendations(
             String gptJson, List<ChatAnalysisDto> stockList, Integer userId, String riskType) {
         try {

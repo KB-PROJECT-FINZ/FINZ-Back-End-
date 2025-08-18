@@ -62,6 +62,20 @@ public class PortfolioAnalyzeHandler implements IntentHandler {
         parsed.setUserId(ctx.getUserId());
         parsed.setSessionId(ctx.getSessionId());
         parsed.setTransactionCount(stats.getTransactionCount());
+
+
+
+        if (ctx.getMessageId() == null) {
+            throw new IllegalStateException("messageId가 없습니다. 컨텍스트 전달을 확인하세요.");
+        }
+        parsed.setMessageId(ctx.getMessageId());
+
+        // INT/DATE 컬럼은 정확한 타입으로 세팅
+        parsed.setAnalysisPeriod(requestedPeriod);
+        parsed.setAnalysisStart(stats.getAnalysisStart());
+        parsed.setAnalysisEnd(stats.getAnalysisEnd());
+
+        // 한 번만 insert
         chatBotMapper.insertChatBehaviorFeedback(parsed);
 
         // 연관 거래 저장
