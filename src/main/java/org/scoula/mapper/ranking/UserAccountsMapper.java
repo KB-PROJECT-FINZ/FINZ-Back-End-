@@ -1,5 +1,6 @@
 package org.scoula.mapper.ranking;
 
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -14,5 +15,8 @@ public interface UserAccountsMapper {
 
     @Select("SELECT current_balance FROM user_accounts WHERE account_id = #{accountId}")
     BigDecimal selectCurrentBalance(Integer accountId);
+
+    @Select("SELECT initial_capital FROM user_accounts WHERE account_id = #{accountId}")
+    BigDecimal selectInitialCapital(@Param("accountId") Integer accountId);
 }
 

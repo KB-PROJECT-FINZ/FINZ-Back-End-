@@ -9,11 +9,16 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Date;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,139 +30,122 @@ public class AssetHistoryServiceImpl implements AssetHistoryService {
     private final AssetHistoryMapper assetHistoryMapper;
     private final StockPriceService stockPriceService;
 
-    /** KST 고정 */
+    private static final BigDecimal ZERO = BigDecimal.ZERO;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    /** 오늘 기준 ‘지난주 일요일’ (일~토 완결 주) */
-    private LocalDate lastSundayKST() {
+    /** 오늘 기준 '지난주 일요일'(주간 앵커) */
+    private LocalDate lastSundayKst() {
         LocalDate today = LocalDate.now(KST);
-        int dow0 = today.getDayOfWeek().getValue() % 7; // SUN=0
-        // “지난주” 일요일: 이번 주 일요일이더라도 반드시 1주 전으로
-        return today.minusDays(dow0 + 7L);
+        // 항상 '이전' 일요일로 이동 (오늘이 일요일이어도 지난주로 간주)
+        return today.with(TemporalAdjusters.previous(java.time.DayOfWeek.SUNDAY));
     }
 
-    /** 임의 날짜를 그 주의 ‘일요일’로 정규화 */
-    private LocalDate normalizeToSunday(LocalDate d) {
-        int dow0 = d.getDayOfWeek().getValue() % 7; // SUN=0
-        return d.minusDays(dow0);
+    /** 이번 주 일요일(수동 스냅샷용) */
+    private LocalDate thisSundayKst() {
+        LocalDate today = LocalDate.now(KST);
+        return today.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.SUNDAY));
     }
 
-    /* =========================
-       퍼블릭 API 구현
-       ========================= */
+    // =============== Public APIs ===============
 
-    /** (기존) 이번 주 월요일 기준 스냅샷 저장 — 필요 시 유지 */
-    @Override
-    public void saveAssetHistoryForAllUsersThisWeek() {
-        // KST 기준 이번 주 월요일
-        LocalDate thisWeekMonday = LocalDate.now(KST).with(DayOfWeek.MONDAY);
-        List<Integer> accountIds = userAccountsMapper.selectAllAccountIds();
-        for (Integer accountId : accountIds) {
-            saveAssetHistoryForAccountAndDate(accountId, thisWeekMonday);
-        }
-    }
-
-    /** 주간 데이터 저장 (기본: 지난주 일요일, KST) */
+    /** 주간 데이터 저장 (기본: 지난주 일요일, KST 기준) */
     @Override
     public void saveWeeklyAssetHistory() {
-        LocalDate anchorSunday = lastSundayKST(); // 예: 2025-08-10
-        log.info(">>> [WEEKLY] anchorSunday(default KST last Sunday) = {}", anchorSunday);
-
-        List<Integer> accountIds = userAccountsMapper.selectAllAccountIds();
-        log.info(">>> [WEEKLY] total accounts = {}", accountIds.size());
-
-        for (Integer accountId : accountIds) {
-            log.info(">>> [WEEKLY] processing accountId={}", accountId);
-            saveAssetHistoryForAccountAndDate(accountId, anchorSunday);
-        }
-        log.info(">>> [WEEKLY] asset history save completed (anchor={})", anchorSunday);
+        LocalDate baseDate = lastSundayKst();
+        log.info(">>> [WEEKLY] baseDate (last Sunday, KST) = {}", baseDate);
+        saveForAllAccounts(baseDate);
     }
 
     /** 주간 데이터 저장 (앵커 일요일을 명시적으로 지정) */
     @Override
     public void saveWeeklyAssetHistory(LocalDate anchorSunday) {
-        if (anchorSunday == null) {
-            anchorSunday = lastSundayKST();
-        } else {
-            anchorSunday = normalizeToSunday(anchorSunday);
-        }
-        log.info(">>> [WEEKLY] anchorSunday(explicit) = {}", anchorSunday);
-
-        List<Integer> accountIds = userAccountsMapper.selectAllAccountIds();
-        log.info(">>> [WEEKLY] total accounts = {}", accountIds.size());
-
-        for (Integer accountId : accountIds) {
-            log.info(">>> [WEEKLY] processing accountId={}", accountId);
-            saveAssetHistoryForAccountAndDate(accountId, anchorSunday);
-        }
-        log.info(">>> [WEEKLY] asset history save completed (anchor={})", anchorSunday);
+        LocalDate baseDate = (anchorSunday != null) ? anchorSunday : lastSundayKst();
+        log.info(">>> [WEEKLY] baseDate (explicit anchor, KST) = {}", baseDate);
+        saveForAllAccounts(baseDate);
     }
 
-    /* =========================
-       내부 헬퍼
-       ========================= */
+    /** (기존) 이번 주 자산 스냅샷 저장 — 필요 시 유지 */
+    @Override
+    public void saveAssetHistoryForAllUsersThisWeek() {
+        LocalDate baseDate = thisSundayKst();
+        log.info(">>> [THIS WEEK] baseDate (this Sunday, KST) = {}", baseDate);
+        saveForAllAccounts(baseDate);
+    }
 
-    /** 계좌별 자산 이력 저장 — baseDate(=anchorSunday or 월요일 등)를 그대로 저장 */
+    // =============== Internal ===============
+
+    private void saveForAllAccounts(LocalDate baseDate) {
+        List<Integer> accountIds = userAccountsMapper.selectAllAccountIds();
+        for (Integer accountId : accountIds) {
+            log.info(">>> saving asset history: accountId={}, baseDate={}", accountId, baseDate);
+            saveAssetHistoryForAccountAndDate(accountId, baseDate);
+        }
+        log.info(">>> asset history save completed (anchor={})", baseDate);
+    }
+
+    /**
+     * ✅ 수익률 계산: 순기여금 = 초기자본(임시)
+     *  - 새 인터페이스/레저 없이 현재 제출 요건에 맞춰 간소화
+     *  - 나중에 ledger(입금/출금/크레딧) 붙일 땐 netContrib만 확장
+     */
     private void saveAssetHistoryForAccountAndDate(Integer accountId, LocalDate baseDate) {
         try {
+            // (1) 주식 평가금액 계산
             var holdings = holdingsMapper.selectByAccountId(accountId);
-            int holdingsCount = (holdings == null) ? 0 : holdings.size();
-            log.info(">>> holdings count for accountId {}: {}", accountId, holdingsCount);
+            List<String> stockCodes = holdings.stream()
+                    .map(h -> h.getStockCode())
+                    .collect(Collectors.toList());
 
-            List<String> stockCodes = (holdings == null) ? List.of()
-                    : holdings.stream().map(h -> h.getStockCode()).toList();
+            Map<String, BigDecimal> priceMap = stockPriceService.getCurrentPrices(stockCodes);
 
-            Map<String, BigDecimal> currentPrices =
-                    stockPriceService.getCurrentPrices(stockCodes != null ? stockCodes : List.of());
-
-            BigDecimal totalStockValue = BigDecimal.ZERO;
-            BigDecimal totalInvestment = BigDecimal.ZERO;
-
-            if (holdings != null) {
-                for (var holding : holdings) {
-                    BigDecimal quantity = BigDecimal.valueOf(holding.getQuantity());
-                    BigDecimal avgPrice = holding.getAveragePrice() != null ? holding.getAveragePrice() : BigDecimal.ZERO;
-                    BigDecimal currentPrice = currentPrices.getOrDefault(holding.getStockCode(), BigDecimal.ZERO);
-
-                    BigDecimal currentValue = currentPrice.multiply(quantity);
-                    BigDecimal investedAmount = avgPrice.multiply(quantity);
-
-                    totalStockValue = totalStockValue.add(currentValue);
-                    totalInvestment = totalInvestment.add(investedAmount);
-                }
+            BigDecimal stockValue = ZERO;
+            for (var h : holdings) {
+                BigDecimal qty = BigDecimal.valueOf(h.getQuantity());
+                BigDecimal cur = priceMap.getOrDefault(h.getStockCode(), ZERO);
+                stockValue = stockValue.add(cur.multiply(qty));
             }
 
-            BigDecimal currentBalance = userAccountsMapper.selectCurrentBalance(accountId);
-            if (currentBalance == null) currentBalance = BigDecimal.ZERO;
+            // (2) 현금 + 총자산
+            BigDecimal cash = nvl(userAccountsMapper.selectCurrentBalance(accountId), ZERO);
+            BigDecimal totalAsset = stockValue.add(cash);
 
-            BigDecimal totalAssetValue = totalStockValue.add(currentBalance);
-            BigDecimal totalProfitLoss = totalAssetValue.subtract(totalInvestment);
+            // (3) 순기여금 = 초기자본(기본값 없음, NULL은 0 처리)
+            BigDecimal initialCapital = nvl(userAccountsMapper.selectInitialCapital(accountId), ZERO);
+            BigDecimal netContrib = initialCapital;
 
-            BigDecimal profitRate = BigDecimal.ZERO;
-            if (totalInvestment.compareTo(BigDecimal.ZERO) > 0) {
-                profitRate = totalProfitLoss
-                        .multiply(BigDecimal.valueOf(100))
-                        .divide(totalInvestment, 2, RoundingMode.HALF_UP);
-            }
+            // (4) 손익/수익률 계산
+            BigDecimal cumPnL = totalAsset.subtract(netContrib);
+            BigDecimal profitRate = netContrib.signum() > 0
+                    ? cumPnL.multiply(new BigDecimal("100"))
+                    .divide(netContrib, 2, RoundingMode.HALF_UP)
+                    : ZERO;
 
-            // ✅ baseDate 가 곧 ‘주차 앵커’로 저장됨 (주간이면 '일요일'이어야 함)
-            assetHistoryMapper.insertAssetHistory(
-                    accountId,
-                    baseDate,
-                    totalAssetValue,
-                    currentBalance,
-                    totalStockValue,
-                    totalProfitLoss,
-                    totalProfitLoss,  // 필요시 분리 가능
-                    profitRate
-            );
+            // (5) 저장 (dailyPnL은 간단히 누적손익으로 저장; 필요 시 전일 대비로 교체)
+            BigDecimal dailyPnL = cumPnL;
 
-            log.info("✅ saved asset history — accountId={}, baseDate={}, totalAsset={}, profitRate={}%",
-                    accountId, baseDate, totalAssetValue, profitRate);
+            // XML이 parameterType="map"이므로 Map으로 바인딩
+            Map<String, Object> params = new HashMap<>();
+            params.put("accountId", accountId);
+            params.put("baseDate", Date.valueOf(baseDate));     // java.sql.Date로 안전 매핑
+            params.put("totalAssetValue", totalAsset);
+            params.put("cashBalance", cash);
+            params.put("stockValue", stockValue);
+            params.put("profitLoss", dailyPnL);                 // daily_profit_loss
+            params.put("realizedProfitLoss", cumPnL);           // cumulative_profit_loss
+            params.put("profitRate", profitRate);
+
+            assetHistoryMapper.insertAssetHistory(params);
+
+            log.info("✅ saved — accountId={}, baseDate={}, totalAsset={}, netContrib(initial)={}, cumPnL={}, rate={}%",
+                    accountId, baseDate, totalAsset, netContrib, cumPnL, profitRate);
 
         } catch (Exception e) {
-            log.error("❌ failed to save asset history — accountId={}, baseDate={}, err={}",
-                    accountId, baseDate, e.getMessage(), e);
+            log.error("❌ save failed — accountId={}, baseDate={}, err={}", accountId, baseDate, e.getMessage(), e);
         }
     }
+
+    private static BigDecimal nvl(BigDecimal v, BigDecimal d) {
+        return v == null ? d : v;
+    }
 }
+
