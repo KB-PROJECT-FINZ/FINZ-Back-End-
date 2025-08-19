@@ -3,10 +3,8 @@ package org.scoula.service.feedback;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.feedback.dto.AIAnalysisReportDto;
-import org.scoula.mapper.AIAnalysisReportMapper;
+import org.scoula.mapper.feedback.AIAnalysisReportMapper;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * AI 분석 리포트 서비스
@@ -24,8 +22,6 @@ public class AIAnalysisReportService {
      * @return 최신 AI 분석 리포트 (없으면 null)
      */
     public AIAnalysisReportDto getLatestByUserId(Integer userId) {
-        log.info("사용자 {}의 최신 AI 분석 리포트 조회", userId);
-
         try {
             AIAnalysisReportDto report = aiAnalysisReportMapper.selectLatestByUserId(userId);
 

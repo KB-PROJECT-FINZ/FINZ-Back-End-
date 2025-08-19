@@ -3,10 +3,9 @@ package org.scoula.service.feedback;
 import lombok.RequiredArgsConstructor;
 import org.scoula.domain.feedback.dto.FeedbackSaveDto;
 import org.scoula.domain.feedback.vo.JournalFeedback;
-import org.scoula.mapper.JournalFeedbackMapper;
+import org.scoula.mapper.feedback.JournalFeedbackMapper;
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
 import java.util.List;
 
 @Service

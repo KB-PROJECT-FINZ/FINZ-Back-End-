@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.scoula.domain.learning.dto.*;
 
 import org.scoula.domain.learning.vo.LearningQuizVO;
-import org.scoula.mapper.LearningMapper;
+import org.scoula.mapper.learning.LearningMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +49,10 @@ public class LearningServiceImpl implements LearningService {
         learningMapper.insertLearningHistory(dto);
     }
 
+    @Override
+    public void giveCreditOnce(int userId){
+        learningMapper.updateUserCredit(userId,8000);
+    }
     @Override
     @Transactional
     public int giveCredit(int userId, int quizId) {

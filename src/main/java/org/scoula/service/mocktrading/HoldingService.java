@@ -3,7 +3,7 @@ package org.scoula.service.mocktrading;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.scoula.domain.mocktrading.vo.Holding;
-import org.scoula.mapper.HoldingMapper;
+import org.scoula.mapper.trading.HoldingMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

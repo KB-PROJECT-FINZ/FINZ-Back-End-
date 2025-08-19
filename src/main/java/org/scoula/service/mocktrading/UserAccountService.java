@@ -7,14 +7,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.scoula.domain.mocktrading.vo.UserAccount;
-import org.scoula.domain.mocktrading.vo.Holding;
-import org.scoula.mapper.UserAccountMapper;
+import org.scoula.mapper.trading.UserAccountMapper;
 import org.scoula.util.mocktrading.AccountNumberGenerator;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +28,7 @@ public class UserAccountService {
     private TransactionService transactionService;
 
     // 초기 시드머니 (1천만원)
-    private static final Long INITIAL_BALANCE = 10_000_000L;
+    private static final Long INITIAL_BALANCE = 2_000_000L;
 
     /**
      * 회원가입 완료 후 계좌 생성 (트랜잭션 독립적으로 처리)

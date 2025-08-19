@@ -17,71 +17,116 @@ import java.util.*;
 public class RankingServiceImpl implements RankingService {
 
     private final RankingMapper rankingMapper;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
-    // ✅ baseDate 파라미터가 오면 그대로 쓰되, 없으면 "가장 최근 주간 캐시"를 자동 선택
-    private String resolveLatestWeekBaseDate(String baseDate) {
-        if (baseDate != null && !baseDate.isBlank()) {
-            // 전달된 baseDate에도 캐시가 있는지 확인
-            if (rankingMapper.existsWeekCacheByDate(baseDate) == 1) return baseDate;
-            log.warn("요청 baseDate={} 에 대한 주간 캐시가 없습니다. 최신 캐시로 대체합니다.", baseDate);
-        }
-        String latest = rankingMapper.selectLatestWeekBaseDate();
-        if (latest == null) {
-            log.error("주간 캐시가 하나도 없습니다. 배치 적재를 먼저 수행하세요.");
-            // 비상시: 지난주 일요일로 시도(없으면 빈값 반환될 수 있음)
-            LocalDate fallback = LocalDate.now().with(DayOfWeek.SUNDAY).minusWeeks(1);
-            return fallback.toString();
-        }
-        return latest;
+    /** 오늘 기준 '지난주 일요일' (일~토 완결 주 anchor) */
+    private String lastSundayKST() {
+        LocalDate today = LocalDate.now(KST);
+        int dow = today.getDayOfWeek().getValue() % 7; // SUN=0
+        LocalDate lastSunday = today.minusDays(dow + 7);
+        return lastSunday.toString(); // YYYY-MM-DD
     }
 
+    /** 임의 날짜를 그 주의 '일요일'로 정규화 */
+    private String normalizeToSunday(String yyyyMmDd) {
+        if (yyyyMmDd == null || yyyyMmDd.isBlank()) return null;
+        LocalDate d = LocalDate.parse(yyyyMmDd);
+        int dow = d.getDayOfWeek().getValue() % 7; // SUN=0
+        return d.minusDays(dow).toString();
+    }
+
+    /**
+     * anchor 주차에 캐시가 없고, 사용자가 주를 지정하지 않은 경우에만
+     * anchor 이하(<=)에서 가장 최신 주로 1회 폴백
+     */
+    private String maybeFallbackToLatestLTE(String anchor, boolean userSpecified) {
+        if (userSpecified) return anchor; // 사용자가 명시했으면 다운그레이드 금지
+        Integer exists = rankingMapper.existsWeekCacheByDate(anchor);
+        if (exists != null && exists == 1) return anchor;
+        String latestLTE = rankingMapper.selectLatestWeekBaseDateLTE(anchor);
+        if (latestLTE != null) {
+            log.warn("anchor={} 주차 캐시 없음 → 과거 최신 주({})로 폴백", anchor, latestLTE);
+            return latestLTE;
+        }
+        log.warn("anchor={} 주차 및 과거 데이터 모두 없음", anchor);
+        return anchor; // 어차피 쿼리 결과는 빈값이 됨
+    }
+
+    /**
+     * 요청 baseDate 처리:
+     *  - 들어오면: 그 주의 일요일로 정규화 (userSpecified=true)
+     *  - 없으면: 지난주 일요일(anchor) 계산 후, 캐시 없으면 anchor 이하에서 최신 주로 1회 폴백
+     */
+    private String resolveQueryBaseDate(String baseDate) {
+        boolean userSpecified = (baseDate != null && !baseDate.isBlank());
+        String anchor = userSpecified ? normalizeToSunday(baseDate) : lastSundayKST();
+        return maybeFallbackToLatestLTE(anchor, userSpecified);
+    }
+
+    // =========================
+    // 서비스 구현
+    // =========================
+
+    /** 내 주간 랭킹 */
     @Override
     public MyRankingDto getMyRanking(Long userId, String baseDate) {
-        String bd = resolveLatestWeekBaseDate(baseDate);
-        MyRankingDto dto = rankingMapper.selectMyRankingCached(userId, bd);
-        if (dto != null) dto.setBaseDate(bd);
-        return dto; // dto가 null이면 프론트에서 "데이터 없음" 처리
+        String qDate = resolveQueryBaseDate(baseDate);
+        MyRankingDto dto = rankingMapper.selectMyRankingCached(userId, qDate);
+        if (dto != null) dto.setBaseDate(qDate);
+        log.debug("getMyRanking userId={}, qDate={}, exists={}", userId, qDate, dto != null);
+        return dto; // null이면 프론트에서 '데이터 없음' 처리
     }
 
-    @Override
-    public List<RankingByTraitGroupDto> getWeeklyRanking(String baseDate) {
-        String bd = resolveLatestWeekBaseDate(baseDate);
-        return rankingMapper.selectWeeklyRankingCached(bd);
-    }
-
-    @Override
-    public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking(String baseDate) {
-        String bd = resolveLatestWeekBaseDate(baseDate);
-        Map<String, List<RankingByTraitGroupDto>> res = new LinkedHashMap<>();
-        for (String g : List.of("CONSERVATIVE","BALANCED","AGGRESSIVE","ANALYTICAL","EMOTIONAL")) {
-            res.put(g, rankingMapper.selectGroupedWeeklyRankingCached(bd, g));
-        }
-        return res;
-    }
-
-    // "오늘 DAY 없으면 지난주 WEEK"는 그대로 유지
+    /** 오늘 인기 종목 Top10 (DAY → 없으면 어제 DAY → 없으면 지난주 WEEK 폴백) */
     @Override
     public List<PopularStockDto> getRealTimeOrFallbackPopularStocks() {
-        ZoneId KST = ZoneId.of("Asia/Seoul");
         String today = LocalDate.now(KST).toString();
         String yesterday = LocalDate.now(KST).minusDays(1).toString();
 
         // 1) 오늘 DAY
         List<PopularStockDto> day = rankingMapper.selectPopularStocksCachedDay(today);
-        if (day != null && !day.isEmpty()) return day;
-
-        // 2) 어제 DAY
-        List<PopularStockDto> dayPrev = rankingMapper.selectPopularStocksCachedDay(yesterday);
-        if (dayPrev != null && !dayPrev.isEmpty()) return dayPrev;
-
-        // 3) ✅ popular_stocks에서 최신 WEEK 기준일로 폴백
-        String latestWeek = rankingMapper.selectLatestWeekBaseDateFromPopular();
-        if (latestWeek != null) {
-            List<PopularStockDto> week = rankingMapper.selectPopularStocksCachedWeek(latestWeek);
-            if (week != null && !week.isEmpty()) return week;
+        if (day != null && !day.isEmpty()) {
+            log.debug("popular-stocks: using DAY(today={})", today);
+            return day;
         }
 
-        // 4) 정말 없으면 빈 배열
+        // 2) 어제 DAY  ✅ 버그 수정: dayPrev 를 검사해야 함
+        List<PopularStockDto> dayPrev = rankingMapper.selectPopularStocksCachedDay(yesterday);
+        if (dayPrev != null && !dayPrev.isEmpty()) {
+            log.debug("popular-stocks: using DAY(yesterday={})", yesterday);
+            return dayPrev;
+        }
+
+        // 3) 지난주 WEEK (anchor=지난주 일요일)
+        String weekAnchor = lastSundayKST();
+        List<PopularStockDto> week = rankingMapper.selectPopularStocksCachedWeek(weekAnchor);
+        if (week != null && !week.isEmpty()) {
+            log.debug("popular-stocks: fallback WEEK(anchor={})", weekAnchor);
+            return week;
+        }
+
+        log.warn("popular-stocks: no data for today/yesterday/week fallback");
         return List.of();
+    }
+
+    /** 주간 전체 랭킹: baseDate 없으면 지난주 anchor → 없으면 anchor 이하 최신으로 폴백 */
+    @Override
+    public List<RankingByTraitGroupDto> getWeeklyRanking(String baseDate) {
+        String qDate = resolveQueryBaseDate(baseDate);
+        log.debug("getWeeklyRanking qDate={}", qDate);
+        return rankingMapper.selectWeeklyRankingCached(qDate);
+    }
+
+    /** 주간 성향별 랭킹: 동일 규칙 */
+    @Override
+    public Map<String, List<RankingByTraitGroupDto>> getGroupedWeeklyRanking(String baseDate) {
+        String qDate = resolveQueryBaseDate(baseDate);
+        log.debug("getGroupedWeeklyRanking qDate={}", qDate);
+
+        Map<String, List<RankingByTraitGroupDto>> res = new LinkedHashMap<>();
+        for (String g : List.of("CONSERVATIVE", "BALANCED", "AGGRESSIVE", "ANALYTICAL", "EMOTIONAL")) {
+            res.put(g, rankingMapper.selectGroupedWeeklyRankingCached(qDate, g));
+        }
+        return res;
     }
 }

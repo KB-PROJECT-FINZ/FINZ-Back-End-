@@ -89,7 +89,7 @@ public class MarketIndexApi {
             JsonNode output = json.path("output");
             Map<String, Object> result = parseIndexData(output, indexCode);
 
-            log.info("✅ 시장지수 조회 성공 - {}: {}", result.get("name"), result.get("value"));
+            log.info("시장지수 조회 성공 - {}: {}", result.get("name"), result.get("value"));
             return result;
 
         } catch (IOException e) {
