@@ -35,7 +35,7 @@ public class ProfileStockRecommender {
                 log.info("🔎 종목 상세 조회 요청 → {} ({})", name, ticker);
 
                 var raw = PriceApi.getPriceData(ticker);
-//                log.info("🧾 -----------price raw response for {}: {}", ticker, raw.toPrettyString());
+
                 log.info("🧾 price API 응답 수신 완료 → {} ({})", name, ticker);
 
 
