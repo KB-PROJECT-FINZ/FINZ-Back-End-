@@ -7,20 +7,13 @@ import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Map;
 
 @Mapper
 public interface AssetHistoryMapper {
+    int insertAssetHistory(Map<String, Object> params);
 
-     void insertAssetHistory(
-            @Param("accountId") Integer accountId,
-            @Param("baseDate") LocalDate baseDate,
-            @Param("totalAssetValue") BigDecimal totalAssetValue,
-            @Param("cashBalance") BigDecimal cashBalance,
-            @Param("stockValue") BigDecimal stockValue,
-            @Param("profitLoss") BigDecimal profitLoss,
-            @Param("realizedProfitLoss") BigDecimal realizedProfitLoss,
-            @Param("profitRate") BigDecimal profitRate
-    );
+
 }
 
 
