@@ -9,15 +9,16 @@
     <select id="selectPopularStocksCachedDay" resultType="org.scoula.domain.ranking.PopularStockDto">
         <![CDATA[
         SELECT
-            ps.stock_code        AS stockCode,
-            ps.stock_name        AS stockName,
-            ps.transaction_count AS transactionCount,
-            ps.ranking           AS ranking,
-            s.image_url          AS imageUrl
+            LPAD(ps.stock_code, 6, '0') AS stockCode,
+            ps.stock_name               AS stockName,
+            ps.transaction_count        AS transactionCount,
+            ps.ranking                  AS ranking,
+            /* 이미지 없으면 API 폴백 */
+            COALESCE(s.image_url, CONCAT('/api/logo/', LPAD(ps.stock_code,6,'0'), '.png')) AS imageUrl
         FROM popular_stocks ps
-                 LEFT JOIN stocks s ON s.code = ps.stock_code
+                 LEFT JOIN stocks s ON s.code = LPAD(ps.stock_code, 6, '0')
         WHERE ps.date_type = 'DAY'
-          AND ps.base_date = #{baseDate}
+          AND ps.base_date = STR_TO_DATE(LEFT(#{baseDate}, 10), '%Y-%m-%d')
         ORDER BY ps.ranking ASC
             LIMIT 10
         ]]>
@@ -27,15 +28,16 @@
     <select id="selectPopularStocksCachedWeek" resultType="org.scoula.domain.ranking.PopularStockDto">
         <![CDATA[
         SELECT
-            ps.stock_code        AS stockCode,
-            ps.stock_name        AS stockName,
-            ps.transaction_count AS transactionCount,
-            ps.ranking           AS ranking,
-            s.image_url          AS imageUrl
+            LPAD(ps.stock_code, 6, '0') AS stockCode,
+            ps.stock_name               AS stockName,
+            ps.transaction_count        AS transactionCount,
+            ps.ranking                  AS ranking,
+            /* 이미지 없으면 API 폴백 */
+            COALESCE(s.image_url, CONCAT('/api/logo/', LPAD(ps.stock_code,6,'0'), '.png')) AS imageUrl
         FROM popular_stocks ps
-                 LEFT JOIN stocks s ON s.code = ps.stock_code
+                 LEFT JOIN stocks s ON s.code = LPAD(ps.stock_code, 6, '0')
         WHERE ps.date_type = 'WEEK'
-          AND ps.base_date = #{baseDate}
+          AND ps.base_date = STR_TO_DATE(LEFT(#{baseDate}, 10), '%Y-%m-%d')
         ORDER BY ps.ranking ASC
             LIMIT 10
         ]]>
@@ -169,16 +171,15 @@
             LIMIT 1
         ]]>
     </select>
+
     <!-- anchor(YYYY-MM-DD) 이하에서 가장 최신 WEEK base_date -->
     <select id="selectLatestWeekBaseDateLTE" parameterType="string" resultType="string">
-  <![CDATA[
+        <![CDATA[
         SELECT DATE_FORMAT(MAX(base_date), '%Y-%m-%d')
         FROM ranking_by_trait_group
         WHERE date_type = 'WEEK'
           AND base_date <= #{anchor}
         ]]>
-</select>
-
-
+    </select>
 
 </mapper>
