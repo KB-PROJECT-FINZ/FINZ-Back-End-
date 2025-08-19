@@ -35,8 +35,9 @@ public class RankingServiceImpl implements RankingService {
         return d.minusDays(dow).toString();
     }
 
-    /** anchor 주차에 캐시가 없고, 사용자가 주를 지정하지 않은 경우에만
-     *  anchor 이하(<=)에서 가장 최신 주로 1회 폴백
+    /**
+     * anchor 주차에 캐시가 없고, 사용자가 주를 지정하지 않은 경우에만
+     * anchor 이하(<=)에서 가장 최신 주로 1회 폴백
      */
     private String maybeFallbackToLatestLTE(String anchor, boolean userSpecified) {
         if (userSpecified) return anchor; // 사용자가 명시했으면 다운그레이드 금지
@@ -51,7 +52,8 @@ public class RankingServiceImpl implements RankingService {
         return anchor; // 어차피 쿼리 결과는 빈값이 됨
     }
 
-    /** 요청 baseDate 처리:
+    /**
+     * 요청 baseDate 처리:
      *  - 들어오면: 그 주의 일요일로 정규화 (userSpecified=true)
      *  - 없으면: 지난주 일요일(anchor) 계산 후, 캐시 없으면 anchor 이하에서 최신 주로 1회 폴백
      */
@@ -88,9 +90,9 @@ public class RankingServiceImpl implements RankingService {
             return day;
         }
 
-        // 2) 어제 DAY
+        // 2) 어제 DAY  ✅ 버그 수정: dayPrev 를 검사해야 함
         List<PopularStockDto> dayPrev = rankingMapper.selectPopularStocksCachedDay(yesterday);
-        if (dayPrev != null && !day.isEmpty()) {
+        if (dayPrev != null && !dayPrev.isEmpty()) {
             log.debug("popular-stocks: using DAY(yesterday={})", yesterday);
             return dayPrev;
         }
