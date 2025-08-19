@@ -28,7 +28,7 @@ public class UserAccountService {
     private TransactionService transactionService;
 
     // 초기 시드머니 (1천만원)
-    private static final Long INITIAL_BALANCE = 10_000_000L;
+    private static final Long INITIAL_BALANCE = 2_000_000L;
 
     /**
      * 회원가입 완료 후 계좌 생성 (트랜잭션 독립적으로 처리)
