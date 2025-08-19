@@ -11,7 +11,12 @@ import java.util.List;
 @Component
 public class PromptBuilder {
 
-    // 분석용 프롬프트
+    /**
+     *   투자 성향 기반 종목 분석 프롬프트
+     * - 여러 종목의 재무/기술 지표 데이터를 기반으로 GPT에게 분석 요청
+     * - 분석 시 "투자 권유"가 아닌 "분석/제안형" 어투를 사용하도록 제한
+     * - 출력은 반드시 JSON 배열로 강제
+     */
     public String buildForStockInsights(List<ChatAnalysisDto> list) {
         StringBuilder sb = new StringBuilder();
         sb.append("""
@@ -62,7 +67,11 @@ public class PromptBuilder {
         return sb.toString();
     }
 
-    // 종목 분석용 프롬프트 (STOCK_ANALYZE 전용)
+    /**
+     *   단일 종목 분석 프롬프트 (STOCK_ANALYZE 전용)
+     * - 사용자가 특정 종목(삼성전자 등)에 대한 분석 요청 시 사용
+     * - 위와 동일하게 JSON 배열 형식 강제
+     */
     public String buildForStockAnalysis(List<ChatAnalysisDto> list) {
         StringBuilder sb = new StringBuilder();
         sb.append("""
@@ -85,11 +94,11 @@ public class PromptBuilder {
     - 반드시 출력은 JSON 배열 형식으로 하며, 각 종목은 다음 구조를 따라야 하며 모든 필드 간 쉼표(,)를 포함하여 **정확한 JSON 문법**을 지켜야 합니다.. :
     ```json
     {
-      "ticker": "TSLA",
-      "reason": "테슬라는 전기차 시장에서 선두주자로 알려져 있고, 미래 성장 가능성이 높아 보여요. 기술적으로도 혁신적인 모습을 보여 관심 가져볼 수 있어요. 하지만 높은 가격 수준과 미래 수익에 대한 불확실성이 있어 고위험 고수익 종목이에요.",
+      "ticker": "NAVER",
+      "reason": "네이버는 국내 인터넷 서비스의 대표주자로 알려져 있고, 검색, 커머스, 콘텐츠 등 다양한 사업 영역을 보유하고 있어요. 기술적으로도 AI, 클라우드 등 미래 성장 동력을 확보하고 있어 관심 가져볼 수 있어요. 하지만 경쟁 구도 변화와 규제 리스크가 있어 중위험 중수익 종목이에요.",
       "riskLevel": "높음",
       "timingComment": "최근 주가 상승으로 매수시 적절한 타이밍이 아닐 수 있어요. 추가 하락 기회를 기다려보세요.",
-      "futureOutlook": "전기차 시장 성장에 따른 수요 증가가 기대되지만, 경쟁사와의 신차 출시로 인한 경쟁이 치열할 수 있어요."
+      "futureOutlook": "AI 시장 성장에 따른 수요 증가가 기대되지만, 경쟁사와의 경쟁이 치열할 수 있어요."
     }
     ```
 
@@ -111,7 +120,11 @@ public class PromptBuilder {
         return sb.toString();
     }
 
-    // 분석한 제이슨 + 이유 + 신버전  투자 성향 기반 추천  응답 프롬프트
+    /**
+     *   성향 기반 종목 추천 요약 프롬프트
+     * - GPT가 종목별 분석(JSON) → 자연스러운 한국어 요약으로 재가공하도록 요청
+     * - 추천 사유 + 수치 데이터(PER, ROE 등)를 모두 포함
+     */
     public String buildSummaryFromRecommendations(String summary, List<ChatRecommendationDto> recList, List<ChatAnalysisDto> analysisList) {
         StringBuilder sb = new StringBuilder();
 
@@ -143,26 +156,13 @@ public class PromptBuilder {
         return sb.toString();
     }
 
-    // 투자 성향 기반 추천 구버전
-//    public String buildForProfile(Integer userId, String summary, List<ChatAnalysisDto> analysisList) {
-//        // analysisList 내용을 바탕으로 프롬프트 생성
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("당신의 투자 성향은 다음과 같습니다: ").append(summary).append("\n\n");
-//        sb.append("다음은 성향에 맞는 추천 종목입니다:\n");
-//
-//        for (ChatAnalysisDto stock : analysisList) {
-//            sb.append("- ").append(stock.getName())
-//                    .append(": 현재가 ").append(stock.getPrice())
-//                    .append(", PER ").append(stock.getPer())
-//                    .append(", 거래량 ").append(stock.getVolume())
-//                    .append("\n");
-//        }
-//
-//        return sb.toString();
-//    }
+    /**
+     *   키워드 기반 종목 추천 프롬프트
+     * - 특정 산업/테마/섹터(예: 반도체, AI) 기반 종목 추출
+     * - 한국 주식시장(KOSPI/KOSDAQ/KONEX)만 허용
+     * - 최소 5개 이상의 관련 종목을 JSON 배열로 반환하도록 강제
+     */
 
-
-    // 키워드 기반 추천
     public String buildForKeyword(String keyword) {
         return """
         The user requested stock recommendations related to the keyword: "%s".
@@ -189,7 +189,11 @@ public class PromptBuilder {
     }
 
 
-    // 종목 추출프롬프트
+    /**
+     *   사용자 입력에서 종목명/티커 추출 프롬프트
+     * - 입력 문장에서 첫 번째 언급된 종목만 추출
+     * - 티커 없으면 null 반환
+     */
     public String stockextractionPrompt(String userMessage) {
         return """
         Extract the stock name and its ticker symbol from the user input below.
@@ -215,20 +219,20 @@ public class PromptBuilder {
         Stock: 카카오  
         Ticker: 035720
 
-        Input: 테슬라 어때?  
+        Input: 네이버 어때?  
         Output:  
-        Stock: 테슬라  
-        Ticker: null
+        Stock: 네이버  
+        Ticker: 035420
 
         Input: 삼성전자 어때?  
         Output:  
         Stock: 삼성전자  
         Ticker: 005930
 
-        Input: 테슬라 ㄱㅊ?  
+        Input: 네이버 ㄱㅊ?  
         Output:  
-        Stock: 테슬라  
-        Ticker: null
+        Stock: 네이버  
+        Ticker: 035420
 
         Input: 카카오  
         Output:  
@@ -247,7 +251,11 @@ public class PromptBuilder {
 
 
 
-    // 모의투자 성과 분석
+    /**
+     *   모의투자 거래 성과 분석 프롬프트
+     * - 최근 n일 동안의 거래 데이터 기반 전략 요약, 리스크, 개선 제안
+     * - JSON 구조 강제
+     */
     public String buildForPortfolioAnalysis(BehaviorStatsDto stats) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(stats.getRequestedPeriod());
@@ -289,7 +297,10 @@ public class PromptBuilder {
         );
     }
 
-    // 용어 설명
+    /**
+     *   투자 용어 설명 프롬프트
+     * - 특정 용어(예: PER, EPS)를 초보자도 이해할 수 있게 JSON으로 설명
+     */
     public String buildForTermExplain(String term) {
         return """
 아래 투자 용어에 대해 JSON 형식으로 설명해주세요.
@@ -312,7 +323,10 @@ public class PromptBuilder {
 """.formatted(term);
     }
 
-    // 키워드 분류 프롬프트
+    /**
+     *   키워드 추출 프롬프트
+     * - 사용자 입력에서 산업/테마/섹터 키워드만 JSON으로 반환
+     */
     public String buildKeywordExtractionPrompt(String userMessage) {
         return """
     You are a keyword extractor for a financial stock chatbot.
@@ -371,7 +385,10 @@ public class PromptBuilder {
     """.formatted(userMessage);
     }
 
-    // 의도 분류 프롬프트
+    /**
+     *   의도 분류 프롬프트
+     * - 사용자 입력을 IntentType(enum) 중 하나로 분류
+     */
     public String buildIntentClassificationPrompt(String userMessage) {
         return """
     You are an intent classifier for a financial chatbot.
