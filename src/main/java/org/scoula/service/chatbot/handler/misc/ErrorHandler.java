@@ -11,6 +11,18 @@ import org.scoula.service.chatbot.handler.context.ExecutionContext;
 import org.scoula.service.chatbot.handler.result.ExecutionResult;
 import org.springframework.stereotype.Component;
 
+/**
+ * ErrorHandler
+ *
+ * <p>IntentType.ERROR 상황에서 실행되는 전용 핸들러.</p>
+ *
+ * <h3>역할</h3>
+ * <ul>
+ *   <li>예상치 못한 오류가 발생했을 때 실행</li>
+ *   <li>사용자의 입력(혹은 오류 상황)을 에러 로그 테이블에 저장</li>
+ *   <li>사용자에게는 안전한 안내 메시지를 반환</li>
+ * </ul>
+ */
 @Log4j2
 @Component
 @RequiredArgsConstructor
