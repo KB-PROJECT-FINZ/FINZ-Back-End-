@@ -57,7 +57,6 @@ public class ChatBotServiceImpl implements ChatBotService {
     private final ChatSessionService chatSessionService;
 
 
-
     @Override
     public ChatResponseDto getChatResponse(ChatRequestDto request) {
         try {
@@ -147,8 +146,8 @@ public class ChatBotServiceImpl implements ChatBotService {
      *   <li>사용자에게는 일반화된 경고 메시지 반환</li>
      * </ul>
      *
-     * @param e         발생한 예외
-     * @param userId    사용자 ID (에러 기록용)
+     * @param e          발생한 예외
+     * @param userId     사용자 ID (에러 기록용)
      * @param intentType 에러 발생 시점의 의도 (세션 종료 판단 용도)
      * @return 에러용 ChatResponseDto
      */
@@ -194,4 +193,5 @@ public class ChatBotServiceImpl implements ChatBotService {
                 .intentType(IntentType.ERROR)
                 .build();
     }
+}
 
