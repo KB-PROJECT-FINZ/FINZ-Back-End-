@@ -86,7 +86,7 @@ public class PromptBuilder {
     ```json
     {
       "ticker": "TSLA",
-      "reason": "테슬라는 전기차 시장에서 선두주자로 알려져 있고, 미래 성장 가능성이 높아 보여요. 기술적으로도 혁신적인 모습을 보여 관심 가져볼 수 있어요. 하지만 높은 가격 수준과 미래 수익에 대한 불확실성이 있어 고위험 고수익 종목이에요.",
+      "reason": "네이버는 국내 인터넷 서비스의 대표주자로 알려져 있고, 검색, 커머스, 콘텐츠 등 다양한 사업 영역을 보유하고 있어요. 기술적으로도 AI, 클라우드 등 미래 성장 동력을 확보하고 있어 관심 가져볼 수 있어요. 하지만 경쟁 구도 변화와 규제 리스크가 있어 중위험 중수익 종목이에요.",
       "riskLevel": "높음",
       "timingComment": "최근 주가 상승으로 매수시 적절한 타이밍이 아닐 수 있어요. 추가 하락 기회를 기다려보세요.",
       "futureOutlook": "전기차 시장 성장에 따른 수요 증가가 기대되지만, 경쟁사와의 신차 출시로 인한 경쟁이 치열할 수 있어요."
@@ -215,20 +215,20 @@ public class PromptBuilder {
         Stock: 카카오  
         Ticker: 035720
 
-        Input: 테슬라 어때?  
+        Input: 네이버 어때?  
         Output:  
-        Stock: 테슬라  
-        Ticker: null
+        Stock: 네이버  
+        Ticker: 035420
 
         Input: 삼성전자 어때?  
         Output:  
         Stock: 삼성전자  
         Ticker: 005930
 
-        Input: 테슬라 ㄱㅊ?  
+        Input: 네이버 ㄱㅊ?  
         Output:  
-        Stock: 테슬라  
-        Ticker: null
+        Stock: 네이버  
+        Ticker: 035420
 
         Input: 카카오  
         Output:  
